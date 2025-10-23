@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Cliente } from '../models/cliente/cliente-module';
 import { QrService } from './qr.service';
-import { environment } from '../../environments/environment.supabase';
 
 @Injectable({
   providedIn: 'root'
@@ -10,14 +9,15 @@ import { environment } from '../../environments/environment.supabase';
 export class ClienteService {
 
   private supabase: SupabaseClient;
-  
+
   constructor(private qrService: QrService) {
-    // Inicializar Supabase con las credenciales del environment
+    // Inicializar Supabase con tus credenciales
     this.supabase = createClient(
-      environment.supabase.url, 
-      environment.supabase.anonKey
+      'YOUR_SUPABASE_URL', 
+      'YOUR_SUPABASE_ANON_KEY'
     );
   }
+
   /**
    * Crear un nuevo cliente con QR generado automáticamente
    * @param clienteData - Datos del cliente sin el ID y QR

@@ -3,21 +3,479 @@
 }
 
 .register-container {
-  padding: 40px 20px;
-  text-align: center;
-  height: 100%;
+  padding: 20px;
+  min-height: 100vh;
+  
+  .step-container {
+    max-width: 600px;
+    margin: 0 auto;
+    animation: fadeInUp 0.3s ease-out;
+    
+    .step-header {
+      text-align: center;
+      margin-bottom: 30px;
+      
+      .step-icon {
+        font-size: 3rem;
+        color: #00ff88;
+        margin-bottom: 10px;
+        filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.3));
+      }
+      
+      h2 {
+        color: #00ff88;
+        font-size: 2rem;
+        margin-bottom: 8px;
+        font-weight: 600;
+        text-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+      }
+      
+      p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1rem;
+        margin: 0;
+        
+        &.medical-disclaimer {
+          font-style: italic;
+          font-size: 0.9rem;
+          background: rgba(255, 193, 7, 0.1);
+          padding: 10px;
+          border-radius: 8px;
+          border-left: 4px solid #ffc107;
+          margin-top: 10px;
+        }
+      }
+    }
+    
+    .register-form {
+      margin-bottom: 30px;
+      
+      .form-item {
+        --background: rgba(255, 255, 255, 0.05);
+        --border-color: rgba(255, 255, 255, 0.1);
+        --border-radius: 12px;
+        margin-bottom: 16px;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        
+        &:hover {
+          --background: rgba(255, 255, 255, 0.08);
+          --border-color: rgba(0, 255, 136, 0.3);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 20px rgba(0, 255, 136, 0.1);
+        }
+        
+        ion-label {
+          color: #00ff88;
+          font-weight: 500;
+          font-size: 0.9rem;
+        }
+        
+        ion-input, ion-textarea, ion-select, ion-datetime {
+          --color: white;
+          --placeholder-color: rgba(255, 255, 255, 0.5);
+          --padding-start: 16px;
+          --padding-end: 16px;
+          
+          &::part(native) {
+            font-size: 1rem;
+          }
+        }
+      }
+      
+      .checkbox-item {
+        --background: rgba(255, 255, 255, 0.03);
+        --border-color: rgba(255, 255, 255, 0.1);
+        --border-radius: 10px;
+        margin-bottom: 12px;
+        border-radius: 10px;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+        
+        &:hover {
+          --background: rgba(255, 255, 255, 0.06);
+          --border-color: rgba(0, 255, 136, 0.2);
+        }
+        
+        ion-checkbox {
+          --color: #00ff88;
+          --color-checked: #00ff88;
+          --border-color: rgba(255, 255, 255, 0.3);
+          --border-color-checked: #00ff88;
+          --checkmark-color: #000;
+          margin-right: 12px;
+        }
+        
+        ion-label {
+          color: rgba(255, 255, 255, 0.9);
+          font-size: 0.95rem;
+          line-height: 1.4;
+        }
+      }
+      
+      .conditional-item {
+        margin-left: 20px;
+        border-left: 3px solid #00ff88;
+        --background: rgba(0, 255, 136, 0.05);
+        animation: slideInLeft 0.3s ease-out;
+      }
+      
+      .section-divider {
+        margin: 25px 0 15px 0;
+        
+        .section-title {
+          display: flex;
+          align-items: center;
+          color: #00ff88;
+          font-weight: 600;
+          font-size: 1.1rem;
+          padding: 12px 16px;
+          background: rgba(0, 255, 136, 0.1);
+          border-radius: 8px;
+          border-left: 4px solid #00ff88;
+          
+          ion-icon {
+            margin-right: 8px;
+            font-size: 1.2rem;
+          }
+        }
+      }
+    }
+    
+    .step-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 40px;
+      
+      .prev-button {
+        --color: #00ff88;
+        --border-color: #00ff88;
+        --background: transparent;
+        --background-hover: rgba(0, 255, 136, 0.1);
+        flex: 1;
+        height: 50px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2);
+        }
+      }
+      
+      .next-button, .submit-button {
+        --color: #000;
+        --background: linear-gradient(45deg, #00ff88, #00cc6a);
+        --background-hover: linear-gradient(45deg, #00cc6a, #00aa55);
+        flex: 2;
+        height: 50px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+        }
+        
+        &:disabled {
+          --background: rgba(255, 255, 255, 0.1);
+          --color: rgba(255, 255, 255, 0.5);
+          box-shadow: none;
+          transform: none;
+        }
+      }
+      
+      .submit-button {
+        --background: linear-gradient(45deg, #ff6b35, #f7931e);
+        --background-hover: linear-gradient(45deg, #f7931e, #e8761a);
+        box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        
+        &:hover {
+          box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+      }
+    }
+  }
+}
+
+.summary-section {
+  margin-bottom: 30px;
+  
+  .summary-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      border-color: rgba(0, 255, 136, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      background: rgba(0, 255, 136, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      
+      ion-icon {
+        font-size: 1.5rem;
+        color: #00ff88;
+        margin-right: 10px;
+      }
+      
+      h3 {
+        color: #00ff88;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+      }
+    }
+    
+    .card-content {
+      padding: 16px 20px;
+      
+      p {
+        color: rgba(255, 255, 255, 0.9);
+        margin: 8px 0;
+        line-height: 1.5;
+        
+        strong {
+          color: #00ff88;
+          font-weight: 600;
+        }
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+}
+
+.success-container {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
   
-  h2 {
-    color: #00ff88;
-    font-size: 2rem;
-    margin-bottom: 20px;
+  .success-content {
+    text-align: center;
+    max-width: 400px;
+    animation: bounceIn 0.6s ease-out;
+    
+    .success-icon {
+      font-size: 5rem;
+      color: #00ff88;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.5));
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    h2 {
+      color: #00ff88;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      font-weight: 600;
+      text-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+    }
+    
+    p {
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+      line-height: 1.5;
+    }
+    
+    .action-buttons {
+      margin-top: 30px;
+      
+      .login-button {
+        --color: #000;
+        --background: linear-gradient(45deg, #00ff88, #00cc6a);
+        --background-hover: linear-gradient(45deg, #00cc6a, #00aa55);
+        height: 50px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+        transition: all 0.3s ease;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+        }
+      }
+    }
+  }
+}
+
+// Animaciones
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .register-container {
+    padding: 15px;
+    
+    .step-container {
+      .step-header {
+        .step-icon {
+          font-size: 2.5rem;
+        }
+        
+        h2 {
+          font-size: 1.8rem;
+        }
+      }
+      
+      .register-form {
+        .form-item {
+          margin-bottom: 14px;
+        }
+      }
+      
+      .step-buttons {
+        flex-direction: column;
+        
+        .prev-button {
+          order: 2;
+        }
+        
+        .next-button, .submit-button {
+          order: 1;
+        }
+      }
+    }
   }
   
-  p {
-    color: rgba(255, 255, 255, 0.8);
-    margin-bottom: 40px;
+  .success-container {
+    .success-content {
+      .success-icon {
+        font-size: 4rem;
+      }
+      
+      h2 {
+        font-size: 2rem;
+      }
+    }
   }
+}
+
+@media (max-width: 480px) {
+  .register-container {
+    padding: 10px;
+    
+    .step-container {
+      .step-header {
+        margin-bottom: 20px;
+        
+        h2 {
+          font-size: 1.6rem;
+        }
+      }
+      
+      .step-buttons {
+        .prev-button, .next-button, .submit-button {
+          height: 45px;
+          font-size: 0.95rem;
+        }
+      }
+    }
+  }
+  
+  .summary-section {
+    .summary-card {
+      .card-header {
+        padding: 12px 16px;
+        
+        h3 {
+          font-size: 1.1rem;
+        }
+      }
+      
+      .card-content {
+        padding: 12px 16px;
+        
+        p {
+          font-size: 0.95rem;
+        }
+      }
+    }
+  }
+}
+
+// Dark theme enhancements
+ion-item {
+  --highlight-color-focused: #00ff88;
+  --highlight-color-valid: #00ff88;
+  --highlight-color-invalid: #ff6b6b;
+}
+
+ion-input, ion-textarea, ion-select, ion-datetime {
+  --highlight-color: #00ff88;
+}
+
+ion-checkbox {
+  --size: 20px;
+  --checkbox-background-checked: #00ff88;
+  --border-width: 2px;
+  --transition: all 0.3s ease;
 }

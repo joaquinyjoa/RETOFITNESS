@@ -5,17 +5,397 @@
         <ion-icon name="arrow-back"></ion-icon>
       </ion-button>
     </ion-buttons>
-    <ion-title>Registro</ion-title>
+    <ion-title>Registro - Paso {{currentStep}} de {{totalSteps}}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true" class="register-content">
-  <div class="register-container">
-    <h2>¡Únete al reto!</h2>
-    <p>Página de registro en construcción...</p>
+  
+  <!-- Formulario de registro por pasos -->
+  <div class="register-container" *ngIf="!showSuccess">
     
-    <ion-button expand="block" (click)="goBack()">
-      Volver al inicio
-    </ion-button>
+    <!-- Paso 1: Información Personal -->
+    <div *ngIf="currentStep === 1" class="step-container">
+      <div class="step-header">
+        <ion-icon name="person-outline" class="step-icon"></ion-icon>
+        <h2>Información Personal</h2>
+        <p>Cuéntanos sobre ti</p>
+      </div>
+      
+      <form class="register-form">
+        <ion-item class="form-item">
+          <ion-label position="stacked">Nombre *</ion-label>
+          <ion-input 
+            [(ngModel)]="cliente.nombre" 
+            name="nombre"
+            type="text" 
+            placeholder="Tu nombre"
+            required>
+          </ion-input>
+        </ion-item>
+
+        <ion-item class="form-item">
+          <ion-label position="stacked">Apellido *</ion-label>
+          <ion-input 
+            [(ngModel)]="cliente.apellido" 
+            name="apellido"
+            type="text" 
+            placeholder="Tu apellido"
+            required>
+          </ion-input>
+        </ion-item>
+
+        <ion-item class="form-item">
+          <ion-label position="stacked">Edad *</ion-label>
+          <ion-input 
+            [(ngModel)]="cliente.edad" 
+            name="edad"
+            type="number" 
+            placeholder="Tu edad"
+            min="13"
+            max="120"
+            required>
+          </ion-input>
+        </ion-item>
+
+        <ion-item class="form-item">
+          <ion-label position="stacked">Género</ion-label>
+          <ion-select [(ngModel)]="cliente.genero" name="genero" placeholder="Selecciona tu género">
+            <ion-select-option value="M">Masculino</ion-select-option>
+            <ion-select-option value="F">Femenino</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item class="form-item">
+          <ion-label position="stacked">Correo Electrónico *</ion-label>
+          <ion-input 
+            [(ngModel)]="cliente.correo" 
+            name="correo"
+            type="email" 
+            placeholder="tu@email.com"
+            required>
+          </ion-input>
+        </ion-item>
+
+        <ion-item class="form-item">
+          <ion-label position="stacked">Contraseña *</ion-label>
+          <ion-input 
+            [(ngModel)]="cliente['contraseña']" 
+            name="password"
+            type="password" 
+            placeholder="Mínimo 6 caracteres"
+            required>
+          </ion-input>
+        </ion-item>
+      </form>
+
+      <div class="step-buttons">
+        <ion-button 
+          expand="block" 
+          (click)="nextStep()" 
+          [disabled]="!isStep1Valid()"
+          class="next-button">
+          Siguiente
+          <ion-icon name="arrow-forward" slot="end"></ion-icon>
+        </ion-button>
+      </div>
+    </div>
+
+    <!-- Paso 2: Información Física y Objetivos -->
+    <div *ngIf="currentStep === 2" class="step-container">
+      <div class="step-header">
+        <ion-icon name="fitness-outline" class="step-icon"></ion-icon>
+        <h2>Información Física</h2>
+        <p>Datos sobre tu estado físico y objetivos</p>
+      </div>
+      
+      <form class="register-form">
+        <ion-item class="form-item">
+          <ion-label position="stacked">Peso (kg) *</ion-label>
+          <ion-input 
+            [(ngModel)]="cliente.peso" 
+            name="peso"
+            type="number" 
+            placeholder="70"
+            min="30"
+            max="300"
+            required>
+          </ion-input>
+        </ion-item>
+
+        <ion-item class="form-item">
+          <ion-label position="stacked">Altura (cm) *</ion-label>
+          <ion-input 
+            [(ngModel)]="cliente.altura" 
+            name="altura"
+            type="number" 
+            placeholder="170"
+            min="100"
+            max="250"
+            required>
+          </ion-input>
+        </ion-item>
+
+        <ion-item class="form-item">
+          <ion-label position="stacked">Objetivo Fitness *</ion-label>
+          <ion-textarea 
+            [(ngModel)]="cliente.objetivo" 
+            name="objetivo"
+            placeholder="Ejemplo: Perder peso, ganar músculo, mantenerse en forma..."
+            rows="3"
+            required>
+          </ion-textarea>
+        </ion-item>
+
+        <ion-item class="form-item">
+          <ion-label position="stacked">Nivel de Actividad</ion-label>
+          <ion-select [(ngModel)]="cliente.nivelActividad" name="nivelActividad" placeholder="Selecciona tu nivel">
+            <ion-select-option value="Bajo">Bajo (Sedentario)</ion-select-option>
+            <ion-select-option value="Medio">Medio (Ejercicio ocasional)</ion-select-option>
+            <ion-select-option value="Alto">Alto (Ejercicio regular)</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item class="form-item">
+          <ion-label position="stacked">Hora de Dormir *</ion-label>
+          <ion-datetime 
+            [(ngModel)]="cliente['horasSueño']" 
+            name="horasSueno"
+            presentation="time"
+            placeholder="Selecciona tu hora de dormir"
+            required>
+          </ion-datetime>
+        </ion-item>
+      </form>
+
+      <div class="step-buttons">
+        <ion-button fill="outline" (click)="prevStep()" class="prev-button">
+          <ion-icon name="arrow-back" slot="start"></ion-icon>
+          Anterior
+        </ion-button>
+        <ion-button 
+          expand="block" 
+          (click)="nextStep()" 
+          [disabled]="!isStep2Valid()"
+          class="next-button">
+          Siguiente
+          <ion-icon name="arrow-forward" slot="end"></ion-icon>
+        </ion-button>
+      </div>
+    </div>
+
+    <!-- Paso 3: Información Médica -->
+    <div *ngIf="currentStep === 3" class="step-container">
+      <div class="step-header">
+        <ion-icon name="medical-outline" class="step-icon"></ion-icon>
+        <h2>Información Médica</h2>
+        <p class="medical-disclaimer">Esta información nos ayuda a personalizar tu entrenamiento de forma segura</p>
+      </div>
+      
+      <form class="register-form">
+        
+        <!-- Hábitos -->
+        <div class="section-divider">
+          <div class="section-title">
+            <ion-icon name="leaf-outline"></ion-icon>
+            Hábitos de Vida
+          </div>
+        </div>
+        
+        <ion-item class="checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.fuma" name="fuma" slot="start"></ion-checkbox>
+          <ion-label>Fumo regularmente</ion-label>
+        </ion-item>
+
+        <ion-item class="checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.alcohol" name="alcohol" slot="start"></ion-checkbox>
+          <ion-label>Consumo alcohol regularmente</ion-label>
+        </ion-item>
+
+        <!-- Condiciones médicas -->
+        <div class="section-divider">
+          <div class="section-title">
+            <ion-icon name="heart-outline"></ion-icon>
+            Condiciones Médicas
+          </div>
+        </div>
+        
+        <ion-item class="checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.enfermedadCronica" name="enfermedadCronica" slot="start"></ion-checkbox>
+          <ion-label>Tengo alguna enfermedad crónica</ion-label>
+        </ion-item>
+
+        <ion-item *ngIf="cliente.enfermedadCronica" class="form-item conditional-item">
+          <ion-label position="stacked">Descripción de la enfermedad</ion-label>
+          <ion-textarea 
+            [(ngModel)]="cliente.descripcionEnfermedad" 
+            name="descripcionEnfermedad"
+            placeholder="Describe tu condición..."
+            rows="2">
+          </ion-textarea>
+        </ion-item>
+
+        <ion-item class="checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.diabetes" name="diabetes" slot="start"></ion-checkbox>
+          <ion-label>Diabetes</ion-label>
+        </ion-item>
+
+        <ion-item class="checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.hipotension" name="hipotension" slot="start"></ion-checkbox>
+          <ion-label>Hipotensión (presión baja)</ion-label>
+        </ion-item>
+
+        <ion-item class="checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.hipotiroide" name="hipotiroide" slot="start"></ion-checkbox>
+          <ion-label>Hipotiroidismo</ion-label>
+        </ion-item>
+
+        <ion-item class="checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.medicacionRegular" name="medicacionRegular" slot="start"></ion-checkbox>
+          <ion-label>Tomo medicación regular</ion-label>
+        </ion-item>
+
+        <ion-item *ngIf="cliente.medicacionRegular" class="form-item conditional-item">
+          <ion-label position="stacked">Medicación que tomas</ion-label>
+          <ion-textarea 
+            [(ngModel)]="cliente.descripcionMedicacion" 
+            name="descripcionMedicacion"
+            placeholder="Describe qué medicamentos tomas..."
+            rows="2">
+          </ion-textarea>
+        </ion-item>
+
+        <ion-item class="checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.cirugias" name="cirugias" slot="start"></ion-checkbox>
+          <ion-label>He tenido cirugías</ion-label>
+        </ion-item>
+
+        <ion-item *ngIf="cliente.cirugias" class="form-item conditional-item">
+          <ion-label position="stacked">Describe las cirugías</ion-label>
+          <ion-textarea 
+            [(ngModel)]="cliente.descripcionCirugias" 
+            name="descripcionCirugias"
+            placeholder="Describe las cirugías que has tenido..."
+            rows="2">
+          </ion-textarea>
+        </ion-item>
+
+        <ion-item class="checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.lesiones" name="lesiones" slot="start"></ion-checkbox>
+          <ion-label>Tengo lesiones actuales o recientes</ion-label>
+        </ion-item>
+
+        <ion-item *ngIf="cliente.lesiones" class="form-item conditional-item">
+          <ion-label position="stacked">Describe las lesiones</ion-label>
+          <ion-textarea 
+            [(ngModel)]="cliente.descripcionLesiones" 
+            name="descripcionLesiones"
+            placeholder="Describe tus lesiones actuales..."
+            rows="2">
+          </ion-textarea>
+        </ion-item>
+      </form>
+
+      <div class="step-buttons">
+        <ion-button fill="outline" (click)="prevStep()" class="prev-button">
+          <ion-icon name="arrow-back" slot="start"></ion-icon>
+          Anterior
+        </ion-button>
+        <ion-button expand="block" (click)="nextStep()" class="next-button">
+          Siguiente
+          <ion-icon name="arrow-forward" slot="end"></ion-icon>
+        </ion-button>
+      </div>
+    </div>
+
+    <!-- Paso 4: Confirmación -->
+    <div *ngIf="currentStep === 4" class="step-container">
+      <div class="step-header">
+        <ion-icon name="checkmark-circle-outline" class="step-icon"></ion-icon>
+        <h2>Confirmar Registro</h2>
+        <p>Revisa tu información antes de registrarte</p>
+      </div>
+      
+      <div class="summary-section">
+        <div class="summary-card">
+          <div class="card-header">
+            <ion-icon name="person-outline"></ion-icon>
+            <h3>Información Personal</h3>
+          </div>
+          <div class="card-content">
+            <p><strong>Nombre:</strong> {{cliente.nombre}} {{cliente.apellido}}</p>
+            <p><strong>Edad:</strong> {{cliente.edad}} años</p>
+            <p><strong>Email:</strong> {{cliente.correo}}</p>
+            <p><strong>Género:</strong> {{cliente.genero === 'M' ? 'Masculino' : 'Femenino'}}</p>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-header">
+            <ion-icon name="fitness-outline"></ion-icon>
+            <h3>Información Física</h3>
+          </div>
+          <div class="card-content">
+            <p><strong>Peso:</strong> {{cliente.peso}} kg</p>
+            <p><strong>Altura:</strong> {{cliente.altura}} cm</p>
+            <p><strong>Objetivo:</strong> {{cliente.objetivo}}</p>
+            <p><strong>Nivel de Actividad:</strong> {{cliente.nivelActividad}}</p>
+            <p><strong>Hora de Dormir:</strong> {{cliente['horasSueño']}}</p>
+          </div>
+        </div>
+
+        <div class="summary-card" *ngIf="hasHealthConditions()">
+          <div class="card-header">
+            <ion-icon name="medical-outline"></ion-icon>
+            <h3>Condiciones Médicas</h3>
+          </div>
+          <div class="card-content">
+            <p *ngIf="cliente.enfermedadCronica">✓ Enfermedad Crónica: {{cliente.descripcionEnfermedad}}</p>
+            <p *ngIf="cliente.diabetes">✓ Diabetes</p>
+            <p *ngIf="cliente.hipotension">✓ Hipotensión</p>
+            <p *ngIf="cliente.hipotiroide">✓ Hipotiroidismo</p>
+            <p *ngIf="cliente.medicacionRegular">✓ Medicación: {{cliente.descripcionMedicacion}}</p>
+            <p *ngIf="cliente.cirugias">✓ Cirugías: {{cliente.descripcionCirugias}}</p>
+            <p *ngIf="cliente.lesiones">✓ Lesiones: {{cliente.descripcionLesiones}}</p>
+            <p *ngIf="cliente.fuma">✓ Fumador</p>
+            <p *ngIf="cliente.alcohol">✓ Consumo regular de alcohol</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-buttons">
+        <ion-button fill="outline" (click)="prevStep()" class="prev-button">
+          <ion-icon name="arrow-back" slot="start"></ion-icon>
+          Anterior
+        </ion-button>
+        <ion-button 
+          expand="block" 
+          (click)="onSubmit()" 
+          [disabled]="isSubmitting"
+          class="submit-button">
+          <ion-icon *ngIf="!isSubmitting" name="checkmark-circle" slot="start"></ion-icon>
+          <ion-spinner *ngIf="isSubmitting" name="crescent" slot="start"></ion-spinner>
+          {{isSubmitting ? 'Registrando...' : 'Completar Registro'}}
+        </ion-button>
+      </div>
+    </div>
   </div>
+
+  <!-- Pantalla de éxito (placeholder para QR) -->
+  <div class="success-container" *ngIf="showSuccess">
+    <div class="success-content">
+      <ion-icon name="checkmark-circle" class="success-icon"></ion-icon>
+      <h2>¡Registro Exitoso!</h2>
+      <p>Tu cuenta ha sido creada correctamente.</p>
+      <p>Tu código QR se generará automáticamente.</p>
+      
+      <div class="action-buttons">
+        <ion-button expand="block" (click)="goToLogin()" class="login-button">
+          <ion-icon name="log-in" slot="start"></ion-icon>
+          Ir al Login
+        </ion-button>
+      </div>
+    </div>
+  </div>
+
 </ion-content>
