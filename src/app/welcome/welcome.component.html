@@ -1,0 +1,88 @@
+<ion-content class="welcome-content" [fullscreen]="true">
+  <!-- Fondo animado con formas geométricas -->
+  <div class="background-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+    <div class="shape shape-4"></div>
+    <div class="floating-particles">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+  </div>
+
+  <!-- Contenido principal -->
+  <div class="welcome-container">
+    <!-- Logo animado -->
+    <div class="welcome-logo">
+      <div class="logo-glow"></div>
+      <img src="assets/splash/splash.png" alt="RetoFitness Logo" />
+      <div class="logo-ring"></div>
+    </div>
+
+    <!-- Título principal -->
+    <div class="welcome-title">
+      <h1>
+        <span class="title-main">Reto</span>
+        <span class="title-accent">Fitness</span>
+      </h1>
+      <div class="title-underline"></div>
+    </div>
+
+    <!-- Descripción atractiva -->
+    <div class="welcome-description">
+      <h2>🚀 Transforma tu cuerpo</h2>
+      <p>
+        Únete a la revolución fitness más emocionante. Entrena con propósito, 
+        supera tus límites y conviértete en la mejor versión de ti mismo.
+      </p>
+      
+      <div class="features-grid">
+        <div class="feature-item">
+          <ion-icon name="flash" class="feature-icon"></ion-icon>
+          <span>Entrenamientos dinámicos</span>
+        </div>
+        <div class="feature-item">
+          <ion-icon name="trophy" class="feature-icon"></ion-icon>
+          <span>Logros y recompensas</span>
+        </div>
+        <div class="feature-item">
+          <ion-icon name="people" class="feature-icon"></ion-icon>
+          <span>Comunidad activa</span>
+        </div>
+        <div class="feature-item">
+          <ion-icon name="analytics" class="feature-icon"></ion-icon>
+          <span>Progreso detallado</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="welcome-buttons">
+      <ion-button 
+        expand="block" 
+        color="success" 
+        fill="solid"
+        class="primary-button" 
+        (click)="navigateToRegister()">
+        <ion-icon name="person-add" slot="start"></ion-icon>
+        Comenzar mi reto
+      </ion-button>
+      
+      <ion-button 
+        expand="block" 
+        color="success" 
+        fill="outline" 
+        class="secondary-button" 
+        (click)="navigateToLogin()">
+        <ion-icon name="log-in" slot="start"></ion-icon>
+        Ya tengo cuenta
+      </ion-button>
+    </div>
+
+  
+  </div>
+</ion-content>

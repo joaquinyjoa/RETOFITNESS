@@ -1,0 +1,132 @@
+﻿// Variables de colores locales
+:host {
+  --primary-green: #00ff88;
+  --secondary-green: #00cc6a;
+  --dark-bg: #0a0a0a;
+  --gradient-bg: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2a2a2a 100%);
+  --accent-gradient: linear-gradient(45deg, #00ff88 0%, #00cc6a 50%, #ffffff 100%);
+  --glow-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+}
+
+.welcome-content {
+  --background: var(--gradient-bg);
+  position: relative;
+  overflow: hidden;
+}
+
+// Contenedor principal
+.welcome-container {
+  position: relative;
+  z-index: 1;
+  padding: 40px 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+// Elementos con animación de entrada
+.welcome-logo { opacity: 0; }
+.welcome-title { opacity: 0; }
+.welcome-description { opacity: 0; }
+.welcome-buttons { opacity: 0; }
+
+// Diseño mejorado de botones
+.welcome-buttons {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  
+  ion-button {
+    height: 52px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+    border-radius: 26px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    &.primary-button {
+      --background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+      --color: #000000;
+      --box-shadow: 0 4px 15px rgba(0, 255, 136, 0.25);
+      text-transform: uppercase;
+      
+      &:hover {
+        --box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+        transform: translateY(-2px);
+      }
+      
+      &:active {
+        transform: translateY(0);
+        --box-shadow: 0 2px 10px rgba(0, 255, 136, 0.3);
+      }
+    }
+    
+    &.secondary-button {
+      --color: #00ff88;
+      --border-color: rgba(0, 255, 136, 0.4);
+      --border-width: 2px;
+      --background: rgba(0, 255, 136, 0.08);
+      backdrop-filter: blur(10px);
+      
+      &:hover {
+        --background: rgba(0, 255, 136, 0.15);
+        --border-color: rgba(0, 255, 136, 0.6);
+        transform: translateY(-1px);
+      }
+      
+      &:active {
+        transform: translateY(0);
+        --background: rgba(0, 255, 136, 0.2);
+      }
+    }
+    
+    ion-icon {
+      font-size: 1.2rem;
+      margin-right: 8px;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 480px) {
+  .welcome-container {
+    padding: 30px 16px;
+  }
+  
+  .welcome-buttons {
+    max-width: 280px;
+    gap: 14px;
+    
+    ion-button {
+      height: 48px;
+      font-size: 1rem;
+      border-radius: 24px;
+    }
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .welcome-buttons {
+    max-width: 300px;
+  }
+}
+
+// Animación sutil para mejorar la experiencia
+@keyframes subtle-glow {
+  0%, 100% { 
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.25); 
+  }
+  50% { 
+    box-shadow: 0 4px 20px rgba(0, 255, 136, 0.35); 
+  }
+}
+
+.primary-button:not(:active):not(:hover) {
+  animation: subtle-glow 3s ease-in-out infinite;
+}

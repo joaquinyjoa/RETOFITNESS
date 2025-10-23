@@ -1,0 +1,16 @@
+// For information on how to create your own theme, please see:
+// http://ionicframework.com/docs/theming/
+
+/* Custom colors */
+:root {
+	--ion-color-primary: #3880ff;
+	--ion-color-primary-contrast: #ffffff;
+	--ion-color-primary-shade: #3171e0;
+	--ion-color-primary-tint: #4c8dff;
+
+	/* Success color mapped to our green */
+	--ion-color-success: #00ff88;
+	--ion-color-success-contrast: #000000;
+	--ion-color-success-shade: #00cc6a;
+	--ion-color-success-tint: #33ff9b;
+}

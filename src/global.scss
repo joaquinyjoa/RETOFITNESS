@@ -1,0 +1,357 @@
+/*
+ * App Global CSS
+ * ----------------------------------------------------------------------------
+ * Put style rules here that you want to apply globally. These styles are for
+ * the entire app and not just one component. Additionally, this file can be
+ * used as an entry point to import other CSS/Sass files to be included in the
+ * output CSS.
+ * For more information on global stylesheets, visit the documentation:
+ * https://ionicframework.com/docs/layout/global-stylesheets
+ */
+
+/* Core CSS required for Ionic components to work properly */
+@import "@ionic/angular/css/core.css";
+
+/* Basic CSS for apps built with Ionic */
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+
+/* Optional CSS utils that can be commented out */
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+/**
+ * Ionic Dark Mode
+ * -----------------------------------------------------
+ * For more info, please see:
+ * https://ionicframework.com/docs/theming/dark-mode
+ */
+
+/* @import "@ionic/angular/css/palettes/dark.always.css"; */
+/* @import "@ionic/angular/css/palettes/dark.class.css"; */
+@import '@ionic/angular/css/palettes/dark.system.css';
+
+/* Background shapes and particle animations shared globally */
+.background-shapes {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	z-index: 0;
+
+	.shape {
+		position: absolute;
+		border-radius: 50%;
+		background: rgba(0, 255, 136, 0.1);
+		animation: float 6s ease-in-out infinite;
+	}
+
+	.floating-particles {
+		.particle {
+			position: absolute;
+			width: 4px;
+			height: 4px;
+			background: var(--primary-green);
+			border-radius: 50%;
+			animation: particle-float 8s linear infinite;
+		}
+	}
+}
+
+@keyframes float {
+	0%, 100% { transform: translateY(0px) rotate(0deg); }
+	50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+@keyframes particle-float {
+	0% {
+		transform: translateY(100vh) rotate(0deg);
+		opacity: 0;
+	}
+	10% { opacity: 1; }
+	90% { opacity: 1; }
+	100% {
+		transform: translateY(-100px) rotate(360deg);
+		opacity: 0;
+	}
+}
+
+/* Welcome component shared styles (moved from component to respect build budgets) */
+:root {
+	--primary-green: #00ff88;
+	--secondary-green: #00cc6a;
+	--dark-bg: #0a0a0a;
+	--gradient-bg: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2a2a2a 100%);
+	--accent-gradient: linear-gradient(45deg, #00ff88 0%, #00cc6a 50%, #ffffff 100%);
+	--glow-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+}
+
+.welcome-content {
+	--background: var(--gradient-bg);
+	position: relative;
+	overflow: hidden;
+}
+
+.welcome-container {
+	position: relative;
+	z-index: 1;
+	padding: 40px 20px;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
+}
+
+.welcome-logo {
+	position: relative;
+	margin-bottom: 40px;
+	opacity: 0;
+}
+
+.welcome-logo .logo-glow {
+	position: absolute;
+	top: -20px;
+	left: -20px;
+	right: -20px;
+	bottom: -20px;
+	background: radial-gradient(circle, rgba(0, 255, 136, 0.3) 0%, transparent 70%);
+	border-radius: 50%;
+	animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.welcome-logo img {
+	width: 150px;
+	height: 150px;
+	border-radius: 50%;
+	border: 4px solid var(--primary-green);
+	box-shadow: var(--glow-shadow);
+	position: relative;
+	z-index: 2;
+}
+
+.welcome-logo .logo-ring {
+	position: absolute;
+	top: -15px;
+	left: -15px;
+	right: -15px;
+	bottom: -15px;
+	border: 2px solid rgba(0, 255, 136, 0.3);
+	border-radius: 50%;
+	animation: rotate-ring 10s linear infinite;
+}
+
+.welcome-title {
+	margin-bottom: 30px;
+	opacity: 0;
+}
+
+.welcome-title h1 {
+	font-size: 3.2rem;
+	font-weight: 900;
+	margin: 0;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+}
+
+.welcome-title .title-main {
+	background: linear-gradient(45deg, #ffffff 0%, #f0f0f0 100%);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.welcome-title .title-accent {
+	background: var(--accent-gradient);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.welcome-title .title-underline {
+	width: 60px;
+	height: 4px;
+	background: var(--accent-gradient);
+	margin: 10px auto;
+	border-radius: 2px;
+	animation: expand-line 1s ease-out 1.2s both;
+}
+
+.welcome-description {
+	margin-bottom: 40px;
+	opacity: 0;
+	max-width: 350px;
+}
+
+.welcome-description h2 {
+	font-size: 1.4rem;
+	color: var(--primary-green);
+	margin-bottom: 15px;
+	font-weight: 700;
+}
+
+.welcome-description p {
+	color: rgba(255, 255, 255, 0.9);
+	font-size: 1rem;
+	line-height: 1.6;
+	margin-bottom: 25px;
+}
+
+.features-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 15px;
+	margin-top: 20px;
+}
+
+.feature-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 15px 10px;
+	background: rgba(255, 255, 255, 0.05);
+	border-radius: 12px;
+	border: 1px solid rgba(0, 255, 136, 0.2);
+	transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-item:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 5px 15px rgba(0, 255, 136, 0.2);
+}
+
+.feature-icon {
+	font-size: 1.5rem;
+	color: var(--primary-green);
+	margin-bottom: 8px;
+}
+
+.welcome-buttons {
+	width: 100%;
+	max-width: 300px;
+	opacity: 0;
+}
+
+.primary-button {
+	--background: var(--accent-gradient);
+	--color: #000000;
+	--border-radius: 25px;
+	--box-shadow: var(--glow-shadow);
+	margin-bottom: 15px;
+	font-weight: 700;
+	height: 50px;
+	font-size: 1.1rem;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	transition: transform 0.3s ease;
+}
+
+.primary-button:hover { transform: scale(1.02); }
+
+.secondary-button {
+	--color: var(--primary-green);
+	--border-color: var(--primary-green);
+	--border-radius: 25px;
+	margin-bottom: 30px;
+	font-weight: 600;
+	height: 50px;
+	font-size: 1rem;
+	transition: all 0.3s ease;
+}
+
+.secondary-button:hover { --background: rgba(0, 255, 136, 0.1); transform: scale(1.02); }
+
+@keyframes pulse-glow {
+	0%, 100% { opacity: 0.5; transform: scale(1); }
+	50% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes rotate-ring {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
+@keyframes expand-line {
+	from { width: 0; }
+	to { width: 60px; }
+}
+
+@keyframes bounce-arrow {
+	0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+	40% { transform: translateY(-10px); }
+	60% { transform: translateY(-5px); }
+}
+
+/* Force button styles for mobile devices - multiple approaches for maximum compatibility */
+ion-button.primary-button {
+	--background: linear-gradient(45deg, #00ff88 0%, #00cc6a 100%) !important;
+	--color: #000000 !important;
+	--border-radius: 25px !important;
+	margin-bottom: 15px !important;
+	display: block !important;
+	width: 100% !important;
+	height: 54px !important;
+}
+
+ion-button.secondary-button {
+	--background: transparent !important;
+	--color: #00ff88 !important;
+	--border-color: #00ff88 !important;
+	--border-width: 2px !important;
+	--border-radius: 25px !important;
+	margin-bottom: 20px !important;
+	display: block !important;
+	width: 100% !important;
+	height: 54px !important;
+}
+
+/* Force native part styles for WebView shadow DOM */
+ion-button.primary-button::part(native) {
+	background: linear-gradient(45deg, #00ff88 0%, #00cc6a 100%) !important;
+	color: #000000 !important;
+	border-radius: 25px !important;
+	box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3) !important;
+}
+
+ion-button.secondary-button::part(native) {
+	background: transparent !important;
+	color: #00ff88 !important;
+	border: 2px solid #00ff88 !important;
+	border-radius: 25px !important;
+}
+
+/* Ensure vertical stacking and proper spacing */
+.welcome-buttons {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 15px !important;
+	width: 100% !important;
+	max-width: 320px !important;
+	margin: 0 auto !important;
+}
+
+@media (max-width: 480px) {
+	.welcome-title h1 { font-size: 2.5rem; }
+	.welcome-logo img { width: 120px; height: 120px; }
+	.welcome-description .features-grid { grid-template-columns: 1fr; gap: 10px; }
+	
+	/* Extra mobile button fixes */
+	.welcome-buttons {
+		padding: 0 20px !important;
+		max-width: 280px !important;
+	}
+	
+	ion-button.primary-button,
+	ion-button.secondary-button {
+		height: 50px !important;
+		font-size: 1rem !important;
+	}
+}
