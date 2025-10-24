@@ -1,158 +1,88 @@
 import { Injectable } from '@angular/core';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Cliente } from '../models/cliente/cliente-module';
 import { QrService } from './qr.service';
-import { environment } from '../../environments/environment.supabase';
+import { SupabaseService, Cliente as ClienteSupabase } from './supabase.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ClienteService {
 
-  private supabase: SupabaseClient;
-  
-  constructor(private qrService: QrService) {
-    // Inicializar Supabase con las credenciales del environment
-    this.supabase = createClient(
-      environment.supabase.url, 
-      environment.supabase.anonKey
-    );
-  }
+  constructor(
+    private qrService: QrService,
+    private supabaseService: SupabaseService
+  ) {}
   /**
    * Crear un nuevo cliente con QR generado automáticamente
-   * @param clienteData - Datos del cliente sin el ID y QR
-   * @returns Promise con el cliente creado
+   * @param clienteData - Datos del cliente
+   * @returns Promise con el resultado del registro
    */
-  async crearCliente(clienteData: Omit<Cliente, 'id' | 'qr'>): Promise<Cliente> {
+  async crearCliente(clienteData: ClienteSupabase): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      // Insertar cliente en la base de datos (sin QR inicialmente)
-      const { data, error } = await this.supabase
-        .from('clientes')
-        .insert([clienteData])
-        .select()
-        .single();
-
-      if (error) {
-        throw new Error(`Error creando cliente: ${error.message}`);
-      }
-
-      // Generar QR con el ID del cliente recién creado
-      const qrCode = await this.qrService.generarQRCliente(data.id);
-
-      // Actualizar el cliente con el QR generado
-      const { data: clienteActualizado, error: updateError } = await this.supabase
-        .from('clientes')
-        .update({ qr: qrCode })
-        .eq('id', data.id)
-        .select()
-        .single();
-
-      if (updateError) {
-        throw new Error(`Error actualizando QR: ${updateError.message}`);
-      }
-
-      return clienteActualizado;
-    } catch (error) {
-      console.error('Error en crearCliente:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Obtener cliente por ID (para cuando el entrenador escanee el QR)
-   * @param clienteId - ID del cliente
-   * @returns Promise con los datos del cliente
-   */
-  async obtenerClientePorId(clienteId: number): Promise<Cliente | null> {
-    try {
-      const { data, error } = await this.supabase
-        .from('clientes')
-        .select('*')
-        .eq('id', clienteId)
-        .single();
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return null; // Cliente no encontrado
-        }
-        throw new Error(`Error obteniendo cliente: ${error.message}`);
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error en obtenerClientePorId:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Procesar QR escaneado y obtener datos del cliente
-   * @param qrData - Datos del QR escaneado
-   * @returns Promise con los datos del cliente
-   */
-  async procesarQRCliente(qrData: string): Promise<Cliente | null> {
-    try {
-      // Decodificar el QR
-      const datosQR = this.qrService.decodificarQRCliente(qrData);
+      console.log('ClienteService: Iniciando registro de cliente:', clienteData);
       
-      if (!datosQR) {
-        throw new Error('QR inválido o no es de un cliente');
+      // 1. Verificar si el email ya existe
+      const emailExists = await this.supabaseService.verificarEmailExistente(clienteData.correo);
+      if (emailExists) {
+        return { success: false, error: 'Este correo electrónico ya está registrado' };
       }
 
-      // Obtener los datos completos del cliente
-      return await this.obtenerClientePorId(datosQR.id);
-    } catch (error) {
-      console.error('Error procesando QR:', error);
-      throw error;
+      // 2. Registrar cliente en la base de datos
+      const result = await this.supabaseService.registrarCliente(clienteData);
+      
+      if (!result.success || !result.data) {
+        return { success: false, error: result.error || 'Error al registrar el cliente' };
+      }
+
+      const clienteRegistrado = result.data;
+      console.log('Cliente registrado exitosamente:', clienteRegistrado);
+
+      // 3. Generar código QR con el ID del cliente
+      const qrDataUrl = await this.qrService.generarQRCliente(clienteRegistrado.id);
+      
+      // 4. Convertir DataURL a Blob y subir imagen QR al storage
+      const qrBlob = this.dataURLtoBlob(qrDataUrl);
+      const fileName = `qr_cliente_${clienteRegistrado.id}.png`;
+      const uploadResult = await this.supabaseService.subirImagenQR(qrBlob, fileName);
+      
+      if (!uploadResult.success || !uploadResult.url) {
+        console.warn('Cliente registrado, pero no se pudo generar el QR');
+        return { success: true, data: clienteRegistrado, error: 'Cliente registrado, pero no se pudo generar el QR' };
+      } else {
+        // 5. Actualizar el cliente con la URL del QR
+        const updateResult = await this.supabaseService.actualizarQRCliente(clienteRegistrado.id, uploadResult.url);
+        if (!updateResult.success) {
+          console.warn('No se pudo actualizar la URL del QR en el cliente');
+        }
+      }
+
+      return { success: true, data: clienteRegistrado };
+    } catch (error: any) {
+      console.error('Error en crearCliente:', error);
+      return { success: false, error: error.message };
     }
   }
 
   /**
-   * Regenerar QR para un cliente existente
-   * @param clienteId - ID del cliente
-   * @returns Promise con el nuevo QR
+   * Convertir DataURL a Blob para subir archivo
    */
-  async regenerarQR(clienteId: number): Promise<string> {
-    try {
-      // Generar nuevo QR
-      const nuevoQR = await this.qrService.generarQRCliente(clienteId);
-
-      // Actualizar en la base de datos
-      const { error } = await this.supabase
-        .from('clientes')
-        .update({ qr: nuevoQR })
-        .eq('id', clienteId);
-
-      if (error) {
-        throw new Error(`Error actualizando QR: ${error.message}`);
-      }
-
-      return nuevoQR;
-    } catch (error) {
-      console.error('Error regenerando QR:', error);
-      throw error;
+  private dataURLtoBlob(dataurl: string): Blob {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)![1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
     }
+    return new Blob([u8arr], { type: mime });
   }
 
   /**
-   * Obtener todos los clientes
-   * @returns Promise con la lista de clientes
+   * Verificar si un email ya existe
+   * @param correo - Email a verificar
+   * @returns Promise con true si existe, false si no
    */
-  async obtenerClientes(): Promise<Cliente[]> {
-    try {
-      const { data, error } = await this.supabase
-        .from('clientes')
-        .select('*')
-        .order('id', { ascending: true });
-
-      if (error) {
-        throw new Error(`Error obteniendo clientes: ${error.message}`);
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Error en obtenerClientes:', error);
-      throw error;
-    }
+  async verificarEmailExistente(correo: string): Promise<boolean> {
+    return await this.supabaseService.verificarEmailExistente(correo);
   }
 }

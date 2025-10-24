@@ -1,22 +1,10 @@
-:host {
-  /* Paleta inspirada en welcome */
-  --primary-green: #00ff88;
-  --secondary-green: #00cc6a;
-  --dark-bg: #0a0a0a;
-  --card-bg: rgba(26, 26, 26, 0.95);
-  --gradient-bg: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2a2a2a 100%);
-  --accent-gradient: linear-gradient(45deg, #00ff88 0%, #00cc6a 50%, #ffffff 100%);
-  --border-color: rgba(0, 255, 136, 0.3);
-  --glow-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --input-bg: rgba(255, 255, 255, 0.05);
-  --input-focus-bg: rgba(0, 255, 136, 0.1);
-}
-
 /* ===== Fondo general con gradiente ===== */
 ion-content {
   --background: var(--gradient-bg);
+  /* Asegurar que el scroll funcione correctamente */
+  --overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden; /* Evitar scroll horizontal */
   
   &::before {
     content: '';
@@ -33,6 +21,28 @@ ion-content {
   }
 }
 
+/* Evitar desbordamiento en toda la página */
+:host {
+  /* Paleta inspirada en welcome */
+  --primary-green: #00ff88;
+  --secondary-green: #00cc6a;
+  --dark-bg: #0a0a0a;
+  --card-bg: rgba(26, 26, 26, 0.95);
+  --gradient-bg: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2a2a2a 100%);
+  --accent-gradient: linear-gradient(45deg, #00ff88 0%, #00cc6a 50%, #ffffff 100%);
+  --border-color: rgba(0, 255, 136, 0.3);
+  --glow-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-focus-bg: rgba(0, 255, 136, 0.1);
+  
+  /* Evitar scroll horizontal global */
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
 /* ===== Contenedor principal centrado ===== */
 .register-container {
   position: relative;
@@ -43,25 +53,27 @@ ion-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 80px);
+  width: 100%; /* Asegurar que no se desborde */
+  box-sizing: border-box; /* Incluir padding en el ancho total */
+  overflow-x: hidden; /* Evitar scroll horizontal */
 }
 
 /* ===== Toolbar visual dentro del contenido ===== */
 .content-toolbar {
   width: 100%;
-  max-width: 600px;
+  max-width: 100%; /* No exceder el ancho del contenedor */
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
   padding: 15px 12px;
-  margin-bottom: 20px;
+  margin: 0 0 20px 0; /* Sin márgenes laterales */
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 16px;
   backdrop-filter: blur(20px);
   box-shadow: var(--glow-shadow);
+  box-sizing: border-box; /* Incluir padding en el ancho */
 }
 
 .content-toolbar .toolbar-left {
@@ -120,20 +132,18 @@ ion-content {
   margin-right: auto;
 }
 
-/* ===== Header simplificado ===== */
+/* ===== Header simplificado y funcional ===== */
 ion-header {
-  padding-top: 20px; /* Baja el toolbar */
+  padding: 0;
 }
 
 ion-header ion-toolbar {
   --background: var(--dark-bg);
   --color: var(--text-primary);
   border-bottom: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  --min-height: 56px; /* Ajusta la altura del toolbar */
+  --min-height: 60px;
+  margin: 0; /* Sin márgenes que causen scroll horizontal */
+  padding: 0;
 }
 
 ion-title {
@@ -142,11 +152,6 @@ ion-title {
   color: var(--primary-green);
   text-shadow: 0 2px 10px rgba(0, 255, 136, 0.3);
   text-align: center;
-  width: 100%;
-  position: absolute;
-  left: 0;
-  right: 0;
-  z-index: 1;
 }
 
 ion-buttons[slot="start"] {
@@ -182,69 +187,86 @@ ion-button {
   }
 }
 
-/* ===== Animaciones de transición de pasos ===== */
+/* ===== Animaciones de transición de pasos mejoradas ===== */
 .step-container {
   width: 100%;
   position: relative;
   overflow: hidden;
+  transform-style: preserve-3d;
+  perspective: 1000px;
 }
 
+/* Animaciones hacia adelante (más fluidas) */
 .step-slide-enter {
-  animation: slideInRight 0.4s ease-out;
+  animation: slideInRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .step-slide-leave {
-  animation: slideOutLeft 0.4s ease-out;
+  animation: slideOutLeft 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
+/* Animaciones hacia atrás */
 .step-slide-enter-back {
-  animation: slideInLeft 0.4s ease-out;
+  animation: slideInLeft 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .step-slide-leave-back {
-  animation: slideOutRight 0.4s ease-out;
+  animation: slideOutRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
+/* Keyframes mejorados con mejor easing */
 @keyframes slideInRight {
-  from {
-    transform: translateX(100%);
+  0% {
+    transform: translateX(100%) scale(0.95);
     opacity: 0;
   }
-  to {
-    transform: translateX(0);
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
 }
 
 @keyframes slideOutLeft {
-  from {
-    transform: translateX(0);
+  0% {
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
-  to {
-    transform: translateX(-100%);
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateX(-100%) scale(0.95);
     opacity: 0;
   }
 }
 
 @keyframes slideInLeft {
-  from {
-    transform: translateX(-100%);
+  0% {
+    transform: translateX(-100%) scale(0.95);
     opacity: 0;
   }
-  to {
-    transform: translateX(0);
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
 }
 
 @keyframes slideOutRight {
-  from {
-    transform: translateX(0);
+  0% {
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
-  to {
-    transform: translateX(100%);
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateX(100%) scale(0.95);
     opacity: 0;
   }
 }
@@ -257,44 +279,44 @@ ion-card {
   margin: 20px 0;
   box-shadow: var(--glow-shadow);
   width: 100%;
-  max-width: 500px;
+  max-width: 100%; /* No exceder el contenedor padre */
   backdrop-filter: blur(20px);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-sizing: border-box; /* Incluir bordes en el ancho total */
 }
 
-/* Scroll específico para información médica */
+/* Animación de entrada para elementos del card */
+.step-slide-enter ion-card-header,
+.step-slide-enter-back ion-card-header {
+  animation: fadeInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.1s both;
+}
+
+.step-slide-enter ion-list,
+.step-slide-enter-back ion-list {
+  animation: fadeInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s both;
+}
+
+.step-slide-enter .step-buttons,
+.step-slide-enter-back .step-buttons {
+  animation: fadeInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s both;
+}
+
+@keyframes fadeInUp {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Remover limitaciones de altura - permitir scroll natural de la página */
 .medical-info .medical-content,
 .physical-info .physical-content {
-  max-height: 50vh;
-  overflow-y: auto;
+  /* Remover max-height y overflow-y para permitir scroll natural */
   padding: 0 24px 24px 24px;
-  
-  /* Estilo del scrollbar */
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: var(--primary-green);
-    border-radius: 4px;
-  }
-  
-  &::-webkit-scrollbar-thumb:hover {
-    background: var(--secondary-green);
-  }
-}
-
-/* Estilos específicos para cada sección */
-.physical-info .physical-content {
-  max-height: 50vh; /* Altura más pequeña para forzar scroll */
-}
-
-.medical-info .medical-content {
-  max-height: 50vh; /* Altura más pequeña para forzar scroll */
 }
 
 ion-card-header {
@@ -362,6 +384,39 @@ ion-item {
   flex-direction: column;
   align-items: center;
   margin: 0 auto 20px auto; /* Centrar y agregar separación de 20px */
+  opacity: 0;
+  animation: fadeInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Animación escalonada para inputs */
+.step-slide-enter ion-item:nth-child(1) .input-wrapper,
+.step-slide-enter-back ion-item:nth-child(1) .input-wrapper {
+  animation-delay: 0.1s;
+}
+
+.step-slide-enter ion-item:nth-child(2) .input-wrapper,
+.step-slide-enter-back ion-item:nth-child(2) .input-wrapper {
+  animation-delay: 0.2s;
+}
+
+.step-slide-enter ion-item:nth-child(3) .input-wrapper,
+.step-slide-enter-back ion-item:nth-child(3) .input-wrapper {
+  animation-delay: 0.3s;
+}
+
+.step-slide-enter ion-item:nth-child(4) .input-wrapper,
+.step-slide-enter-back ion-item:nth-child(4) .input-wrapper {
+  animation-delay: 0.4s;
+}
+
+.step-slide-enter ion-item:nth-child(5) .input-wrapper,
+.step-slide-enter-back ion-item:nth-child(5) .input-wrapper {
+  animation-delay: 0.5s;
+}
+
+.step-slide-enter ion-item:nth-child(6) .input-wrapper,
+.step-slide-enter-back ion-item:nth-child(6) .input-wrapper {
+  animation-delay: 0.6s;
 }
 
 .native-input,
@@ -558,16 +613,6 @@ ion-item {
         transition: all 0.3s ease;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
       }
-      
-      .toggle-text {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--text-secondary);
-      }
     }
     
     .toggle-input:checked + .toggle-label {
@@ -577,10 +622,6 @@ ion-item {
       &::before {
         left: 30px;
         background: var(--dark-bg);
-      }
-      
-      .toggle-text {
-        color: var(--dark-bg);
       }
     }
   }
@@ -593,7 +634,7 @@ ion-item {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  animation: slideIn 0.3s ease;
+  animation: slideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   backdrop-filter: blur(10px);
   
   .char-counter {
@@ -601,6 +642,19 @@ ion-item {
     font-size: 0.8rem;
     color: var(--text-secondary);
     margin-top: 8px;
+  }
+}
+
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+    max-height: 0;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    max-height: 200px;
   }
 }
 
@@ -619,21 +673,39 @@ ion-item {
   font-size: 1rem;
   border-radius: 12px;
   text-transform: none;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   min-width: 120px;
+  --background: var(--primary-green) !important;
+  --background-activated: var(--secondary-green) !important;
+  --color: #000000 !important;
+  color: #000000 !important;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    --background: var(--secondary-green) !important;
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    transition: all 0.1s ease;
+  }
 }
 
 /* Botón Anterior */
 .step-buttons .back-button {
-  --background: var(--card-bg);
-  --color: var(--text-secondary);
+  --background: var(--primary-green);
+  --background-activated: var(--secondary-green);
+  --color: #000000;
   --border-width: 2px;
-  --border-color: var(--border-color);
-  backdrop-filter: blur(10px);
+  --border-color: var(--primary-green);
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
   
   &:hover {
-    --background: var(--input-bg);
-    --color: var(--text-primary);
+    --background: var(--secondary-green);
+    --color: #000000;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
   }
 }
 
@@ -642,13 +714,14 @@ ion-item {
 .step-buttons .submit-button {
   --background: var(--primary-green);
   --background-activated: var(--secondary-green);
-  --color: #000;
+  --color: #0afc02;
   font-weight: 600;
-  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+  box-shadow: 0 4px 15px rgb(255, 255, 255);
   
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+    --background: var(--secondary-green);
   }
 }
 
@@ -656,17 +729,22 @@ ion-item {
 ion-button {
   border-radius: 12px;
   box-shadow: var(--glow-shadow);
+  --background: var(--primary-green);
+  --background-activated: var(--secondary-green);
+  --color: #0afc02;
+  font-weight: 600;
 }
 
 ion-button[fill="outline"] {
   --border-color: var(--primary-green);
   --color: var(--primary-green);
+  --background: transparent;
 }
 
 ion-button[color="success"] {
   --background: var(--primary-green);
   --background-activated: var(--secondary-green);
-  color: #000;
+  --color: #000000;
   font-weight: 600;
 }
 
@@ -773,4 +851,713 @@ ion-button[color="success"] {
 /* ===== Smooth height transitions ===== */
 .register-container {
   transition: all 0.3s ease;
+}
+
+/* ===== Optimizaciones de rendimiento para animaciones ===== */
+.step-container,
+.step-container * {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Mejora del rendimiento en mobile */
+@media (max-width: 768px) {
+  .step-slide-enter,
+  .step-slide-leave,
+  .step-slide-enter-back,
+  .step-slide-leave-back {
+    animation-duration: 0.4s;
+  }
+  
+  .step-slide-enter ion-card-header,
+  .step-slide-enter-back ion-card-header,
+  .step-slide-enter ion-list,
+  .step-slide-enter-back ion-list,
+  .step-slide-enter .step-buttons,
+  .step-slide-enter-back .step-buttons {
+    animation-duration: 0.5s;
+  }
+}
+
+/* ===== ESTILOS PARA LA PANTALLA DE CONFIRMACIÓN ===== */
+.confirmation-step {
+  .confirmation-content {
+    padding: 20px;
+  }
+
+  .info-section {
+    background: rgba(0, 255, 136, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 0 10px 20px 10px; /* Margen de 10px a los lados */
+    backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+    &:hover {
+      background: rgba(0, 255, 136, 0.08);
+      border-color: var(--primary-green);
+      box-shadow: 0 8px 32px rgba(0, 255, 136, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+      padding-bottom: 12px;
+
+      ion-icon {
+        color: var(--primary-green);
+        font-size: 1.5rem;
+      }
+
+      h3 {
+        color: var(--primary-green);
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.1rem;
+        background: var(--accent-gradient);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+
+      @media (min-width: 480px) {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      border: 1px solid rgba(0, 255, 136, 0.1);
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(0, 255, 136, 0.2);
+      }
+
+      .info-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .info-value {
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-weight: 600;
+        word-wrap: break-word;
+      }
+    }
+  }
+
+  // Estilos específicos para condiciones médicas
+  .medical-conditions {
+    .condition-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      border: 1px solid rgba(0, 255, 136, 0.1);
+      margin-bottom: 8px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(0, 255, 136, 0.2);
+      }
+
+      ion-icon {
+        margin-top: 2px;
+        flex-shrink: 0;
+        color: var(--primary-green);
+      }
+
+      .condition-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+      }
+
+      .condition-name {
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+
+      .condition-description {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.4;
+        word-wrap: break-word;
+      }
+
+      // Para condiciones sin descripción
+      &:not(:has(.condition-content)) {
+        align-items: center;
+        
+        .condition-name {
+          margin: 0;
+        }
+      }
+    }
+  }
+
+  // Animaciones de entrada específicas para confirmación
+  .info-section {
+    opacity: 0;
+    animation: slideInConfirm 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+
+    &:nth-child(1) {
+      animation-delay: 0.1s;
+    }
+
+    &:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+  }
+}
+
+@keyframes slideInConfirm {
+  0% {
+    transform: translateX(-30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ===== ESTILOS MEJORADOS PARA INFORMACIÓN PERSONAL ===== */
+.step-container:has(ion-card-title:contains("Información Personal")),
+ion-card:first-of-type {
+  
+  /* Efecto de entrada más elegante */
+  &.step-slide-enter {
+    animation: personalInfoEnter 0.8s cubic-bezier(0.23, 1, 0.320, 1) forwards;
+  }
+  
+  /* Mejorar el header de la sección */
+  ion-card-header {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 204, 106, 0.05) 100%);
+    border-bottom: 2px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.1), transparent);
+      animation: shimmer 2s infinite;
+    }
+  }
+  
+  ion-card-title {
+    font-size: 1.6rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+    
+    ion-icon {
+      font-size: 1.8rem;
+      filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.5));
+    }
+  }
+  
+  /* Mejorar los inputs específicamente para información personal */
+  .input-wrapper {
+    position: relative;
+    background: rgba(0, 255, 136, 0.03);
+    border-radius: 16px;
+    padding: 8px;
+    margin-bottom: 24px;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+    border: 1px solid transparent;
+    
+    &:hover {
+      background: rgba(0, 255, 136, 0.06);
+      border-color: rgba(0, 255, 136, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 255, 136, 0.15);
+    }
+    
+    &:focus-within {
+      background: rgba(0, 255, 136, 0.08);
+      border-color: var(--primary-green);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 35px rgba(0, 255, 136, 0.25);
+    }
+  }
+  
+  .native-input,
+  .native-select {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid rgba(0, 255, 136, 0.2);
+    border-radius: 12px;
+    padding: 18px 24px;
+    font-size: 1.05rem;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+    
+    &:focus {
+      background: rgba(0, 255, 136, 0.08);
+      border-color: var(--primary-green);
+      box-shadow: 
+        0 0 0 3px rgba(0, 255, 136, 0.2),
+        0 8px 25px rgba(0, 255, 136, 0.15);
+      transform: scale(1.02);
+    }
+    
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+      font-style: italic;
+    }
+  }
+  
+  .floating-label {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.8), rgba(0, 204, 106, 0.8));
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
+    
+    &.active {
+      animation: labelPulse 0.6s cubic-bezier(0.23, 1, 0.320, 1);
+    }
+  }
+  
+  /* Botón de siguiente mejorado para información personal */
+  .step-buttons .next-button {
+    background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+    position: relative;
+    overflow: hidden;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 0 32px;
+    height: 56px;
+    border-radius: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 
+      0 8px 25px rgba(0, 255, 136, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.6s;
+    }
+    
+    &:hover::before {
+      left: 100%;
+    }
+    
+    &:hover {
+      transform: translateY(-4px) scale(1.05);
+      box-shadow: 
+        0 15px 35px rgba(0, 255, 136, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+    
+    ion-icon {
+      font-size: 1.3rem;
+      margin-left: 8px;
+    }
+  }
+}
+
+/* Animaciones específicas para información personal */
+@keyframes personalInfoEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(50px) scale(0.9);
+    filter: blur(10px);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateY(20px) scale(0.95);
+    filter: blur(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes labelPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Efectos adicionales para inputs de información personal */
+.step-container:first-child {
+  .native-input[name="nombre"],
+  .native-input[name="apellido"] {
+    font-family: 'Georgia', serif;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  
+  .native-input[name="correo"] {
+    font-family: 'Monaco', monospace;
+    font-size: 0.95rem;
+    text-transform: lowercase;
+  }
+  
+  .native-input[name="edad"] {
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-green);
+  }
+  
+  .native-select[name="genero"] {
+    text-align: center;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+}
+
+/* ===== MENSAJES DE ERROR DE VALIDACIÓN ===== */
+.error-message {
+  display: block;
+  color: #ff4444;
+  font-size: 0.8rem;
+  margin: 4px 16px 12px 16px;
+  padding: 6px 12px;
+  font-weight: 500;
+  opacity: 0.95;
+  animation: fadeInError 0.3s ease-in-out;
+  background: rgba(255, 68, 68, 0.15);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-left: 4px solid #ff4444;
+  border-radius: 6px;
+  box-sizing: border-box;
+  
+  /* Sombra para mejor legibilidad */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 2px 4px rgba(255, 68, 68, 0.2);
+  
+  /* Icono antes del mensaje */
+  &::before {
+    content: '⚠ ';
+    color: #ff6666;
+    font-weight: bold;
+    margin-right: 4px;
+  }
+}
+
+/* Animación para aparición de errores */
+@keyframes fadeInError {
+  0% {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  100% {
+    opacity: 0.9;
+    transform: translateY(0);
+  }
+}
+
+/* Estilo para inputs con error */
+.input-wrapper:has(.error-message) {
+  .native-input,
+  .native-select {
+    border-color: #ff4444 !important;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.3) !important;
+    
+    &:focus {
+      border-color: #ff6666 !important;
+      box-shadow: 0 0 15px rgba(255, 68, 68, 0.5) !important;
+    }
+  }
+  
+  .floating-label {
+    color: #ff6666 !important;
+  }
+}
+
+/* Estilo mejorado para el botón deshabilitado */
+.next-button:disabled,
+.next-button[disabled] {
+  --background: rgba(255, 255, 255, 0.1) !important;
+  --color: rgba(255, 255, 255, 0.4) !important;
+  cursor: not-allowed !important;
+  opacity: 0.5 !important;
+  
+  ion-icon {
+    opacity: 0.4 !important;
+  }
+  
+  /* Eliminar efectos hover cuando está deshabilitado */
+  &:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/* ===== SPINNER DE CARGA CENTRADO ===== */
+.loading-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 99999 !important;
+  backdrop-filter: blur(4px) !important;
+  animation: fadeInOverlay 0.3s ease-in-out;
+}
+
+.spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 10, 0.9);
+  border-radius: 20px;
+  padding: 40px 30px;
+  border: 2px solid var(--primary-green);
+  box-shadow: 
+    0 0 30px rgba(0, 255, 136, 0.3),
+    inset 0 0 20px rgba(0, 255, 136, 0.1);
+  animation: scaleInSpinner 0.4s ease-out;
+}
+
+.custom-spinner {
+  --color: var(--primary-green);
+  width: 60px;
+  height: 60px;
+  margin-bottom: 20px;
+  
+  /* Animación personalizada */
+  animation: spinGlow 1.5s linear infinite;
+}
+
+.loading-text {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+  text-align: center;
+  opacity: 0.9;
+  
+  /* Efecto de texto brillante */
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+  
+  /* Animación pulsante */
+  animation: textPulse 2s ease-in-out infinite;
+}
+
+/* Animaciones para el spinner */
+@keyframes fadeInOverlay {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(3px);
+  }
+}
+
+@keyframes scaleInSpinner {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes spinGlow {
+  0% {
+    filter: drop-shadow(0 0 5px var(--primary-green));
+  }
+  50% {
+    filter: drop-shadow(0 0 15px var(--primary-green));
+  }
+  100% {
+    filter: drop-shadow(0 0 5px var(--primary-green));
+  }
+}
+
+@keyframes textPulse {
+  0%, 100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* ===== ICONOS PARA DISPOSITIVOS MÓVILES ===== */
+ion-icon {
+  /* Asegurar que los iconos se rendericen correctamente */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  display: inline-block !important;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: optimizeLegibility;
+  line-height: 1;
+  min-width: 1.5em;
+  min-height: 1.5em;
+  
+  /* Mejorar nitidez en móviles */
+  --ionicon-stroke-width: 48px;
+  font-size: 1.5em !important;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  
+  /* Fallback mejorado para dispositivos que no cargan los iconos */
+  &:empty::before,
+  &[aria-hidden="true"]::before {
+    content: '●';
+    font-family: Arial, sans-serif !important;
+    font-size: 1em !important;
+    color: inherit !important;
+    display: inline-block !important;
+  }
+  
+  /* Fallback específico por nombre de icono */
+  &[name="person-outline"]:empty::before { content: '👤'; }
+  &[name="fitness-outline"]:empty::before { content: '💪'; }
+  &[name="medical-outline"]:empty::before { content: '🏥'; }
+  &[name="arrow-forward"]:empty::before { content: '→'; }
+  &[name="arrow-back"]:empty::before { content: '←'; }
+  &[name="checkmark"]:empty::before { content: '✓'; }
+  &[name="checkmark-circle"]:empty::before { content: '✅'; }
+  &[name="checkmark-circle-outline"]:empty::before { content: '⭕'; }
+  &[name="person-circle-outline"]:empty::before { content: '👤'; }
+}
+
+/* Específico para iconos en botones */
+ion-button ion-icon {
+  font-size: 1.4em !important;
+  width: 1.4em !important;
+  height: 1.4em !important;
+  transform: translateZ(0);
+  image-rendering: crisp-edges;
+}
+
+/* Específico para iconos en headers */
+ion-card-title ion-icon {
+  font-size: 1.8em !important;
+  width: 1.8em !important;
+  height: 1.8em !important;
+  margin-right: 12px !important;
+  transform: translateZ(0);
+  image-rendering: crisp-edges;
+}
+
+/* Fallbacks específicos para Android */
+@supports (-webkit-touch-callout: none) {
+  ion-icon {
+    position: relative;
+    
+    &::after {
+      content: var(--fallback-content, '●');
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1em;
+      z-index: 1;
+    }
+  }
+}
+
+/* Para dispositivos Android específicamente */
+.platform-android ion-icon:not([class*="hydrated"]) {
+  &::before {
+    content: attr(aria-label) !important;
+    font-size: 0.7em !important;
+    color: var(--primary-green) !important;
+  }
+}
+
+/* ===== ANIMACIÓN PARA EL TÍTULO DEL HEADER ===== */
+@keyframes titleGlow {
+  0% {
+    text-shadow: 
+      0 2px 15px rgba(0, 255, 136, 0.4),
+      0 0 25px rgba(0, 255, 136, 0.2);
+  }
+  100% {
+    text-shadow: 
+      0 2px 20px rgba(0, 255, 136, 0.6),
+      0 0 35px rgba(0, 255, 136, 0.4);
+  }
 }

@@ -23,8 +23,7 @@
   <ion-card *ngIf="currentStep === 1" [class]="animationClass" class="step-container">
     <ion-card-header>
       <ion-card-title>
-        <ion-icon name="person-outline"></ion-icon>
-        Información Personal
+        👤 Información Personal
       </ion-card-title>
     </ion-card-header>
     
@@ -41,12 +40,15 @@
               autocomplete="given-name"
               autocapitalize="words"
               (input)="onInputChange('nombre', $event)"
-              (focus)="onInputFocus('nombre')"
               (blur)="onInputBlur('nombre')"
+              (focus)="onInputFocus('nombre')"
               required>
-            <label class="floating-label" [class.active]="cliente.nombre.length > 0">Nombre </label>
+            <label class="floating-label" [class.active]="cliente.nombre.length > 0">Nombre</label>
           </div>
         </ion-item>
+        <div class="error-message" *ngIf="validationErrors.nombre">
+          {{ validationErrors.nombre }}
+        </div>
 
         <ion-item>
           <div class="input-wrapper">
@@ -59,10 +61,14 @@
               autocomplete="family-name"
               autocapitalize="words"
               (input)="onInputChange('apellido', $event)"
+              (blur)="onInputBlur('apellido')"
               required>
             <label class="floating-label" [class.active]="cliente.apellido.length > 0">Apellido </label>
           </div>
         </ion-item>
+        <div class="error-message" *ngIf="validationErrors.apellido">
+          {{ validationErrors.apellido }}
+        </div>
 
         <ion-item>
           <div class="input-wrapper">
@@ -72,14 +78,18 @@
               name="edad"
               type="number" 
               placeholder="Años"
-              min="13"
-              max="100"
+              min="10"
+              max="80"
               inputmode="numeric"
               (input)="onInputChange('edad', $event)"
+              (blur)="onInputBlur('edad')"
               required>
             <label class="floating-label" [class.active]="cliente.edad > 0">Edad </label>
           </div>
         </ion-item>
+        <div class="error-message" *ngIf="validationErrors.edad">
+          {{ validationErrors.edad }}
+        </div>
 
         <ion-item>
           <div class="input-wrapper">
@@ -88,15 +98,19 @@
               [(ngModel)]="cliente.correo"
               name="correo"
               type="email" 
-              placeholder="nombre@cliente.com"
+              placeholder="nombre@retofitness.com"
               autocomplete="email"
               autocapitalize="none"
               inputmode="email"
               (input)="onInputChange('correo', $event)"
+              (blur)="onInputBlur('correo')"
               required>
             <label class="floating-label" [class.active]="cliente.correo.length > 0">Correo Electrónico</label>
           </div>
         </ion-item>
+        <div class="error-message" *ngIf="validationErrors.correo">
+          {{ validationErrors.correo }}
+        </div>
 
         <ion-item>
           <div class="input-wrapper">
@@ -105,13 +119,17 @@
               [(ngModel)]="cliente.password"
               name="password"
               type="password" 
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 6 caracteres con letras y números"
               autocomplete="new-password"
               (input)="onInputChange('password', $event)"
+              (blur)="onInputBlur('password')"
               required>
             <label class="floating-label" [class.active]="cliente.password.length > 0">Contraseña</label>
           </div>
         </ion-item>
+        <div class="error-message" *ngIf="validationErrors.password">
+          {{ validationErrors.password }}
+        </div>
 
         <ion-item>
           <div class="input-wrapper">
@@ -120,19 +138,23 @@
               [(ngModel)]="cliente.genero"
               name="genero"
               (change)="onInputChange('genero', $event)"
+              (blur)="onInputBlur('genero')"
               required>
               <option value="">Seleccionar género</option>
-              <option value="M">Hombre</option>
-              <option value="F">Mujer</option>
+              <option value="Hombre">Hombre</option>
+              <option value="Mujer">Mujer</option>
+              <option value="Otro">Otro</option>
             </select>
             <label class="floating-label" [class.active]="cliente.genero">Género</label>
           </div>
         </ion-item>
+        <div class="error-message" *ngIf="validationErrors.genero">
+          {{ validationErrors.genero }}
+        </div>
       </ion-list>
 
       <div class="step-buttons">
         <ion-button class="next-button" (click)="nextStep()" [disabled]="!isStep1Valid()">
-          <ion-icon name="arrow-forward" slot="start"></ion-icon>
           Siguiente
         </ion-button>
       </div>
@@ -143,10 +165,8 @@
   <ion-card *ngIf="currentStep === 2" [class]="animationClass" class="step-container physical-info">
     <ion-card-header>
       <ion-card-title>
-        <ion-icon name="fitness-outline"></ion-icon>
         Información Física
       </ion-card-title>
-      <ion-card-subtitle>Datos sobre tu estado físico</ion-card-subtitle>
     </ion-card-header>
     
     <ion-card-content class="physical-content">
@@ -188,7 +208,7 @@
         <!-- Objetivos múltiples -->
         <ion-item>
           <div class="checkbox-group">
-            <label class="section-label">Objetivos Fitness * (puedes elegir varios)</label>
+            <label class="section-label">Objetivos Fitness (opcional - puedes elegir varios)</label>
             
             <div class="checkbox-option">
               <input 
@@ -239,6 +259,29 @@
                 (change)="updateObjetivos()">
               <label for="objetivo-salud">Mejorar salud general</label>
             </div>
+            
+            <div class="checkbox-option">
+              <input 
+                type="checkbox" 
+                id="objetivo-otro" 
+                [(ngModel)]="objetivos.otro"
+                name="objetivo-otro"
+                (change)="updateObjetivos()">
+              <label for="objetivo-otro">Otro</label>
+            </div>
+            
+            <!-- Campo de texto para objetivo personalizado -->
+            <div class="input-wrapper" *ngIf="objetivos.otro" style="margin-top: 10px;">
+              <input 
+                class="native-input"
+                [(ngModel)]="objetivoOtro"
+                name="objetivoOtro"
+                type="text" 
+                placeholder="Especifica tu objetivo"
+                (input)="updateObjetivos()"
+                maxlength="100">
+              <label class="floating-label" [class.active]="objetivoOtro.length > 0"></label>
+            </div>
           </div>
         </ion-item>
 
@@ -276,11 +319,9 @@
 
       <div class="step-buttons">
         <ion-button class="back-button" (click)="prevStep()">
-          <ion-icon name="arrow-back" slot="start"></ion-icon>
           Anterior
         </ion-button>
         <ion-button class="next-button" (click)="nextStep()" [disabled]="!isStep2Valid()">
-          <ion-icon name="arrow-forward" slot="end"></ion-icon>
           Siguiente
         </ion-button>
       </div>
@@ -291,13 +332,11 @@
   <ion-card *ngIf="currentStep === 3" [class]="animationClass" class="step-container medical-info">
     <ion-card-header>
       <ion-card-title>
-        <ion-icon name="medical-outline"></ion-icon>
         Información Médica
       </ion-card-title>
-      <ion-card-subtitle>Ayúdanos a personalizar tu entrenamiento</ion-card-subtitle>
     </ion-card-header>
-    
-    <ion-card-content class="medical-content">`
+
+    <ion-card-content class="medical-content">
       <ion-list>
         <!-- Enfermedad Crónica -->
         <ion-item>
@@ -312,7 +351,6 @@
                 (change)="onInputChange('enfermedadCronica', $event)"
                 class="toggle-input">
               <label for="enfermedadCronica" class="toggle-label">
-                <span class="toggle-text">{{cliente.enfermedadCronica ? 'Sí' : 'No'}}</span>
               </label>
             </div>
           </div>
@@ -329,7 +367,7 @@
               rows="3"
               (input)="onInputChange('descripcionEnfermedad', $event)">
             </textarea>
-            <label class="floating-label" [class.active]="cliente.descripcionEnfermedad && cliente.descripcionEnfermedad.length > 0">Describe tu condición</label>
+            <label class="floating-label" [class.active]="cliente.descripcionEnfermedad && cliente.descripcionEnfermedad.length > 0"></label>
             <div class="char-counter">{{(cliente.descripcionEnfermedad || '').length}}/500</div>
           </div>
         </ion-item>
@@ -347,7 +385,6 @@
                 (change)="onInputChange('diabetes', $event)"
                 class="toggle-input">
               <label for="diabetes" class="toggle-label">
-                <span class="toggle-text">{{cliente.diabetes ? 'Sí' : 'No'}}</span>
               </label>
             </div>
           </div>
@@ -366,7 +403,6 @@
                 (change)="onInputChange('hipotension', $event)"
                 class="toggle-input">
               <label for="hipotension" class="toggle-label">
-                <span class="toggle-text">{{cliente.hipotension ? 'Sí' : 'No'}}</span>
               </label>
             </div>
           </div>
@@ -385,7 +421,6 @@
                 (change)="onInputChange('hipotiroide', $event)"
                 class="toggle-input">
               <label for="hipotiroide" class="toggle-label">
-                <span class="toggle-text">{{cliente.hipotiroide ? 'Sí' : 'No'}}</span>
               </label>
             </div>
           </div>
@@ -404,7 +439,6 @@
                 (change)="onInputChange('hipotiroidismo', $event)"
                 class="toggle-input">
               <label for="hipotiroidismo" class="toggle-label">
-                <span class="toggle-text">{{cliente.hipotiroidismo ? 'Sí' : 'No'}}</span>
               </label>
             </div>
           </div>
@@ -423,7 +457,6 @@
                 (change)="onInputChange('medicacionRegular', $event)"
                 class="toggle-input">
               <label for="medicacionRegular" class="toggle-label">
-                <span class="toggle-text">{{cliente.medicacionRegular ? 'Sí' : 'No'}}</span>
               </label>
             </div>
           </div>
@@ -440,7 +473,7 @@
               rows="3"
               (input)="onInputChange('descripcionMedicacion', $event)">
             </textarea>
-            <label class="floating-label" [class.active]="cliente.descripcionMedicacion && cliente.descripcionMedicacion.length > 0">¿Qué medicamentos tomas?</label>
+            <label class="floating-label" [class.active]="cliente.descripcionMedicacion && cliente.descripcionMedicacion.length > 0"></label>
             <div class="char-counter">{{(cliente.descripcionMedicacion || '').length}}/500</div>
           </div>
         </ion-item>
@@ -458,7 +491,6 @@
                 (change)="onInputChange('cirugias', $event)"
                 class="toggle-input">
               <label for="cirugias" class="toggle-label">
-                <span class="toggle-text">{{cliente.cirugias ? 'Sí' : 'No'}}</span>
               </label>
             </div>
           </div>
@@ -475,7 +507,7 @@
               rows="3"
               (input)="onInputChange('descripcionCirugias', $event)">
             </textarea>
-            <label class="floating-label" [class.active]="cliente.descripcionCirugias && cliente.descripcionCirugias.length > 0">Describe las cirugías</label>
+            <label class="floating-label" [class.active]="cliente.descripcionCirugias && cliente.descripcionCirugias.length > 0"></label>
             <div class="char-counter">{{(cliente.descripcionCirugias || '').length}}/500</div>
           </div>
         </ion-item>
@@ -493,7 +525,6 @@
                 (change)="onInputChange('lesiones', $event)"
                 class="toggle-input">
               <label for="lesiones" class="toggle-label">
-                <span class="toggle-text">{{cliente.lesiones ? 'Sí' : 'No'}}</span>
               </label>
             </div>
           </div>
@@ -510,7 +541,7 @@
               rows="3"
               (input)="onInputChange('descripcionLesiones', $event)">
             </textarea>
-            <label class="floating-label" [class.active]="cliente.descripcionLesiones && cliente.descripcionLesiones.length > 0">Describe las lesiones</label>
+            <label class="floating-label" [class.active]="cliente.descripcionLesiones && cliente.descripcionLesiones.length > 0"></label>
             <div class="char-counter">{{(cliente.descripcionLesiones || '').length}}/500</div>
           </div>
         </ion-item>
@@ -528,7 +559,6 @@
                 (change)="onInputChange('fuma', $event)"
                 class="toggle-input">
               <label for="fuma" class="toggle-label">
-                <span class="toggle-text">{{cliente.fuma ? 'Sí' : 'No'}}</span>
               </label>
             </div>
           </div>
@@ -547,7 +577,6 @@
                 (change)="onInputChange('alcohol', $event)"
                 class="toggle-input">
               <label for="alcohol" class="toggle-label">
-                <span class="toggle-text">{{cliente.alcohol ? 'Sí' : 'No'}}</span>
               </label>
             </div>
           </div>
@@ -556,11 +585,9 @@
 
       <div class="step-buttons">
         <ion-button class="back-button" (click)="prevStep()">
-          <ion-icon name="arrow-back" slot="start"></ion-icon>
           Anterior
         </ion-button>
         <ion-button class="next-button" (click)="nextStep()">
-          <ion-icon name="arrow-forward" slot="end"></ion-icon>
           Siguiente
         </ion-button>
       </div>
@@ -568,61 +595,126 @@
   </ion-card>
 
   <!-- Paso 4: Confirmación -->
-  <ion-card *ngIf="currentStep === 4" [class]="animationClass" class="step-container">
+  <ion-card *ngIf="currentStep === 4" [class]="animationClass" class="step-container confirmation-step">
     <ion-card-header>
       <ion-card-title>
-        <ion-icon name="checkmark-circle-outline"></ion-icon>
         Confirmar Registro
       </ion-card-title>
-      <ion-card-subtitle>Revisa tu información</ion-card-subtitle>
     </ion-card-header>
     
-    <ion-card-content>
+    <ion-card-content class="confirmation-content">
       <!-- Información Personal -->
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>Información Personal</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <p><strong>Nombre:</strong> {{cliente.nombre}} {{cliente.apellido}}</p>
-          <p><strong>Edad:</strong> {{cliente.edad}} años</p>
-          <p><strong>Email:</strong> {{cliente.correo}}</p>
-          <p><strong>Género:</strong> {{cliente.genero === 'M' ? 'Masculino' : 'Femenino'}}</p>
-        </ion-card-content>
-      </ion-card>
+      <div class="info-section personal-info">
+        <div class="section-header">
+          <h3>Información Personal</h3>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Nombre y apellido</span>
+            <span class="info-value">{{cliente.nombre}} {{cliente.apellido}}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Edad</span>
+            <span class="info-value">{{cliente.edad}} años</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Email</span>
+            <span class="info-value">{{cliente.correo}}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Género</span>
+            <span class="info-value">{{cliente.genero}}</span>
+          </div>
+        </div>
+      </div>
 
       <!-- Información Física -->
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>Información Física</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <p><strong>Peso:</strong> {{cliente.peso}} kg</p>
-          <p><strong>Altura:</strong> {{cliente.altura}} cm</p>
-          <p><strong>Objetivo:</strong> {{cliente.objetivo}}</p>
-          <p><strong>Nivel de Actividad:</strong> {{cliente.nivelActividad}}</p>
-          <p><strong>Horas de Sueño:</strong> {{cliente.horasSueno}}</p>
-        </ion-card-content>
-      </ion-card>
+      <div class="info-section physical-info">
+        <div class="section-header">
+          <h3>Información Física</h3>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Peso</span>
+            <span class="info-value">{{cliente.peso}} kg</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Altura</span>
+            <span class="info-value">{{cliente.altura}} cm</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Objetivos</span>
+            <span class="info-value">{{cliente.objetivo}}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Nivel de Actividad</span>
+            <span class="info-value">{{cliente.nivelActividad}}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Horas de Sueño</span>
+            <span class="info-value">{{cliente.horasSueno}}</span>
+          </div>
+        </div>
+      </div>
 
       <!-- Condiciones Médicas -->
-      <ion-card *ngIf="hasHealthConditions()">
-        <ion-card-header>
-          <ion-card-title>Condiciones Médicas</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <p *ngIf="cliente.enfermedadCronica">✅ Enfermedad Crónica: {{cliente.descripcionEnfermedad}}</p>
-          <p *ngIf="cliente.diabetes">✅ Diabetes</p>
-          <p *ngIf="cliente.hipotension">✅ Hipotensión</p>
-          <p *ngIf="cliente.hipotiroide">✅ Hipotiroide</p>
-          <p *ngIf="cliente.hipotiroidismo">✅ Hipotiroidismo</p>
-          <p *ngIf="cliente.medicacionRegular">✅ Medicación: {{cliente.descripcionMedicacion}}</p>
-          <p *ngIf="cliente.cirugias">✅ Cirugías: {{cliente.descripcionCirugias}}</p>
-          <p *ngIf="cliente.lesiones">✅ Lesiones: {{cliente.descripcionLesiones}}</p>
-          <p *ngIf="cliente.fuma">✅ Fumador</p>
-          <p *ngIf="cliente.alcohol">✅ Consumo de alcohol</p>
-        </ion-card-content>
-      </ion-card>
+      <div class="info-section medical-info" *ngIf="hasHealthConditions()">
+        <div class="section-header">
+          <h3>Condiciones Médicas</h3>
+        </div>
+        <div class="medical-conditions">
+          <div class="condition-item" *ngIf="cliente.enfermedadCronica">
+            <div class="condition-content">
+              <span class="condition-name">Enfermedad Crónica</span>
+              <span class="condition-description">{{cliente.descripcionEnfermedad}}</span>
+            </div>
+          </div>
+          <div class="condition-item" *ngIf="cliente.diabetes">
+            <span class="condition-name">Diabetes</span>
+          </div>
+          <div class="condition-item" *ngIf="cliente.hipotension">
+            <ion-icon name="checkmark-circle" color="success"></ion-icon>
+            <span class="condition-name">Hipotensión</span>
+          </div>
+          <div class="condition-item" *ngIf="cliente.hipotiroide">
+            <ion-icon name="checkmark-circle" color="success"></ion-icon>
+            <span class="condition-name">Hipotiroide</span>
+          </div>
+          <div class="condition-item" *ngIf="cliente.hipotiroidismo">
+            <ion-icon name="checkmark-circle" color="success"></ion-icon>
+            <span class="condition-name">Hipotiroidismo</span>
+          </div>
+          <div class="condition-item" *ngIf="cliente.medicacionRegular">
+            <ion-icon name="checkmark-circle" color="success"></ion-icon>
+            <div class="condition-content">
+              <span class="condition-name">Medicación Regular</span>
+              <span class="condition-description">{{cliente.descripcionMedicacion}}</span>
+            </div>
+          </div>
+          <div class="condition-item" *ngIf="cliente.cirugias">
+            <ion-icon name="checkmark-circle" color="success"></ion-icon>
+            <div class="condition-content">
+              <span class="condition-name">Cirugías</span>
+              <span class="condition-description">{{cliente.descripcionCirugias}}</span>
+            </div>
+          </div>
+          <div class="condition-item" *ngIf="cliente.lesiones">
+            <ion-icon name="checkmark-circle" color="success"></ion-icon>
+            <div class="condition-content">
+              <span class="condition-name">Lesiones Actuales</span>
+              <span class="condition-description">{{cliente.descripcionLesiones}}</span>
+            </div>
+          </div>
+          <div class="condition-item" *ngIf="cliente.fuma">
+            <ion-icon name="checkmark-circle" color="success"></ion-icon>
+            <span class="condition-name">Fumador</span>
+          </div>
+          <div class="condition-item" *ngIf="cliente.alcohol">
+            <ion-icon name="checkmark-circle" color="success"></ion-icon>
+            <span class="condition-name">Consumo de alcohol</span>
+          </div>
+        </div>
+      </div>
 
       <div class="step-buttons">
         <ion-button class="back-button" (click)="prevStep()">
@@ -633,9 +725,8 @@
           class="next-button" 
           (click)="onSubmit()" 
           [disabled]="isSubmitting">
-          <ion-spinner *ngIf="isSubmitting" name="crescent" slot="start"></ion-spinner>
-          <ion-icon *ngIf="!isSubmitting" name="checkmark" slot="start"></ion-icon>
-          {{isSubmitting ? 'Registrando...' : 'Completar'}}
+          <ion-icon name="checkmark" slot="start"></ion-icon>
+          Completar
         </ion-button>
       </div>
     </ion-card-content>
@@ -658,3 +749,11 @@
 
   </div>
 </ion-content>
+
+<!-- Spinner de carga centrado - fuera del ion-content -->
+<div class="loading-overlay" *ngIf="showSpinner">
+  <div class="spinner-container">
+    <ion-spinner name="crescent" class="custom-spinner"></ion-spinner>
+    <p class="loading-text">Registrando tu cuenta...</p>
+  </div>
+</div>

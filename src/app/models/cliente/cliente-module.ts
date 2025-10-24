@@ -24,6 +24,6 @@ export interface Cliente {
   objetivo: string;
   altura: number;
   nivelActividad?: 'Bajo' | 'Medio' | 'Alto';
-  genero?: 'M' | 'F';
+  genero?: 'Hombre' | 'Mujer' | 'Otro';
   qr: string;
 }
