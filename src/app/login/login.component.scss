@@ -75,20 +75,27 @@ ion-content {
 
   ion-card-header {
     text-align: center;
-    padding: 30px 20px 20px;
-    
+    padding: 18px 16px 12px; /* más compacto y limpio */
+    background: linear-gradient(180deg, rgba(0,0,0,0.02), transparent);
+    border-bottom: none;
+    z-index: 2;
+
     ion-card-title {
       color: var(--primary-green);
-      font-size: 1.8rem;
+      font-size: 1.6rem;
       font-weight: 700;
-      margin-bottom: 10px;
-      text-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
-    
+
     ion-card-subtitle {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 0.95rem;
       font-weight: 300;
+      margin-top: 6px;
     }
   }
 
@@ -255,9 +262,10 @@ ion-item:not(.input-item) {
 
   .login-button,
   .register-button {
-    width: calc(100% - 0px); /* Ancho completo menos el margen ya aplicado */
-    max-width: 100%;
-    margin: 0; /* Sin margen adicional */
+    width: calc(100% - 20px); /* deja 10px de espacio a cada lado dentro del contenedor */
+    max-width: 380px; /* evita que el botón sea enorme en pantallas grandes */
+    margin: 0 auto; /* centrar horizontalmente */
+    display: block;
   }
 
   .login-button {
@@ -394,18 +402,7 @@ ion-item:not(.input-item) {
     padding-top: 40px;
   }
 
-  .content-toolbar {
-    margin: -15px -15px 20px -15px;
-    padding: 25px 15px;
-
-    .toolbar-title {
-      font-size: 1.8rem;
-    }
-
-    .toolbar-sub {
-      font-size: 0.9rem;
-    }
-  }
+  /* Se removió el toolbar visual para simplificar la interfaz en móvil */
 
   .login-card {
     max-width: 100%;
