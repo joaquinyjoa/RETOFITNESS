@@ -1,10 +1,10 @@
 export interface Cliente {
-  id: number;
+  id?: number;
   nombre: string;
   apellido: string;
   edad: number;
   correo: string;
-  contraseña: string;
+  password: string;
   enfermedadCronica: boolean;
   descripcionEnfermedad?: string;
   diabetes: boolean;
@@ -19,7 +19,7 @@ export interface Cliente {
   descripcionLesiones?: string;
   fuma: boolean;
   alcohol: boolean;
-  horasSueño: string;
+  horasSueno: string;
   peso: number;
   objetivo: string;
   altura: number;

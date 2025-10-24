@@ -15,12 +15,13 @@ import { Cliente } from '../models/cliente/cliente-module';
 export class RegisterComponent implements OnInit {
 
   // Datos del formulario
-  cliente: any = {
+  cliente: Cliente = {
+    // id se generará automáticamente en la base de datos
     nombre: '',
     apellido: '',
     edad: 18,
-    correo: '',
-    contraseña: '',
+    correo: '@cliente.com',
+    password: '',
     enfermedadCronica: false,
     descripcionEnfermedad: '',
     diabetes: false,
@@ -35,12 +36,22 @@ export class RegisterComponent implements OnInit {
     descripcionLesiones: '',
     fuma: false,
     alcohol: false,
-    horasSueño: '',
-    peso: 0,
+    horasSueno: '7',
+    peso: 70,
     objetivo: '',
-    altura: 0,
+    altura: 170,
     nivelActividad: 'Medio',
-    genero: 'M'
+    genero: 'M',
+    qr: '' // Se generará después del registro con el id
+  };
+
+  // Objetivos múltiples separados
+  objetivos = {
+    bajarPeso: false,
+    aumentarMasa: false,
+    mejorarFuerza: false,
+    mejorarResistencia: false,
+    mejorarSalud: false
   };
 
   // Estado del formulario
@@ -48,10 +59,49 @@ export class RegisterComponent implements OnInit {
   totalSteps: number = 4;
   isSubmitting: boolean = false;
   showSuccess: boolean = false;
+  
+  // Variables para animaciones
+  animationClass: string = '';
+  isAnimating: boolean = false;
 
-  constructor(private router: Router) { }
+  constructor(private router: Router) { 
+    // Asegurar que el objeto cliente esté completamente inicializado
+    console.log('Cliente inicializado:', this.cliente);
+  }
 
-  ngOnInit() {}
+  ngOnInit() {
+    // Debug para verificar el estado inicial
+    console.log('ngOnInit - Cliente:', this.cliente);
+  }
+
+  // Método para debug del two-way binding
+  onInputChange(field: string, event: any) {
+    const value = event.target?.value || '';
+    console.log(`Campo ${field} cambió a:`, value);
+    console.log('Cliente actual:', this.cliente);
+  }
+
+  // Métodos debug para eventos
+  onInputFocus(field: string) {
+    console.log(`Focus en ${field}`);
+  }
+
+  onInputBlur(field: string) {
+    console.log(`Blur en ${field}`);
+  }
+
+  // Actualizar objetivos múltiples
+  updateObjetivos() {
+    const objetivosSeleccionados = [];
+    if (this.objetivos.bajarPeso) objetivosSeleccionados.push('Bajar de peso');
+    if (this.objetivos.aumentarMasa) objetivosSeleccionados.push('Aumentar masa muscular');
+    if (this.objetivos.mejorarFuerza) objetivosSeleccionados.push('Mejorar fuerza');
+    if (this.objetivos.mejorarResistencia) objetivosSeleccionados.push('Mejorar resistencia');
+    if (this.objetivos.mejorarSalud) objetivosSeleccionados.push('Mejorar salud general');
+    
+    this.cliente.objetivo = objetivosSeleccionados.join(', ');
+    console.log('Objetivos actualizados:', this.cliente.objetivo);
+  }
 
   goBack() {
     if (this.currentStep > 1) {
@@ -62,15 +112,45 @@ export class RegisterComponent implements OnInit {
   }
 
   nextStep() {
-    if (this.currentStep < this.totalSteps) {
-      this.currentStep++;
+    if (this.currentStep < this.totalSteps && !this.isAnimating) {
+      this.animateStepTransition('next');
     }
   }
 
   prevStep() {
-    if (this.currentStep > 1) {
-      this.currentStep--;
+    if (this.currentStep > 1 && !this.isAnimating) {
+      this.animateStepTransition('back');
     }
+  }
+
+  animateStepTransition(direction: 'next' | 'back') {
+    this.isAnimating = true;
+    
+    // Aplicar animación de salida
+    this.animationClass = direction === 'next' ? 'step-slide-leave' : 'step-slide-leave-back';
+    
+    setTimeout(() => {
+      // Cambiar el paso después de la animación de salida
+      if (direction === 'next') {
+        this.currentStep++;
+      } else {
+        this.currentStep--;
+      }
+      
+      // Aplicar animación de entrada
+      this.animationClass = direction === 'next' ? 'step-slide-enter' : 'step-slide-enter-back';
+      
+      setTimeout(() => {
+        // Limpiar animaciones
+        this.animationClass = '';
+        this.isAnimating = false;
+      }, 400);
+    }, 200);
+  }
+
+  toggleObjetivo(objetivo: string) {
+    (this.objetivos as any)[objetivo] = !(this.objetivos as any)[objetivo];
+    this.updateObjetivos();
   }
 
   async onSubmit() {
@@ -100,8 +180,10 @@ export class RegisterComponent implements OnInit {
   isStep1Valid(): boolean {
     return this.cliente.nombre.trim() !== '' && 
            this.cliente.apellido.trim() !== '' && 
-           this.cliente.correo.trim() !== '' && 
-           this.cliente.contraseña.trim() !== '' &&
+           this.cliente.correo.includes('@cliente.com') &&
+           this.cliente.correo.length > '@cliente.com'.length &&
+           this.cliente.password.trim() !== '' &&
+           this.cliente.password.length >= 6 &&
            this.cliente.edad >= 13;
   }
 
@@ -109,7 +191,7 @@ export class RegisterComponent implements OnInit {
     return this.cliente.peso > 0 && 
            this.cliente.altura > 0 && 
            this.cliente.objetivo.trim() !== '' &&
-           this.cliente['horasSueño'].trim() !== '';
+           this.cliente.horasSueno.trim() !== '';
   }
 
   isStep3Valid(): boolean {
