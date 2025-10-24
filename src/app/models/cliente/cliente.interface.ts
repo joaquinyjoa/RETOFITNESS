@@ -23,7 +23,7 @@ export interface Cliente {
   peso: number;
   objetivo: string;
   altura: number;
-  nivelActividad?: 'Bajo' | 'Medio' | 'Alto';
-  genero?: 'Hombre' | 'Mujer' | 'Otro';
+  nivelActividad: string;
+  genero: string;
   qr: string;
 }

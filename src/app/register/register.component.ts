@@ -4,7 +4,7 @@ import { IonicModule, IonIcon } from '@ionic/angular';
 import { IonIcon as IonIconStandalone } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Cliente } from '../models/cliente/cliente-module';
+import { Cliente } from '../models/cliente/cliente.interface';
 import { Cliente as ClienteSupabase } from '../services/supabase.service';
 import { ClienteService } from '../services/cliente.service';
 import { ToastService } from '../services/toast.service';
@@ -107,25 +107,6 @@ export class RegisterComponent implements OnInit {
   ) { 
     // Asegurar que el objeto cliente esté completamente inicializado
     console.log('Cliente inicializado:', this.cliente);
-    
-    // Forzar carga de iconos para dispositivos móviles
-    this.forceIconLoad();
-  }
-
-  // Método para forzar la carga de iconos
-  private forceIconLoad() {
-    // Asegurar que los iconos se carguen inmediatamente
-    if (typeof window !== 'undefined') {
-      const style = document.createElement('style');
-      style.textContent = `
-        ion-icon {
-          --ionicon-stroke-width: 32px !important;
-          font-size: 1.2em !important;
-          display: inline-block !important;
-        }
-      `;
-      document.head.appendChild(style);
-    }
   }
 
   ngOnInit() {}
@@ -383,7 +364,7 @@ export class RegisterComponent implements OnInit {
         descripcionLesiones: this.cliente.descripcionLesiones?.trim() || '',
         fuma: this.cliente.fuma,
         alcohol: this.cliente.alcohol,
-        horas_sueno: parseInt(this.cliente.horasSueno) || 7,
+        horas_sueno: this.cliente.horasSueno || '7', // Enviar como string para coincidir con BD
         peso: this.cliente.peso,
         objetivo: this.cliente.objetivo,
         altura: this.cliente.altura,

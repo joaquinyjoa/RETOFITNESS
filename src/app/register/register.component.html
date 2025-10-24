@@ -165,7 +165,7 @@
   <ion-card *ngIf="currentStep === 2" [class]="animationClass" class="step-container physical-info">
     <ion-card-header>
       <ion-card-title>
-        Información Física
+       💪 Información Física
       </ion-card-title>
     </ion-card-header>
     
@@ -332,7 +332,7 @@
   <ion-card *ngIf="currentStep === 3" [class]="animationClass" class="step-container medical-info">
     <ion-card-header>
       <ion-card-title>
-        Información Médica
+        🩺 Información Médica
       </ion-card-title>
     </ion-card-header>
 
@@ -606,7 +606,7 @@
       <!-- Información Personal -->
       <div class="info-section personal-info">
         <div class="section-header">
-          <h3>Información Personal</h3>
+          <h3>👤 Información Personal</h3>
         </div>
         <div class="info-grid">
           <div class="info-item">
@@ -631,7 +631,7 @@
       <!-- Información Física -->
       <div class="info-section physical-info">
         <div class="section-header">
-          <h3>Información Física</h3>
+          <h3>💪 Información Física</h3>
         </div>
         <div class="info-grid">
           <div class="info-item">
@@ -660,7 +660,7 @@
       <!-- Condiciones Médicas -->
       <div class="info-section medical-info" *ngIf="hasHealthConditions()">
         <div class="section-header">
-          <h3>Condiciones Médicas</h3>
+          <h3>❤️ Condiciones Médicas</h3>
         </div>
         <div class="medical-conditions">
           <div class="condition-item" *ngIf="cliente.enfermedadCronica">
@@ -670,6 +670,7 @@
             </div>
           </div>
           <div class="condition-item" *ngIf="cliente.diabetes">
+            <ion-icon name="checkmark-circle" color="success"></ion-icon>
             <span class="condition-name">Diabetes</span>
           </div>
           <div class="condition-item" *ngIf="cliente.hipotension">
@@ -718,14 +719,12 @@
 
       <div class="step-buttons">
         <ion-button class="back-button" (click)="prevStep()">
-          <ion-icon name="arrow-back" slot="start"></ion-icon>
           Anterior
         </ion-button>
         <ion-button 
           class="next-button" 
           (click)="onSubmit()" 
           [disabled]="isSubmitting">
-          <ion-icon name="checkmark" slot="start"></ion-icon>
           Completar
         </ion-button>
       </div>
@@ -741,7 +740,6 @@
       <p>Tu código QR se generará automáticamente.</p>
       
       <ion-button expand="full" (click)="goToLogin()" color="success">
-        <ion-icon name="log-in" slot="start"></ion-icon>
         Ir al Login
       </ion-button>
     </ion-card-content>

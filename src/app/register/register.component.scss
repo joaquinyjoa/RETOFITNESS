@@ -1457,48 +1457,6 @@ ion-card:first-of-type {
 }
 
 /* ===== ICONOS PARA DISPOSITIVOS MÓVILES ===== */
-ion-icon {
-  /* Asegurar que los iconos se rendericen correctamente */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  display: inline-block !important;
-  font-style: normal;
-  font-variant: normal;
-  text-rendering: optimizeLegibility;
-  line-height: 1;
-  min-width: 1.5em;
-  min-height: 1.5em;
-  
-  /* Mejorar nitidez en móviles */
-  --ionicon-stroke-width: 48px;
-  font-size: 1.5em !important;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  
-  /* Fallback mejorado para dispositivos que no cargan los iconos */
-  &:empty::before,
-  &[aria-hidden="true"]::before {
-    content: '●';
-    font-family: Arial, sans-serif !important;
-    font-size: 1em !important;
-    color: inherit !important;
-    display: inline-block !important;
-  }
-  
-  /* Fallback específico por nombre de icono */
-  &[name="person-outline"]:empty::before { content: '👤'; }
-  &[name="fitness-outline"]:empty::before { content: '💪'; }
-  &[name="medical-outline"]:empty::before { content: '🏥'; }
-  &[name="arrow-forward"]:empty::before { content: '→'; }
-  &[name="arrow-back"]:empty::before { content: '←'; }
-  &[name="checkmark"]:empty::before { content: '✓'; }
-  &[name="checkmark-circle"]:empty::before { content: '✅'; }
-  &[name="checkmark-circle-outline"]:empty::before { content: '⭕'; }
-  &[name="person-circle-outline"]:empty::before { content: '👤'; }
-}
-
 /* Específico para iconos en botones */
 ion-button ion-icon {
   font-size: 1.4em !important;

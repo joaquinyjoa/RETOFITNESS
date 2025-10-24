@@ -23,7 +23,7 @@ export interface Cliente {
   descripcionLesiones?: string;
   fuma: boolean;
   alcohol: boolean;
-  horas_sueno?: number;
+  horas_sueno?: string; // Cambiado a string para coincidir con BD (text)
   objetivo: string;
   qr?: string;
   genero: string;
@@ -80,6 +80,34 @@ export class SupabaseService {
       return data !== null;
     } catch (error) {
       return false;
+    }
+  }
+
+  // Login de cliente
+  async loginCliente(correo: string, contraseña: string): Promise<{ success: boolean; data?: Cliente; error?: string }> {
+    try {
+      console.log('SupabaseService: Intentando login de cliente con correo:', correo);
+      
+      const { data, error } = await this.supabase
+        .from('clientes')
+        .select('*')
+        .eq('correo', correo)
+        .eq('contraseña', contraseña)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return { success: false, error: 'Credenciales incorrectas' };
+        }
+        console.error('SupabaseService: Error en login de cliente:', error);
+        return { success: false, error: error.message };
+      }
+
+      console.log('SupabaseService: Login de cliente exitoso:', data);
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('SupabaseService: Error en loginCliente:', error);
+      return { success: false, error: error.message };
     }
   }
 

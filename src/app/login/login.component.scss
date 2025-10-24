@@ -1,0 +1,486 @@
+/* ===== VARIABLES DE COLORES ===== */
+:root {
+  --primary-green: #00ff88;
+  --secondary-green: #00cc6a;
+  --dark-bg: #0a0a0a;
+  --gradient-bg: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2a2a2a 100%);
+  --accent-gradient: linear-gradient(45deg, #00ff88 0%, #00cc6a 50%, #ffffff 100%);
+  --glow-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+}
+
+/* ===== EMOJIS VERDES ===== */
+.emoji-green {
+  display: inline-block;
+  filter: hue-rotate(120deg) saturate(2) brightness(1.3) contrast(1.2);
+  text-shadow: 0 0 15px rgba(0, 255, 136, 0.8);
+  transition: all 0.3s ease;
+  margin-right: 8px;
+  
+  &:hover {
+    filter: hue-rotate(120deg) saturate(2.5) brightness(1.5) contrast(1.3);
+    text-shadow: 0 0 20px rgba(0, 255, 136, 1);
+    transform: scale(1.1);
+  }
+}
+
+/* Aplicar filtro verde a emojis específicos */
+ion-card-title,
+.login-button span,
+.register-button {
+  /* Resetear filtros previos para evitar duplicación */
+  filter: none;
+}
+
+/* ===== CONTENEDOR PRINCIPAL ===== */
+ion-content {
+  --background: var(--gradient-bg);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-container {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center; /* Centra horizontalmente */
+  padding: 20px;
+}
+
+/* ===== TARJETA DE LOGIN ===== */
+.login-card {
+  background: rgba(20, 20, 20, 0.95);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 20px;
+  box-shadow: var(--glow-shadow);
+  margin: 0 auto;
+  max-width: 420px; /* Aumentado ligeramente para acomodar el spacing */
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent-gradient);
+    z-index: 1;
+  }
+
+  ion-card-header {
+    text-align: center;
+    padding: 30px 20px 20px;
+    
+    ion-card-title {
+      color: var(--primary-green);
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+    }
+    
+    ion-card-subtitle {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 1rem;
+      font-weight: 300;
+    }
+  }
+
+  ion-card-content {
+    padding: 0 20px 30px;
+  }
+}
+
+/* ===== LISTA Y ITEMS ===== */
+ion-list {
+  background: transparent;
+  margin-bottom: 30px;
+  padding: 0; /* Remover padding por defecto */
+}
+
+.input-item {
+  --background: transparent;
+  --border-color: rgba(0, 255, 136, 0.2);
+  --padding-start: 0;
+  --padding-end: 0;
+  margin: 0 10px 20px 10px; /* Margen de 10px a los lados */
+  border-radius: 12px;
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: rgba(0, 255, 136, 0.4);
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+  }
+
+  &.item-has-focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+  }
+}
+
+/* Mantener el estilo original para otros ion-item */
+ion-item:not(.input-item) {
+  --background: transparent;
+  --border-color: rgba(0, 255, 136, 0.2);
+  --padding-start: 0;
+  --padding-end: 0;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: rgba(0, 255, 136, 0.4);
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+  }
+
+  &.item-has-focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+  }
+}
+
+/* ===== INPUT WRAPPER ===== */
+.input-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 20px 15px 8px;
+
+  .native-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 400;
+    padding: 0;
+    z-index: 2;
+    position: relative;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+      font-weight: 300;
+    }
+
+    &:focus + .floating-label,
+    &:not(:placeholder-shown) + .floating-label {
+      transform: translateY(-12px) scale(0.8);
+      color: var(--primary-green);
+    }
+  }
+
+  .floating-label {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1rem;
+    font-weight: 400;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 1;
+
+    &.active {
+      transform: translateY(-12px) scale(0.8);
+      color: var(--primary-green);
+    }
+  }
+}
+
+/* ===== EMAIL CON DOMINIO FIJO ===== */
+.email-wrapper {
+  display: flex;
+  align-items: center;
+  
+  .email-input {
+    flex: 1;
+    min-width: 0;
+    padding-right: 5px;
+  }
+  
+  .email-domain {
+    color: rgba(0, 255, 136, 0.8);
+    font-size: 1rem;
+    font-weight: 500;
+    white-space: nowrap;
+    user-select: none;
+    pointer-events: none;
+    margin-left: 2px;
+  }
+  
+  .floating-label {
+    left: 15px;
+    z-index: 3;
+  }
+}
+
+/* ===== MENSAJES DE ERROR ===== */
+.error-message {
+  color: #ff4757;
+  font-size: 0.85rem;
+  font-weight: 400;
+  margin: -15px 25px 15px 25px; /* Margen ajustado para alinearse con los inputs */
+  opacity: 0;
+  animation: fadeInError 0.3s ease forwards;
+}
+
+@keyframes fadeInError {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== BOTONES DE ACCIÓN ===== */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centra los botones horizontalmente */
+  gap: 15px;
+  margin: 20px 10px 0 10px; /* Margen de 10px a los lados */
+  padding: 0;
+
+  .login-button,
+  .register-button {
+    width: calc(100% - 0px); /* Ancho completo menos el margen ya aplicado */
+    max-width: 100%;
+    margin: 0; /* Sin margen adicional */
+  }
+
+  .login-button {
+    --background: var(--accent-gradient);
+    --color: #000000;
+    --border-radius: 12px;
+    --box-shadow: var(--glow-shadow);
+    --padding-top: 15px;
+    --padding-bottom: 15px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-transform: none;
+    transition: all 0.3s ease;
+
+    &:hover:not([disabled]) {
+      --box-shadow: 0 0 40px rgba(0, 255, 136, 0.6);
+      transform: translateY(-2px);
+    }
+
+    &[disabled] {
+      --background: rgba(0, 255, 136, 0.3);
+      --color: rgba(255, 255, 255, 0.5);
+    }
+  }
+
+  .register-button {
+    --color: var(--primary-green);
+    --border-color: var(--primary-green);
+    --border-radius: 12px;
+    --padding-top: 15px;
+    --padding-bottom: 15px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-transform: none;
+    transition: all 0.3s ease;
+
+    &:hover {
+      --background: rgba(0, 255, 136, 0.1);
+      --box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+      transform: translateY(-1px);
+    }
+  }
+}
+
+/* ===== SEPARADOR ===== */
+.separator {
+  text-align: center;
+  position: relative;
+  margin: 10px 0;
+
+  span {
+    background: rgba(20, 20, 20, 0.95);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+    padding: 0 15px;
+    position: relative;
+    z-index: 2;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(0, 255, 136, 0.2);
+    z-index: 1;
+  }
+}
+
+/* ===== SPINNER DE CARGA ===== */
+.loading-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 99999 !important;
+  backdrop-filter: blur(4px) !important;
+  animation: fadeInOverlay 0.3s ease-in-out;
+}
+
+.spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 10, 0.9);
+  padding: 40px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  box-shadow: var(--glow-shadow);
+  text-align: center;
+
+  .custom-spinner {
+    --color: var(--primary-green);
+    width: 60px;
+    height: 60px;
+    margin-bottom: 20px;
+  }
+
+  .loading-text {
+    color: var(--primary-green);
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+  }
+}
+
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(4px);
+  }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 15px;
+    justify-content: flex-start;
+    padding-top: 40px;
+  }
+
+  .content-toolbar {
+    margin: -15px -15px 20px -15px;
+    padding: 25px 15px;
+
+    .toolbar-title {
+      font-size: 1.8rem;
+    }
+
+    .toolbar-sub {
+      font-size: 0.9rem;
+    }
+  }
+
+  .login-card {
+    max-width: 100%;
+    margin: 0;
+
+    ion-card-header {
+      padding: 25px 15px 15px;
+
+      ion-card-title {
+        font-size: 1.6rem;
+      }
+
+      ion-card-subtitle {
+        font-size: 0.9rem;
+      }
+    }
+
+    ion-card-content {
+      padding: 0 15px 25px;
+    }
+  }
+
+  .input-wrapper {
+    padding: 18px 12px 6px;
+
+    .native-input {
+      font-size: 0.95rem;
+    }
+
+    .floating-label {
+      left: 12px;
+      font-size: 0.95rem;
+    }
+  }
+
+  .action-buttons {
+    gap: 12px;
+
+    .login-button,
+    .register-button {
+      --padding-top: 12px;
+      --padding-bottom: 12px;
+      font-size: 1rem;
+    }
+  }
+}
+
+/* ===== ANIMACIONES ===== */
+.login-card {
+  animation: slideInUp 0.6s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== EFECTOS DE FONDO ===== */
+ion-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(0, 204, 106, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(0, 255, 136, 0.05) 0%, transparent 50%);
+  z-index: 1;
+  pointer-events: none;
+}

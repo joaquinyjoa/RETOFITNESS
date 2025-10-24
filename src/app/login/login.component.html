@@ -1,3 +1,97 @@
-<p>
-  login works!
-</p>
+<ion-content class="ion-padding">
+  <div class="login-container">
+
+    <!-- Formulario de Login -->
+    <ion-card class="login-card">
+      <ion-card-header>
+        <ion-card-title>
+          <span class="emoji-green">🔐</span> Iniciar Sesión
+        </ion-card-title>
+      </ion-card-header>
+      
+      <ion-card-content>
+        <ion-list>
+          <!-- Campo de Correo -->
+          <ion-item class="input-item">
+            <div class="input-wrapper email-wrapper">
+              <input 
+                class="native-input email-input"
+                [(ngModel)]="emailPrefix"
+                name="emailPrefix"
+                type="text" 
+                placeholder="nombre"
+                autocomplete="email"
+                autocapitalize="none"
+                (input)="onEmailPrefixChange($event)"
+                (blur)="onInputBlur('correo')"
+                (focus)="onInputFocus('correo')"
+                required>
+              <span class="email-domain">@retofitness.com</span>
+              <label class="floating-label" [class.active]="emailPrefix.length > 0">Correo Electrónico *</label>
+            </div>
+          </ion-item>
+          <div class="error-message" *ngIf="validationErrors.correo">
+            {{ validationErrors.correo }}
+          </div>
+
+          <!-- Campo de Contraseña -->
+          <ion-item class="input-item">
+            <div class="input-wrapper">
+              <input 
+                class="native-input"
+                [(ngModel)]="credenciales.password"
+                name="password"
+                type="password" 
+                placeholder="Tu contraseña"
+                autocomplete="current-password"
+                (input)="onInputChange('password', $event)"
+                (blur)="onInputBlur('password')"
+                (focus)="onInputFocus('password')"
+                required>
+              <label class="floating-label" [class.active]="credenciales.password.length > 0">Contraseña *</label>
+            </div>
+          </ion-item>
+          <div class="error-message" *ngIf="validationErrors.password">
+            {{ validationErrors.password }}
+          </div>
+        </ion-list>
+
+        <!-- Botones de Acción -->
+        <div class="action-buttons">
+          <!-- Botón de Iniciar Sesión -->
+          <ion-button 
+            class="login-button" 
+            expand="full"
+            (click)="onLogin()" 
+            [disabled]="isSubmitting">
+            <span *ngIf="!isSubmitting"><span class="emoji-green">🚀</span> Iniciar Sesión</span>
+            <span *ngIf="isSubmitting">Verificando...</span>
+          </ion-button>
+
+          <!-- Separador -->
+          <div class="separator">
+            <span>¿No tienes cuenta?</span>
+          </div>
+
+          <!-- Botón de Comenzar mi Reto -->
+          <ion-button 
+            class="register-button" 
+            expand="full"
+            fill="outline"
+            (click)="goToRegister()">
+            <span class="emoji-green">💪</span> Comenzar mi Reto
+          </ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+  </div>
+</ion-content>
+
+<!-- Spinner de carga centrado -->
+<div class="loading-overlay" *ngIf="showSpinner">
+  <div class="spinner-container">
+    <ion-spinner name="crescent" class="custom-spinner"></ion-spinner>
+    <p class="loading-text">Verificando credenciales...</p>
+  </div>
+</div>
