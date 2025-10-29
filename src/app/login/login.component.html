@@ -5,7 +5,7 @@
     <ion-card class="login-card">
       <ion-card-header>
         <ion-card-title>
-          <span class="emoji-green">🔐</span> Iniciar Sesión
+          Iniciar Sesión
         </ion-card-title>
       </ion-card-header>
       
@@ -14,20 +14,23 @@
           <!-- Campo de Correo -->
           <ion-item class="input-item">
             <div class="input-wrapper email-wrapper">
-              <input 
-                class="native-input email-input"
-                [(ngModel)]="emailPrefix"
-                name="emailPrefix"
-                type="text" 
-                placeholder="nombre"
-                autocomplete="email"
-                autocapitalize="none"
-                (input)="onEmailPrefixChange($event)"
-                (blur)="onInputBlur('correo')"
-                (focus)="onInputFocus('correo')"
-                required>
-              <span class="email-domain">@retofitness.com</span>
-              <label class="floating-label" [class.active]="emailPrefix.length > 0">Correo Electrónico *</label>
+              <label class="top-label" for="emailPrefix">Correo Electrónico</label>
+              <div class="input-container">
+                <input 
+                  id="emailPrefix"
+                  class="native-input email-input"
+                  [(ngModel)]="emailPrefix"
+                  name="emailPrefix"
+                  type="text" 
+                  placeholder="nombre"
+                  autocomplete="email"
+                  autocapitalize="none"
+                  (input)="onEmailPrefixChange($event)"
+                  (blur)="onInputBlur('correo')"
+                  (focus)="onInputFocus('correo')"
+                  required>
+                <span class="email-domain">@retofitness.com</span>
+              </div>
             </div>
           </ion-item>
           <div class="error-message" *ngIf="validationErrors.correo">
@@ -36,25 +39,46 @@
 
           <!-- Campo de Contraseña -->
           <ion-item class="input-item">
-            <div class="input-wrapper">
-              <input 
-                class="native-input"
-                [(ngModel)]="credenciales.password"
-                name="password"
-                type="password" 
-                placeholder="Tu contraseña"
-                autocomplete="current-password"
-                (input)="onInputChange('password', $event)"
-                (blur)="onInputBlur('password')"
-                (focus)="onInputFocus('password')"
-                required>
-              <label class="floating-label" [class.active]="credenciales.password.length > 0">Contraseña *</label>
+            <div class="input-wrapper password-wrapper">
+              <label class="top-label" for="password">Contraseña</label>
+              <div class="input-container">
+                <input 
+                  id="password"
+                  class="native-input password-input"
+                  [(ngModel)]="credenciales.password"
+                  name="password"
+                  [type]="showPassword ? 'text' : 'password'" 
+                  placeholder="Tu contraseña"
+                  autocomplete="current-password"
+                  (input)="onInputChange('password', $event)"
+                  (blur)="onInputBlur('password')"
+                  (focus)="onInputFocus('password')"
+                  required>
+                <button 
+                  type="button"
+                  class="password-toggle-btn"
+                  (click)="togglePasswordVisibility()"
+                  aria-label="Mostrar/ocultar contraseña">
+                  <span class="emoji-icon">{{ showPassword ? 'Ocultar' : 'Mostrar' }}</span>
+                </button>
+              </div>
             </div>
           </ion-item>
           <div class="error-message" *ngIf="validationErrors.password">
             {{ validationErrors.password }}
           </div>
         </ion-list>
+
+        <!-- Acceso Rápido -->
+        <div class="quick-access">
+          <ion-button 
+            class="quick-access-button" 
+            expand="full"
+            fill="clear"
+            (click)="accesoRapidoEntrenador()">
+            ⚡ Acceso Rápido Entrenador
+          </ion-button>
+        </div>
 
         <!-- Botones de Acción -->
         <div class="action-buttons">
@@ -64,7 +88,7 @@
             expand="full"
             (click)="onLogin()" 
             [disabled]="isSubmitting">
-            <span *ngIf="!isSubmitting"><span class="emoji-green">🚀</span> Iniciar Sesión</span>
+            <span *ngIf="!isSubmitting">Iniciar Sesión</span>
             <span *ngIf="isSubmitting">Verificando...</span>
           </ion-button>
 
@@ -79,7 +103,7 @@
             expand="full"
             fill="outline"
             (click)="goToRegister()">
-            <span class="emoji-green">💪</span> Comenzar mi Reto
+            Comenzar mi Reto
           </ion-button>
         </div>
       </ion-card-content>
@@ -87,11 +111,3 @@
 
   </div>
 </ion-content>
-
-<!-- Spinner de carga centrado -->
-<div class="loading-overlay" *ngIf="showSpinner">
-  <div class="spinner-container">
-    <ion-spinner name="crescent" class="custom-spinner"></ion-spinner>
-    <p class="loading-text">Verificando credenciales...</p>
-  </div>
-</div>

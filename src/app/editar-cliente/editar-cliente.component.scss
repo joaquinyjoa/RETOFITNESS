@@ -1,0 +1,220 @@
+:host {
+  --primary-green: #00ff88;
+  --secondary-green: #00cc6a;
+  --card-bg: rgba(26,26,26,0.95);
+  --border-color: rgba(0,255,136,0.12);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255,255,255,0.7);
+  --section-bg: rgba(255,255,255,0.02);
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  
+  ion-spinner {
+    margin-bottom: 16px;
+    --color: var(--primary-green);
+  }
+  
+  p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+}
+
+.form-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding-bottom: 20px;
+}
+
+.form-section {
+  background: var(--section-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--primary-green);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    
+    ion-icon {
+      font-size: 1.2rem;
+    }
+  }
+  
+  ion-item {
+    --background: transparent;
+    --border-color: var(--border-color);
+    --color: var(--text-primary);
+    --placeholder-color: var(--text-secondary);
+    margin-bottom: 8px;
+    
+    ion-label {
+      color: var(--text-primary);
+      font-weight: 500;
+      
+      &.ion-margin-start {
+        margin-left: 12px;
+      }
+    }
+    
+    ion-input, ion-textarea {
+      --color: var(--text-primary);
+      --placeholder-color: var(--text-secondary);
+    }
+    
+    ion-select {
+      --color: var(--text-primary);
+      --placeholder-color: var(--text-secondary);
+    }
+    
+    ion-checkbox {
+      --color: var(--primary-green);
+      --color-checked: var(--primary-green);
+      --checkmark-color: #000000;
+      --border-color: var(--border-color);
+      --border-color-checked: var(--primary-green);
+    }
+  }
+}
+
+// Estilos específicos para los inputs
+ion-input {
+  --highlight-color-focused: var(--primary-green);
+  --highlight-color-valid: var(--secondary-green);
+  --highlight-color-invalid: #ff6b6b;
+}
+
+ion-textarea {
+  --highlight-color-focused: var(--primary-green);
+  --highlight-color-valid: var(--secondary-green);
+  --highlight-color-invalid: #ff6b6b;
+}
+
+ion-select {
+  --highlight-color-focused: var(--primary-green);
+  --highlight-color-valid: var(--secondary-green);
+  --highlight-color-invalid: #ff6b6b;
+}
+
+// Botones de acción
+.action-buttons {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  
+  ion-button {
+    height: 48px;
+    
+    &:first-child {
+      --color: var(--text-secondary);
+      --border-color: var(--border-color);
+    }
+    
+    &:last-child {
+      --background: var(--primary-green);
+      --color: #000000;
+      font-weight: 600;
+      
+      &:disabled {
+        --background: rgba(0,255,136,0.3);
+        --color: rgba(0,0,0,0.5);
+      }
+    }
+  }
+}
+
+// Header toolbar
+ion-header ion-toolbar {
+  --background: var(--card-bg);
+  --color: var(--text-primary);
+  
+  ion-title {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  
+  ion-button {
+    --color: var(--primary-green);
+    
+    &[disabled] {
+      --color: rgba(0,255,136,0.3);
+    }
+  }
+}
+
+// Responsive design
+@media (min-width: 768px) {
+  .form-container {
+    padding: 20px;
+  }
+  
+  .form-section {
+    padding: 24px;
+  }
+  
+  .action-buttons {
+    flex-direction: row;
+    justify-content: space-between;
+    
+    ion-button {
+      flex: 1;
+      margin: 0 6px;
+    }
+  }
+}
+
+// Estados de validación
+.ng-invalid.ng-touched {
+  ion-item {
+    --border-color: #ff6b6b;
+  }
+}
+
+.ng-valid.ng-touched {
+  ion-item {
+    --border-color: var(--secondary-green);
+  }
+}
+
+// Animaciones suaves
+.form-section {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: rgba(0,255,136,0.2);
+  }
+}
+
+ion-button {
+  transition: all 0.3s ease;
+}
+
+// Mejoras de accesibilidad
+ion-checkbox {
+  min-width: 20px;
+  min-height: 20px;
+}
+
+ion-label {
+  line-height: 1.4;
+}
+
+// Estilos para elementos condicionales
+.conditional-field {
+  margin-left: 32px;
+  border-left: 2px solid var(--border-color);
+  padding-left: 16px;
+}

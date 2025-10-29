@@ -12,6 +12,9 @@
 /* Core CSS required for Ionic components to work properly */
 @import "@ionic/angular/css/core.css";
 
+/* Import de Google Fonts (Inter) para mejorar la tipografía global */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
 /* Basic CSS for apps built with Ionic */
 @import "@ionic/angular/css/normalize.css";
 @import "@ionic/angular/css/structure.css";
@@ -85,6 +88,8 @@
 
 /* Welcome component shared styles (moved from component to respect build budgets) */
 :root {
+	/* Fuente global de la app */
+	--app-font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
 	--primary-green: #00ff88;
 	--secondary-green: #00cc6a;
 	--dark-bg: #0a0a0a;
@@ -203,6 +208,29 @@
 	font-size: 1rem;
 	line-height: 1.6;
 	margin-bottom: 25px;
+}
+
+/* Aplicar la tipografía global a todo el body y elementos Ionic */
+body, ion-app, ion-content, .register-container, .welcome-container {
+	font-family: var(--app-font);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Ajustes de jerarquía tipográfica */
+h1, .toolbar-title, ion-card-title, .welcome-title h1 {
+	font-family: var(--app-font);
+	font-weight: 800;
+}
+
+h2, h3, .info-label, .section-header h3 {
+	font-family: var(--app-font);
+	font-weight: 600;
+}
+
+p, label, .native-input, .native-textarea, .native-select, .info-value {
+	font-family: var(--app-font);
+	font-weight: 400;
 }
 
 .features-grid {
@@ -354,4 +382,32 @@ ion-button.secondary-button::part(native) {
 		height: 50px !important;
 		font-size: 1rem !important;
 	}
+}
+
+/* CSS Variables Protection - Prevents optimization from removing unused variables */
+.css-variables-protection {
+	display: none !important;
+	
+	/* Ionic core variables that must be preserved */
+	--ion-color-primary: var(--ion-color-primary);
+	--ion-color-secondary: var(--ion-color-secondary);
+	--ion-color-success: var(--ion-color-success);
+	--ion-color-warning: var(--ion-color-warning);
+	--ion-color-danger: var(--ion-color-danger);
+	
+	/* App custom variables */
+	--primary-green: var(--primary-green);
+	--secondary-green: var(--secondary-green);
+	--dark-bg: var(--dark-bg);
+	--gradient-bg: var(--gradient-bg);
+	--accent-gradient: var(--accent-gradient);
+	--glow-shadow: var(--glow-shadow);
+	
+	/* Ionic component variables */
+	--background: var(--background);
+	--color: var(--color);
+	--border-color: var(--border-color);
+	--border-radius: var(--border-radius);
+	--border-width: var(--border-width);
+	--box-shadow: var(--box-shadow);
 }

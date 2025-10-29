@@ -1,0 +1,430 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="goBack()">
+        <ion-icon name="arrow-back"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Ejercicios</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="abrirModal()">
+        <ion-icon name="add"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="main-content">
+  
+  <!-- Filtros -->
+  <div class="filters-section">
+    <ion-searchbar 
+      [(ngModel)]="filtroTexto" 
+      (ionInput)="aplicarFiltros()"
+      placeholder="Buscar ejercicios..."
+      show-clear-button="focus">
+    </ion-searchbar>
+
+    <div class="filter-row">
+      <ion-select 
+        [(ngModel)]="filtroCategoria" 
+        (ionChange)="aplicarFiltros()"
+        placeholder="Categoría"
+        interface="popover">
+        <ion-select-option value="">Todas las categorías</ion-select-option>
+        <ion-select-option *ngFor="let cat of categorias" [value]="cat.value">
+          {{ cat.label }}
+        </ion-select-option>
+      </ion-select>
+
+      <ion-select 
+        [(ngModel)]="filtroMusculo" 
+        (ionChange)="aplicarFiltros()"
+        placeholder="Músculo"
+        interface="popover">
+        <ion-select-option value="">Todos los músculos</ion-select-option>
+        <ion-select-option *ngFor="let musculo of gruposMusculares" [value]="musculo">
+          {{ musculo }}
+        </ion-select-option>
+      </ion-select>
+
+      <ion-button fill="clear" (click)="limpiarFiltros()">
+        <ion-icon name="refresh"></ion-icon>
+      </ion-button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Cargando ejercicios...</p>
+  </div>
+
+  <!-- Lista de ejercicios -->
+  <div *ngIf="!loading" class="exercises-grid">
+    
+    <!-- Sin ejercicios -->
+    <div *ngIf="ejerciciosFiltrados.length === 0" class="no-exercises">
+      <ion-icon name="barbell-outline" size="large"></ion-icon>
+      <h3>No hay ejercicios</h3>
+      <p *ngIf="filtroTexto || filtroCategoria || filtroMusculo">
+        No se encontraron ejercicios con estos filtros
+      </p>
+      <p *ngIf="!filtroTexto && !filtroCategoria && !filtroMusculo">
+        Aún no has agregado ejercicios
+      </p>
+      <ion-button fill="outline" (click)="abrirModal()">
+        <ion-icon name="add" slot="start"></ion-icon>
+        Agregar primer ejercicio
+      </ion-button>
+    </div>
+
+    <!-- Tarjetas de ejercicios -->
+    <ion-card *ngFor="let ejercicio of ejerciciosFiltrados; trackBy: trackByIndex" class="exercise-card">
+      
+      <!-- Header de la tarjeta -->
+      <ion-card-header>
+        <div class="card-header-content">
+          <div class="exercise-info">
+            <ion-card-title>{{ ejercicio.nombre }}</ion-card-title>
+            <ion-card-subtitle>
+              <div class="subtitle-row">
+                <ion-badge [color]="getCategoriaColor(ejercicio.categoria)" class="category-badge">
+                  {{ getCategoriaLabel(ejercicio.categoria) }}
+                </ion-badge>
+                <ion-badge color="medium" class="difficulty-badge">
+                  {{ getNivelLabel(ejercicio.nivel_dificultad) }}
+                </ion-badge>
+              </div>
+              <span class="muscle-group">
+                <ion-icon name="body" size="small"></ion-icon>
+                {{ ejercicio.musculo_principal }}
+              </span>
+            </ion-card-subtitle>
+          </div>
+          <div class="actions">
+            <ion-button fill="clear" size="small" (click)="verVideo(ejercicio)" class="action-btn video-btn">
+              <ion-icon name="play-circle"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" (click)="abrirModal(ejercicio)" class="action-btn edit-btn">
+              <ion-icon name="create"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" (click)="eliminarEjercicio(ejercicio)" class="action-btn delete-btn">
+              <ion-icon name="trash"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+      </ion-card-header>
+
+      <!-- Contenido de la tarjeta -->
+      <ion-card-content>
+        <p *ngIf="ejercicio.descripcion" class="description">
+          {{ ejercicio.descripcion }}
+        </p>
+        
+        <div class="exercise-details">
+          <div *ngIf="ejercicio.duracion_minutos" class="detail-item">
+            <ion-icon name="time-outline"></ion-icon>
+            <span>{{ ejercicio.duracion_minutos }} min</span>
+          </div>
+
+          <div *ngIf="ejercicio.equipamiento && ejercicio.equipamiento.length > 0" class="detail-item">
+            <ion-icon name="barbell-outline"></ion-icon>
+            <span>{{ getEquipamientoText(ejercicio.equipamiento) }}</span>
+          </div>
+
+          <div class="detail-item">
+            <ion-icon name="link-outline"></ion-icon>
+            <span class="video-link">Video disponible</span>
+          </div>
+        </div>
+
+        <div *ngIf="ejercicio.musculos_secundarios && ejercicio.musculos_secundarios.length > 0" class="secondary-muscles">
+          <small>Músculos secundarios:</small>
+          <div class="muscle-tags">
+            <ion-chip *ngFor="let musculo of ejercicio.musculos_secundarios" outline="true" class="muscle-chip">
+              {{ musculo }}
+            </ion-chip>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+</ion-content>
+
+<!-- Modal para agregar/editar ejercicio -->
+<ion-modal [isOpen]="showModal" (didDismiss)="cerrarModal()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>{{ editMode ? 'Editar' : 'Nuevo' }} Ejercicio</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarModal()">
+            <ion-icon name="close"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="modal-content">
+      <form (ngSubmit)="guardarEjercicio()">
+        
+        <!-- Información básica -->
+        <div class="form-section">
+          <h4>Información básica</h4>
+          
+          <ion-item>
+            <ion-label position="stacked">Nombre del ejercicio *</ion-label>
+            <ion-input 
+              [(ngModel)]="ejercicioActual.nombre" 
+              name="nombre"
+              placeholder="Ej: Press de banca"
+              required>
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Descripción</ion-label>
+            <ion-textarea 
+              [(ngModel)]="ejercicioActual.descripcion" 
+              name="descripcion"
+              placeholder="Descripción breve del ejercicio"
+              rows="3">
+            </ion-textarea>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Categoría *</ion-label>
+            <ion-select [(ngModel)]="ejercicioActual.categoria" name="categoria" interface="popover">
+              <ion-select-option *ngFor="let cat of categorias" [value]="cat.value">
+                {{ cat.label }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Músculo principal *</ion-label>
+            <ion-select [(ngModel)]="ejercicioActual.musculo_principal" name="musculo_principal" interface="popover">
+              <ion-select-option *ngFor="let musculo of gruposMusculares" [value]="musculo">
+                {{ musculo }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Nivel de dificultad *</ion-label>
+            <ion-select [(ngModel)]="ejercicioActual.nivel_dificultad" name="nivel_dificultad" interface="popover">
+              <ion-select-option *ngFor="let nivel of nivesDificultad" [value]="nivel.value">
+                {{ nivel.label }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </div>
+
+        <!-- Video del ejercicio -->
+        <div class="form-section">
+          <h4>Video del ejercicio</h4>
+          
+          <ion-item>
+            <ion-label position="stacked">URL de Google Drive *</ion-label>
+            <ion-input 
+              [(ngModel)]="ejercicioActual.enlace_video" 
+              name="enlace_video"
+              placeholder="https://drive.google.com/file/d/..."
+              (ionBlur)="validarUrlDrive()"
+              required>
+            </ion-input>
+          </ion-item>
+          
+          <div class="url-validation" *ngIf="ejercicioActual.enlace_video">
+            <ion-item *ngIf="urlValida" lines="none" class="validation-success">
+              <ion-icon name="checkmark-circle" slot="start" color="success"></ion-icon>
+              <ion-label color="success">URL válida de Google Drive</ion-label>
+            </ion-item>
+            
+            <ion-item *ngIf="!urlValida && ejercicioActual.enlace_video" lines="none" class="validation-error">
+              <ion-icon name="close-circle" slot="start" color="danger"></ion-icon>
+              <ion-label color="danger">URL no válida. Usa formato: drive.google.com/file/d/...</ion-label>
+            </ion-item>
+          </div>
+          
+          <ion-note>
+            <strong>Requisitos:</strong><br>
+            • Debe ser un enlace de Google Drive<br>
+            • Solo videos o imágenes<br>
+            • Videos: máximo 20 segundos<br>
+            • Formato: https://drive.google.com/file/d/ID/view
+          </ion-note>
+
+          <!-- Preview del video si la URL es válida -->
+          <div *ngIf="urlValida && ejercicioActual.enlace_video" class="video-preview">
+            <ion-button 
+              fill="outline" 
+              size="small" 
+              (click)="previsualizarVideo()"
+              class="preview-button">
+              <ion-icon name="play-circle" slot="start"></ion-icon>
+              Vista previa del video
+            </ion-button>
+          </div>
+        </div>
+
+        <!-- Detalles adicionales -->
+        <div class="form-section">
+          <h4>Detalles adicionales</h4>
+          
+          <ion-item>
+            <ion-label position="stacked">Duración (segundos) - Máximo 20</ion-label>
+            <ion-input 
+              [(ngModel)]="ejercicioActual.duracion_minutos" 
+              name="duracion_minutos"
+              type="number"
+              min="1"
+              max="20"
+              placeholder="20"
+              (ionInput)="convertirSegundosAMinutos()">
+            </ion-input>
+          </ion-item>
+          
+          <ion-note *ngIf="ejercicioActual.duracion_minutos">
+            Duración: {{ ejercicioActual.duracion_minutos }} segundos 
+            ({{ (ejercicioActual.duracion_minutos / 60).toFixed(2) }} minutos)
+          </ion-note>
+
+          <!-- Músculos secundarios -->
+          <div class="array-section">
+            <div class="array-header">
+              <h5>Músculos secundarios</h5>
+              <div class="header-actions">
+                <ion-button 
+                  *ngIf="ejercicioActual.musculos_secundarios.length > 0" 
+                  size="small" 
+                  fill="clear" 
+                  color="warning"
+                  (click)="limpiarMusculosSecundarios()">
+                  <ion-icon name="trash-outline"></ion-icon>
+                  <span>Limpiar</span>
+                </ion-button>
+                <ion-button size="small" fill="clear" (click)="agregarMusculoSecundario()">
+                  <ion-icon name="add"></ion-icon>
+                  <span>Agregar</span>
+                </ion-button>
+              </div>
+            </div>
+            
+            <div class="dynamic-list">
+              <div *ngFor="let musculo of ejercicioActual.musculos_secundarios; let i = index; trackBy: trackByIndex" class="dynamic-item">
+                <ion-item>
+                  <ion-label position="stacked">Músculo {{ i + 1 }}</ion-label>
+                  <ion-select 
+                    [(ngModel)]="ejercicioActual.musculos_secundarios[i]" 
+                    [name]="'musculo_secundario_' + i"
+                    placeholder="Seleccionar músculo"
+                    interface="popover">
+                    <ion-select-option *ngFor="let m of gruposMusculares" [value]="m">
+                      {{ m }}
+                    </ion-select-option>
+                  </ion-select>
+                  <ion-button 
+                    slot="end" 
+                    fill="clear" 
+                    color="danger" 
+                    (click)="eliminarMusculoSecundario(i)"
+                    class="delete-item-btn">
+                    <ion-icon name="close-circle"></ion-icon>
+                  </ion-button>
+                </ion-item>
+              </div>
+            </div>
+            
+            <ion-note *ngIf="ejercicioActual.musculos_secundarios.length === 0" class="empty-note">
+              No hay músculos secundarios agregados
+            </ion-note>
+          </div>
+
+          <!-- Equipamiento -->
+          <div class="array-section">
+            <div class="array-header">
+              <h5>Equipamiento necesario</h5>
+              <div class="header-actions">
+                <ion-button 
+                  *ngIf="ejercicioActual.equipamiento.length > 0" 
+                  size="small" 
+                  fill="clear" 
+                  color="warning"
+                  (click)="limpiarEquipamiento()">
+                  <ion-icon name="trash-outline"></ion-icon>
+                  <span>Limpiar</span>
+                </ion-button>
+                <ion-button size="small" fill="clear" (click)="agregarEquipamiento()">
+                  <ion-icon name="add"></ion-icon>
+                  <span>Agregar</span>
+                </ion-button>
+              </div>
+            </div>
+            
+            <div class="dynamic-list">
+              <div *ngFor="let equipo of ejercicioActual.equipamiento; let i = index; trackBy: trackByIndex" class="dynamic-item">
+                <ion-item>
+                  <ion-label position="stacked">Equipamiento {{ i + 1 }}</ion-label>
+                  <ion-input 
+                    [(ngModel)]="ejercicioActual.equipamiento[i]" 
+                    [name]="'equipamiento_' + i"
+                    placeholder="Ej: Mancuernas, Banca, Bandas elásticas..."
+                    clear-input="true">
+                  </ion-input>
+                  <ion-button 
+                    slot="end" 
+                    fill="clear" 
+                    color="danger" 
+                    (click)="eliminarEquipamiento(i)"
+                    class="delete-item-btn">
+                    <ion-icon name="close-circle"></ion-icon>
+                  </ion-button>
+                </ion-item>
+              </div>
+            </div>
+            
+            <ion-note *ngIf="ejercicioActual.equipamiento.length === 0" class="empty-note">
+              No hay equipamiento agregado. <span class="add-hint">Presiona + para agregar</span>
+            </ion-note>
+          </div>
+        </div>
+
+        <!-- Instrucciones -->
+        <div class="form-section">
+          <h4>Instrucciones y consejos</h4>
+          
+          <ion-item>
+            <ion-label position="stacked">Instrucciones</ion-label>
+            <ion-textarea 
+              [(ngModel)]="ejercicioActual.instrucciones" 
+              name="instrucciones"
+              placeholder="Paso a paso del ejercicio..."
+              rows="4">
+            </ion-textarea>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Consejos</ion-label>
+            <ion-textarea 
+              [(ngModel)]="ejercicioActual.consejos" 
+              name="consejos"
+              placeholder="Consejos para ejecutar correctamente..."
+              rows="3">
+            </ion-textarea>
+          </ion-item>
+        </div>
+
+        <!-- Botones -->
+        <div class="form-actions">
+          <ion-button expand="block" type="submit" [disabled]="loading">
+            <ion-spinner *ngIf="loading" name="crescent"></ion-spinner>
+            <span *ngIf="!loading">{{ editMode ? 'Actualizar' : 'Crear' }} Ejercicio</span>
+          </ion-button>
+        </div>
+      </form>
+    </ion-content>
+  </ng-template>
+</ion-modal>

@@ -153,6 +153,8 @@
         </div>
       </ion-list>
 
+      
+
       <div class="step-buttons">
         <ion-button class="next-button" (click)="nextStep()" [disabled]="!isStep1Valid()">
           Siguiente
@@ -293,10 +295,9 @@
               name="nivelActividad"
               (change)="onInputChange('nivelActividad', $event)"
               required>
-              <option value="">Seleccionar nivel</option>
               <option value="Bajo">Baja (Sedentario)</option>
-              <option value="Medio">Media (Ejercicio ocasional)</option>
-              <option value="Alto">Alta (Ejercicio regular)</option>
+              <option value="Medio">Media (Ocasional)</option>
+              <option value="Alto">Alta (Regular)</option>
             </select>
             <label class="floating-label" [class.active]="cliente.nivelActividad">Nivel de Actividad *</label>
           </div>
@@ -447,7 +448,7 @@
         <!-- Medicación Regular -->
         <ion-item>
           <div class="toggle-question">
-            <label class="question-label">¿Tomas medicación regular?</label>
+            <label class="question-label">¿Tomas medicación?</label>
             <div class="toggle-switch">
               <input 
                 type="checkbox" 
@@ -515,7 +516,7 @@
         <!-- Lesiones -->
         <ion-item>
           <div class="toggle-question">
-            <label class="question-label">¿Tienes lesiones actuales?</label>
+            <label class="question-label">¿Tienes lesiones?</label>
             <div class="toggle-switch">
               <input 
                 type="checkbox" 
@@ -567,7 +568,7 @@
         <!-- Alcohol -->
         <ion-item>
           <div class="toggle-question">
-            <label class="question-label">¿Consumes alcohol regularmente?</label>
+            <label class="question-label">¿Consumes alcohol?</label>
             <div class="toggle-switch">
               <input 
                 type="checkbox" 
@@ -658,61 +659,53 @@
       </div>
 
       <!-- Condiciones Médicas -->
-      <div class="info-section medical-info" *ngIf="hasHealthConditions()">
+      <div class="info-section medical-info" *ngIf="hasAnyMedicalCondition()">
         <div class="section-header">
           <h3>❤️ Condiciones Médicas</h3>
         </div>
         <div class="medical-conditions">
-          <div class="condition-item" *ngIf="cliente.enfermedadCronica">
-            <div class="condition-content">
-              <span class="condition-name">Enfermedad Crónica</span>
-              <span class="condition-description">{{cliente.descripcionEnfermedad}}</span>
-            </div>
-          </div>
-          <div class="condition-item" *ngIf="cliente.diabetes">
-            <ion-icon name="checkmark-circle" color="success"></ion-icon>
-            <span class="condition-name">Diabetes</span>
-          </div>
-          <div class="condition-item" *ngIf="cliente.hipotension">
-            <ion-icon name="checkmark-circle" color="success"></ion-icon>
-            <span class="condition-name">Hipotensión</span>
-          </div>
-          <div class="condition-item" *ngIf="cliente.hipotiroide">
-            <ion-icon name="checkmark-circle" color="success"></ion-icon>
-            <span class="condition-name">Hipotiroide</span>
-          </div>
-          <div class="condition-item" *ngIf="cliente.hipotiroidismo">
-            <ion-icon name="checkmark-circle" color="success"></ion-icon>
-            <span class="condition-name">Hipotiroidismo</span>
-          </div>
-          <div class="condition-item" *ngIf="cliente.medicacionRegular">
-            <ion-icon name="checkmark-circle" color="success"></ion-icon>
-            <div class="condition-content">
-              <span class="condition-name">Medicación Regular</span>
-              <span class="condition-description">{{cliente.descripcionMedicacion}}</span>
-            </div>
-          </div>
-          <div class="condition-item" *ngIf="cliente.cirugias">
-            <ion-icon name="checkmark-circle" color="success"></ion-icon>
-            <div class="condition-content">
-              <span class="condition-name">Cirugías</span>
-              <span class="condition-description">{{cliente.descripcionCirugias}}</span>
-            </div>
-          </div>
-          <div class="condition-item" *ngIf="cliente.lesiones">
-            <ion-icon name="checkmark-circle" color="success"></ion-icon>
-            <div class="condition-content">
-              <span class="condition-name">Lesiones Actuales</span>
-              <span class="condition-description">{{cliente.descripcionLesiones}}</span>
-            </div>
-          </div>
-          <div class="condition-item" *ngIf="cliente.fuma">
-            <ion-icon name="checkmark-circle" color="success"></ion-icon>
-            <span class="condition-name">Fumador</span>
-          </div>
-          <div class="condition-item" *ngIf="cliente.alcohol">
-            <ion-icon name="checkmark-circle" color="success"></ion-icon>
-            <span class="condition-name">Consumo de alcohol</span>
+          <!-- Lista directa de condiciones médicas activas -->
+          <div class="selected-conditions">
+            <ion-item *ngIf="cliente.enfermedadCronica" lines="none">
+              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+              <ion-label>Enfermedad crónica</ion-label>
+            </ion-item>
+            <ion-item *ngIf="cliente.diabetes" lines="none">
+              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+              <ion-label>Diabetes</ion-label>
+            </ion-item>
+            <ion-item *ngIf="cliente.hipotension" lines="none">
+              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+              <ion-label>Hipotensión</ion-label>
+            </ion-item>
+            <ion-item *ngIf="cliente.hipotiroide" lines="none">
+              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+              <ion-label>Hipotiroides</ion-label>
+            </ion-item>
+            <ion-item *ngIf="cliente.hipotiroidismo" lines="none">
+              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+              <ion-label>Hipotiroidismo</ion-label>
+            </ion-item>
+            <ion-item *ngIf="cliente.medicacionRegular" lines="none">
+              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+              <ion-label>Medicación regular</ion-label>
+            </ion-item>
+            <ion-item *ngIf="cliente.cirugias" lines="none">
+              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+              <ion-label>Cirugías</ion-label>
+            </ion-item>
+            <ion-item *ngIf="cliente.lesiones" lines="none">
+              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+              <ion-label>Lesiones</ion-label>
+            </ion-item>
+            <ion-item *ngIf="cliente.fuma" lines="none">
+              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+              <ion-label>Fumador</ion-label>
+            </ion-item>
+            <ion-item *ngIf="cliente.alcohol" lines="none">
+              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+              <ion-label>Consumo de alcohol</ion-label>
+            </ion-item>
           </div>
         </div>
       </div>
@@ -738,9 +731,10 @@
       <h2>¡Registro Exitoso!</h2>
       <p>Tu cuenta ha sido creada correctamente.</p>
       <p>Tu código QR se generará automáticamente.</p>
+      <p><small>Serás redirigido al login en unos segundos...</small></p>
       
       <ion-button expand="full" (click)="goToLogin()" color="success">
-        Ir al Login
+        Ir al Login Ahora
       </ion-button>
     </ion-card-content>
   </ion-card>

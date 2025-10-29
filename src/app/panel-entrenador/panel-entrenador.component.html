@@ -1,0 +1,65 @@
+<ion-content class="panel-content">
+  <!-- Header con información del entrenador -->
+  <div class="header-section">
+    <div class="trainer-info">
+      <div class="avatar">
+        <ion-icon name="person-circle" class="avatar-icon"></ion-icon>
+      </div>
+      <div class="trainer-details" *ngIf="entrenador">
+        <h1 class="trainer-name">
+          {{entrenador.data.nombre}} {{entrenador.data.apellido}}
+        </h1>
+        <p class="trainer-role">Entrenador Personal</p>
+        <p class="trainer-email">{{entrenador.data.correo}}</p>
+      </div>
+    </div>
+    
+    <!-- Botón de cerrar sesión -->
+    <ion-button 
+      fill="clear" 
+      class="logout-button"
+      (click)="cerrarSesion()">
+      <ion-icon name="log-out-outline" slot="icon-only"></ion-icon>
+    </ion-button>
+  </div>
+
+  <!-- Menú de opciones principales -->
+  <div class="main-menu">
+    <h2 class="section-title">Panel de Control</h2>
+    
+    <div class="menu-grid">
+      <!-- Ver Clientes -->
+      <ion-card class="menu-card" (click)="verClientes()">
+        <ion-card-content>
+          <div class="card-icon">
+            <ion-icon name="person" class="menu-icon"></ion-icon>
+          </div>
+          <h3 class="card-title">Ver Clientes</h3>
+          <p class="card-description">Gestiona y revisa el progreso de tus clientes</p>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Escanear QR -->
+      <ion-card class="menu-card" (click)="escanearQR()">
+        <ion-card-content>
+          <div class="card-icon">
+            <ion-icon name="camera" class="menu-icon"></ion-icon>
+          </div>
+          <h3 class="card-title">Escanear QR</h3>
+          <p class="card-description">Escanea códigos QR de clientes</p>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Ejercicios -->
+      <ion-card class="menu-card" (click)="verEjercicios()">
+        <ion-card-content>
+          <div class="card-icon">
+            <ion-icon name="heart" class="menu-icon"></ion-icon>
+          </div>
+          <h3 class="card-title">Ejercicios</h3>
+          <p class="card-description">Biblioteca de ejercicios y rutinas</p>
+        </ion-card-content>
+      </ion-card>
+    </div>
+  </div>
+</ion-content>

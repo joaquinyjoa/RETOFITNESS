@@ -22,17 +22,28 @@ export class EntrenadorService {
     this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
   }
 
+  // Helper para aplicar timeout a promesas de fetch
+  private async withTimeout<T>(promise: Promise<T>, ms: number = 10000): Promise<T> {
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), ms)
+    );
+    return Promise.race([promise, timeout]) as Promise<T>;
+  }
+
   // Verificar login de entrenador
   async loginEntrenador(correo: string, contraseña: string): Promise<{ success: boolean; data?: Entrenador; error?: string }> {
     try {
       console.log('EntrenadorService: Intentando login con correo:', correo);
       
-      const { data, error } = await this.supabase
+      const query = this.supabase
         .from('entrenadores')
         .select('*')
         .eq('correo', correo)
         .eq('contraseña', contraseña)
         .single();
+
+      // Ejecutar la consulta con timeout para evitar colgar en dispositivos
+      const { data, error } = await this.withTimeout(Promise.resolve(query.then((r: any) => r)), 12000);
 
       if (error) {
         if (error.code === 'PGRST116') {

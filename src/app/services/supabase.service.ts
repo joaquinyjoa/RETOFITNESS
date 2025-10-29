@@ -44,10 +44,26 @@ export class SupabaseService {
     this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
   }
 
+  // Helper para aplicar timeout a promesas de fetch
+  private async withTimeout<T>(promise: Promise<T>, ms: number = 10000): Promise<T> {
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), ms)
+    );
+    return Promise.race([promise, timeout]) as Promise<T>;
+  }
+
   // Registrar un nuevo cliente
   async registrarCliente(cliente: Cliente): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
       console.log('SupabaseService: Iniciando registro de cliente:', cliente);
+      
+      // Depuración adicional para campos problemáticos
+      console.log('SupabaseService: Campos de descripción:', {
+        descripcionEnfermedad: cliente.descripcionEnfermedad,
+        descripcionMedicacion: cliente.descripcionMedicacion,
+        descripcionCirugias: cliente.descripcionCirugias,
+        descripcionLesiones: cliente.descripcionLesiones
+      });
       
       const { data, error } = await this.supabase
         .from('clientes')
@@ -88,12 +104,15 @@ export class SupabaseService {
     try {
       console.log('SupabaseService: Intentando login de cliente con correo:', correo);
       
-      const { data, error } = await this.supabase
+      const query = this.supabase
         .from('clientes')
         .select('*')
         .eq('correo', correo)
         .eq('contraseña', contraseña)
         .single();
+
+      // Ejecutar la consulta con timeout para evitar colgar en dispositivos
+  const { data, error } = await this.withTimeout(Promise.resolve(query.then((r: any) => r)), 12000);
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -156,5 +175,10 @@ export class SupabaseService {
       console.error('Error en actualizarQRCliente:', error);
       return { success: false, error: error.message };
     }
+  }
+
+  // Obtener el cliente de Supabase para operaciones personalizadas
+  getClient() {
+    return this.supabase;
   }
 }

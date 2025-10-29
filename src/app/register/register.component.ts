@@ -1,7 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, IonIcon } from '@ionic/angular';
-import { IonIcon as IonIconStandalone } from '@ionic/angular/standalone';
+import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Cliente } from '../models/cliente/cliente.interface';
@@ -14,7 +13,7 @@ import { ToastService } from '../services/toast.service';
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule, IonIconStandalone]
+  imports: [CommonModule, IonicModule, FormsModule]
 })
 export class RegisterComponent implements OnInit {
 
@@ -102,8 +101,9 @@ export class RegisterComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private clienteService: ClienteService,
-    private toastService: ToastService
+  private clienteService: ClienteService,
+  private toastService: ToastService,
+  private cdr: ChangeDetectorRef
   ) { 
     // Asegurar que el objeto cliente esté completamente inicializado
     console.log('Cliente inicializado:', this.cliente);
@@ -111,13 +111,42 @@ export class RegisterComponent implements OnInit {
 
   ngOnInit() {}
 
+  ngAfterViewInit() {
+    // Inicializar lista cacheada de condiciones
+    this.refreshSelectedConditions();
+  }
+
 
   // Método para actualizar valores sin validar automáticamente
   onInputChange(field: string, event: any) {
-    const value = event.target?.value || '';
-    
+    const target = event.target as any;
+    let value: any = '';
+
+    // Manejar checkboxes correctamente (usar checked) y tipos numéricos
+    if (target) {
+      if (target.type === 'checkbox') {
+        value = !!target.checked;
+      } else if (target.type === 'number') {
+        // mantener número o cadena vacía
+        value = target.value === '' ? '' : Number(target.value);
+      } else {
+        value = target.value ?? '';
+      }
+    }
+
     // Actualizar el valor en el modelo
     (this.cliente as any)[field] = value;
+
+    // Si cambiaron campos relacionados con condiciones médicas, refrescar la lista cacheada
+    const healthFields = [
+      'enfermedadCronica', 'descripcionEnfermedad', 'diabetes', 'hipotension', 'hipotiroide',
+      'hipotiroidismo', 'medicacionRegular', 'descripcionMedicacion', 'cirugias', 'descripcionCirugias',
+      'lesiones', 'descripcionLesiones', 'fuma', 'alcohol'
+    ];
+    if (healthFields.includes(field)) {
+      // small delay to ensure ngModel has propagated boolean values for checkboxes
+      setTimeout(() => this.refreshSelectedConditions(), 0);
+    }
     
     // Solo validar si el campo ya fue tocado o se intentó avanzar
     if (this.fieldsTouched[field as keyof typeof this.fieldsTouched] || this.attemptedNextStep) {
@@ -142,8 +171,6 @@ export class RegisterComponent implements OnInit {
           break;
       }
     }
-    
-    console.log(`Campo ${field} cambió a:`, value);
   }
 
   // Métodos para eventos de focus
@@ -177,8 +204,7 @@ export class RegisterComponent implements OnInit {
         this.validateGenero();
         break;
     }
-    
-    console.log(`Blur en ${field} - Campo marcado como tocado`);
+   
   }
 
   // Actualizar objetivos múltiples
@@ -197,8 +223,7 @@ export class RegisterComponent implements OnInit {
     this.cliente.objetivo = objetivosSeleccionados.length > 0 
       ? objetivosSeleccionados.join(', ') 
       : 'Mejorar condición física general';
-      
-    console.log('Objetivos actualizados:', this.cliente.objetivo);
+    
   }
 
   goBack() {
@@ -229,6 +254,19 @@ export class RegisterComponent implements OnInit {
         }
       }
       
+      // Si estamos en el paso 2, validar antes de avanzar
+      if (this.currentStep === 2) {
+        if (!this.isStep2Valid()) {
+          return;
+        }
+      }
+      
+      // Si estamos en el paso 3, solo refrescar condiciones sin validación adicional
+      if (this.currentStep === 3) {
+        console.log('Avanzando desde paso 3 al paso 4');
+        // No llamar refreshSelectedConditions aquí para evitar problemas de timing
+      }
+
       this.animateStepTransition('next');
     }
   }
@@ -240,6 +278,7 @@ export class RegisterComponent implements OnInit {
   }
 
   animateStepTransition(direction: 'next' | 'back') {
+    console.log(`animateStepTransition: ${direction}, currentStep: ${this.currentStep}`);
     this.isAnimating = true;
     
     // Aplicar animación de salida
@@ -251,6 +290,14 @@ export class RegisterComponent implements OnInit {
         this.currentStep++;
       } else {
         this.currentStep--;
+      }
+
+      console.log(`Paso cambiado a: ${this.currentStep}`);
+
+      // Si llegamos al paso 4, refrescar condiciones para asegurar que se muestren
+      if (this.currentStep === 4) {
+        console.log('Llegando al paso 4, refrescando condiciones...');
+        this.refreshSelectedConditions();
       }
 
       // Resetear el estado de intento de avanzar cuando se cambia de paso
@@ -397,6 +444,11 @@ export class RegisterComponent implements OnInit {
       setTimeout(() => {
         this.showSpinner = false;
         this.showSuccess = true;
+        
+        // Navegar automáticamente al login después de 3 segundos
+        setTimeout(() => {
+          this.goToLogin();
+        }, 3000);
       }, 1000);
       
       console.log('Proceso completado exitosamente');
@@ -562,5 +614,104 @@ export class RegisterComponent implements OnInit {
            this.cliente.lesiones || 
            this.cliente.fuma || 
            this.cliente.alcohol;
+  }
+
+  // Devuelve un array con las condiciones médicas seleccionadas y sus detalles opcionales
+  // Lista cacheada de condiciones seleccionadas (se actualiza cuando cambian toggles/descripciones)
+  selectedConditions: Array<{ label: string; detail?: string }> = [];
+
+  // Reconstruye selectedConditions desde el modelo cliente
+  refreshSelectedConditions() {
+    const list: Array<{ label: string; detail?: string }> = [];
+
+    // Solo agregar las condiciones que están en true, sin descripciones para evitar problemas de renderizado
+    if (this.cliente.enfermedadCronica) {
+      list.push({ label: 'Enfermedad crónica' });
+    }
+    if (this.cliente.diabetes) list.push({ label: 'Diabetes' });
+    if (this.cliente.hipotension) list.push({ label: 'Hipotensión' });
+    if (this.cliente.hipotiroide) list.push({ label: 'Hipotiroides' });
+    if (this.cliente.hipotiroidismo) list.push({ label: 'Hipotiroidismo' });
+    if (this.cliente.medicacionRegular) {
+      list.push({ label: 'Medicación regular' });
+    }
+    if (this.cliente.cirugias) {
+      list.push({ label: 'Cirugías' });
+    }
+    if (this.cliente.lesiones) {
+      list.push({ label: 'Lesiones' });
+    }
+    if (this.cliente.fuma) list.push({ label: 'Fumador' });
+    if (this.cliente.alcohol) list.push({ label: 'Consumo de alcohol' });
+
+    this.selectedConditions = list;
+    // Log para depuración rápida cuando el listado se refresca
+    console.log('refreshSelectedConditions (solo condiciones true) ->', this.selectedConditions);
+    
+    // Eliminamos detectChanges() para evitar conflictos con ion-icon duplicado
+    // La detección de cambios se hará automáticamente
+  }
+
+  hasSelectedConditions(): boolean {
+    const hasConditions = this.selectedConditions && this.selectedConditions.length > 0;
+    console.log('hasSelectedConditions:', hasConditions, 'selectedConditions:', this.selectedConditions);
+    return hasConditions;
+  }
+
+  // Método alternativo para verificar condiciones médicas directamente del modelo
+  hasAnyMedicalCondition(): boolean {
+    const hasConditions = this.cliente.enfermedadCronica || 
+           this.cliente.diabetes || 
+           this.cliente.hipotension || 
+           this.cliente.hipotiroide || 
+           this.cliente.hipotiroidismo || 
+           this.cliente.medicacionRegular || 
+           this.cliente.cirugias || 
+           this.cliente.lesiones || 
+           this.cliente.fuma || 
+           this.cliente.alcohol;
+           
+    console.log('hasAnyMedicalCondition:', hasConditions, 'cliente condiciones:', {
+      enfermedadCronica: this.cliente.enfermedadCronica,
+      diabetes: this.cliente.diabetes,
+      hipotension: this.cliente.hipotension,
+      hipotiroide: this.cliente.hipotiroide,
+      hipotiroidismo: this.cliente.hipotiroidismo,
+      medicacionRegular: this.cliente.medicacionRegular,
+      cirugias: this.cliente.cirugias,
+      lesiones: this.cliente.lesiones,
+      fuma: this.cliente.fuma,
+      alcohol: this.cliente.alcohol
+    });
+    
+    return hasConditions;
+  }
+
+  // Método para actualizar condiciones cuando cambien durante el paso 3
+  onMedicalConditionChange() {
+    console.log('Condición médica cambió, actualizando lista...');
+    this.refreshSelectedConditions();
+  }
+
+  // Devuelve todas las opciones médicas (label, valor y detalle opcional)
+  getMedicalOptions(): Array<{ key: string; label: string; value: boolean; detail?: string }> {
+    const map = [
+      { key: 'enfermedadCronica', label: 'Enfermedad crónica', detailKey: 'descripcionEnfermedad' },
+      { key: 'diabetes', label: 'Diabetes' },
+      { key: 'hipotension', label: 'Hipotensión' },
+      { key: 'hipotiroide', label: 'Hipotiroides' },
+      { key: 'hipotiroidismo', label: 'Hipotiroidismo' },
+      { key: 'medicacionRegular', label: 'Medicación regular', detailKey: 'descripcionMedicacion' },
+      { key: 'cirugias', label: 'Cirugías', detailKey: 'descripcionCirugias' },
+      { key: 'lesiones', label: 'Lesiones', detailKey: 'descripcionLesiones' },
+      { key: 'fuma', label: 'Fumador' },
+      { key: 'alcohol', label: 'Consumo de alcohol' }
+    ];
+
+    return map.map(m => {
+      const value = !!(this.cliente as any)[m.key];
+      const detail = m.detailKey ? ((this.cliente as any)[m.detailKey] || '').trim() : undefined;
+      return { key: m.key, label: m.label, value, detail };
+    });
   }
 }

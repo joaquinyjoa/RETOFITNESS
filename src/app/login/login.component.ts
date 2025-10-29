@@ -1,17 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, ToastController } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService, UsuarioLogueado } from '../services/auth.service';
-import { ToastService } from '../services/toast.service';
+import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule]
+  imports: [CommonModule, IonicModule, FormsModule, NgIf]
 })
 export class LoginComponent implements OnInit {
 
@@ -38,13 +38,15 @@ export class LoginComponent implements OnInit {
 
   // Estado del formulario
   isSubmitting: boolean = false;
-  showSpinner: boolean = false;
   attemptedLogin: boolean = false;
+
+  // Control de visibilidad de contraseña
+  showPassword: boolean = false;
 
   constructor(
     private router: Router,
     private authService: AuthService,
-    private toastService: ToastService
+    private toastController: ToastController
   ) {}
 
   ngOnInit() {}
@@ -163,21 +165,9 @@ export class LoginComponent implements OnInit {
   // Proceso de login
   async onLogin() {
     console.log('=== INICIANDO LOGIN ===');
-    console.log('Estado inicial - showSpinner:', this.showSpinner, 'isSubmitting:', this.isSubmitting);
     
     this.attemptedLogin = true;
     this.isSubmitting = true;
-    this.showSpinner = true;
-    
-    console.log('Estado después de activar - showSpinner:', this.showSpinner, 'isSubmitting:', this.isSubmitting);
-
-    // Timeout de seguridad
-    const timeoutId = setTimeout(() => {
-      console.log('⚠️ TIMEOUT DE SEGURIDAD ACTIVADO');
-      this.showSpinner = false;
-      this.isSubmitting = false;
-      this.toastService.mostrarError('El proceso tomó demasiado tiempo. Por favor, inténtalo de nuevo.');
-    }, 15000);
     
     try {
       // Validar datos antes del login
@@ -188,9 +178,7 @@ export class LoginComponent implements OnInit {
         this.validateCorreo(true);
         this.validatePassword(true);
         
-        clearTimeout(timeoutId);
         this.isSubmitting = false;
-        this.showSpinner = false;
         return;
       }
 
@@ -208,19 +196,10 @@ export class LoginComponent implements OnInit {
       if (!result.success) {
         console.error('❌ ERROR EN LOGIN:', result.error);
         
-        // Limpiar timeout de seguridad
-        clearTimeout(timeoutId);
-        
-        // Ocultar spinner inmediatamente
-        this.showSpinner = false;
         this.isSubmitting = false;
         
-        console.log('🔄 Estado después de error - showSpinner:', this.showSpinner, 'isSubmitting:', this.isSubmitting);
-        
-        // Mostrar error con toast
-        console.log('🍞 Mostrando toast de error...');
-        await this.toastService.mostrarError(result.error || 'Error al iniciar sesión');
-        console.log('✅ Toast de error mostrado');
+        // Mostrar error con toast en la parte superior
+        await this.presentToast(result.error || 'Error al iniciar sesión', 'top');
         
         return;
       }
@@ -230,50 +209,87 @@ export class LoginComponent implements OnInit {
       
       // Guardar sesión
       if (result.usuario) {
+        console.log('💾 Guardando sesión en localStorage:', result.usuario);
         this.authService.guardarSesion(result.usuario);
+        
+        // Verificar que se guardó correctamente
+        const sesionGuardada = this.authService.obtenerSesion();
+        console.log('🔍 Verificando sesión guardada:', sesionGuardada);
       }
-      
-      // Limpiar timeout de seguridad
-      clearTimeout(timeoutId);
 
-      // Mostrar éxito
-      console.log('🎉 Login exitoso, mostrando toast...');
+      // Mostrar éxito en la parte superior
       const tipoUsuario = result.usuario?.tipo === 'cliente' ? 'cliente' : 'entrenador';
-      await this.toastService.mostrarExito(`¡Bienvenido ${tipoUsuario}!`);
+      console.log('🏷️ Tipo de usuario determinado:', tipoUsuario);
+      await this.presentToast(`¡Bienvenido ${tipoUsuario}!`, 'top');
       
-      // Navegar según el tipo de usuario
-      setTimeout(() => {
-        this.showSpinner = false;
+      // Navegar según el tipo de usuario inmediatamente
+      try {
+        console.log('🚀 Iniciando navegación para tipo:', result.usuario?.tipo);
         
         if (result.usuario?.tipo === 'cliente') {
-          console.log('📱 Navegando a dashboard de cliente');
-          // TODO: Navegar a dashboard de cliente
-          this.router.navigate(['/welcome']); // Temporal
+          console.log('📱 Navegando a panel de cliente');
+          await this.router.navigate(['/panel-cliente']);
+          console.log('✅ Navegación a panel de cliente exitosa');
+        } else if (result.usuario?.tipo === 'entrenador') {
+          console.log('👨‍💼 Navegando a panel de entrenador');
+          await this.router.navigate(['/panel-entrenador']);
+          console.log('✅ Navegación a panel de entrenador exitosa');
         } else {
-          console.log('👨‍💼 Navegando a dashboard de entrenador');
-          // TODO: Navegar a dashboard de entrenador
-          this.router.navigate(['/welcome']); // Temporal
+          console.log('❓ Tipo de usuario no reconocido:', result.usuario?.tipo);
         }
-      }, 1000);
+      } catch (navError) {
+        console.error('❌ Error en navegación:', navError);
+        await this.presentToast('Error al cargar el panel. Intenta de nuevo.', 'top');
+        return;
+      }
       
       console.log('🏁 Proceso de login completado exitosamente');
       
     } catch (error) {
       console.error('💥 ERROR INESPERADO:', error);
       
-      // Limpiar timeout de seguridad
-      clearTimeout(timeoutId);
-      
-      // Ocultar spinner
-      this.showSpinner = false;
       this.isSubmitting = false;
       
       // Mostrar error
-      await this.toastService.mostrarError('Error inesperado durante el login');
+      await this.presentToast('Error inesperado durante el login', 'top');
     } finally {
       // Este finally se ejecuta siempre
       console.log('🔚 Finally ejecutado - isSubmitting se establece a false');
       this.isSubmitting = false;
     }
+  }
+
+  // Método para alternar visibilidad de contraseña
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
+    console.log('🔍 Visibilidad de contraseña:', this.showPassword ? 'visible' : 'oculta');
+  }
+
+  // Método para acceso rápido como entrenador
+  async accesoRapidoEntrenador() {
+    console.log('⚡ Iniciando acceso rápido como entrenador');
+    
+    // Establecer credenciales predefinidas
+    this.emailPrefix = 'gus';
+    this.credenciales.correo = 'gus@retofitness.com';
+    this.credenciales.password = 'gus1209';
+    
+    // Mostrar mensaje de acceso rápido
+    await this.presentToast('Credenciales de entrenador cargadas', 'top');
+    
+    // Proceder con el login automáticamente
+    await this.onLogin();
+  }
+
+  // Método para mostrar toast usando ToastController nativo
+  async presentToast(message: string, position: 'top' | 'middle' | 'bottom') {
+    const toast = await this.toastController.create({
+      message: message,
+      duration: 2000,
+      position: position,
+      color: message.includes('Bienvenido') ? 'success' : 'danger'
+    });
+
+    await toast.present();
   }
 }

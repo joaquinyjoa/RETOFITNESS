@@ -19,7 +19,7 @@
   position: relative;
   z-index: 1;
   padding: 40px 20px;
-  height: 100%;
+  min-height: 80vh; /* ensure it fills the viewport */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -28,10 +28,23 @@
 }
 
 // Elementos con animación de entrada
-.welcome-logo { opacity: 0; }
+.welcome-logo { opacity: 0; display: flex; align-items: center; justify-content: center; position: relative; }
 .welcome-title { opacity: 0; }
 .welcome-description { opacity: 0; }
 .welcome-buttons { opacity: 0; }
+
+/* Logo specifics */
+.welcome-logo img {
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
+  border-radius: 50%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5), var(--glow-shadow);
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  padding: 12px;
+}
+
+.logo-glow, .logo-ring { display: none; }
 
 // Diseño mejorado de botones
 .welcome-buttons {
@@ -97,7 +110,8 @@
 // Responsive adjustments
 @media (max-width: 480px) {
   .welcome-container {
-    padding: 30px 16px;
+    padding: 18px 14px;
+    justify-content: space-between;
   }
   
   .welcome-buttons {
@@ -110,12 +124,33 @@
       border-radius: 24px;
     }
   }
+
+  .welcome-logo img {
+    width: 140px;
+    height: 140px;
+    padding: 8px;
+  }
+
+  .welcome-title h1 { font-size: 1.6rem; margin-top: 6px; }
+  .welcome-description h2 { font-size: 1rem; }
+  .welcome-description p { font-size: 0.9rem; }
+
+  /* make features grid compact or hide if needed */
+  .features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
+  .feature-item { font-size: 0.82rem; }
 }
 
 @media (min-width: 481px) and (max-width: 768px) {
   .welcome-buttons {
     max-width: 300px;
   }
+}
+
+/* Very small phones: hide secondary verbose content to avoid scroll */
+@media (max-height: 640px) and (max-width: 420px) {
+  .welcome-description { display: none; }
+  .welcome-container { padding: 12px 12px; }
+  .welcome-buttons { gap: 10px; }
 }
 
 // Animación sutil para mejorar la experiencia

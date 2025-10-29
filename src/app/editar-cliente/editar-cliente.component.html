@@ -1,0 +1,283 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="cancelar()">
+        <ion-icon name="arrow-back"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Editar Cliente</ion-title>
+    <ion-buttons slot="end">
+      <ion-button 
+        (click)="guardarCambios()" 
+        [disabled]="guardando"
+        color="primary">
+        <ion-icon name="checkmark" *ngIf="!guardando"></ion-icon>
+        <ion-spinner name="crescent" *ngIf="guardando"></ion-spinner>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  
+  <div *ngIf="loading" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Cargando información del cliente...</p>
+  </div>
+
+  <div *ngIf="!loading" class="form-container">
+    
+    <!-- Información Personal -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <ion-icon name="person-outline"></ion-icon>
+        Información Personal
+      </h3>
+      
+      <ion-item>
+        <ion-label position="stacked">Nombre *</ion-label>
+        <ion-input 
+          [(ngModel)]="cliente.nombre" 
+          placeholder="Ingrese el nombre"
+          type="text">
+        </ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Apellido *</ion-label>
+        <ion-input 
+          [(ngModel)]="cliente.apellido" 
+          placeholder="Ingrese el apellido"
+          type="text">
+        </ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Correo electrónico *</ion-label>
+        <ion-input 
+          [(ngModel)]="cliente.correo" 
+          placeholder="correo@ejemplo.com"
+          type="email">
+        </ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Edad *</ion-label>
+        <ion-input 
+          [(ngModel)]="cliente.edad" 
+          placeholder="Edad en años"
+          type="number"
+          min="1">
+        </ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Género</ion-label>
+        <ion-select [(ngModel)]="cliente.genero" placeholder="Seleccione género">
+          <ion-select-option value="masculino">Masculino</ion-select-option>
+          <ion-select-option value="femenino">Femenino</ion-select-option>
+          <ion-select-option value="otro">Otro</ion-select-option>
+        </ion-select>
+      </ion-item>
+    </div>
+
+    <!-- Información Física -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <ion-icon name="body-outline"></ion-icon>
+        Información Física
+      </h3>
+      
+      <ion-item>
+        <ion-label position="stacked">Peso (kg) *</ion-label>
+        <ion-input 
+          [(ngModel)]="cliente.peso" 
+          placeholder="Peso en kilogramos"
+          type="number"
+          min="1">
+        </ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Altura (cm) *</ion-label>
+        <ion-input 
+          [(ngModel)]="cliente.altura" 
+          placeholder="Altura en centímetros"
+          type="number"
+          min="1">
+        </ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Objetivo</ion-label>
+        <ion-select [(ngModel)]="cliente.objetivo" placeholder="Seleccione objetivo">
+          <ion-select-option value="perder_peso">Perder peso</ion-select-option>
+          <ion-select-option value="ganar_masa_muscular">Ganar masa muscular</ion-select-option>
+          <ion-select-option value="mantener_forma">Mantener forma física</ion-select-option>
+          <ion-select-option value="mejorar_resistencia">Mejorar resistencia</ion-select-option>
+          <ion-select-option value="rehabilitacion">Rehabilitación</ion-select-option>
+          <ion-select-option value="otro">Otro</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Nivel de Actividad</ion-label>
+        <ion-select [(ngModel)]="cliente.nivelActividad" placeholder="Seleccione nivel">
+          <ion-select-option value="sedentario">Sedentario</ion-select-option>
+          <ion-select-option value="ligero">Ligero (1-3 días/semana)</ion-select-option>
+          <ion-select-option value="moderado">Moderado (3-5 días/semana)</ion-select-option>
+          <ion-select-option value="intenso">Intenso (6-7 días/semana)</ion-select-option>
+          <ion-select-option value="muy_intenso">Muy intenso (2 veces/día)</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Horas de sueño</ion-label>
+        <ion-input 
+          [(ngModel)]="cliente.horas_sueno" 
+          placeholder="Ej: 7-8 horas"
+          type="text">
+        </ion-input>
+      </ion-item>
+    </div>
+
+    <!-- Información Médica -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <ion-icon name="medical-outline"></ion-icon>
+        Información Médica
+      </h3>
+      
+      <!-- Enfermedad Crónica -->
+      <ion-item>
+        <ion-checkbox 
+          [(ngModel)]="cliente.enfermedadCronicoa"
+          (ngModelChange)="onEnfermedadChange()">
+        </ion-checkbox>
+        <ion-label class="ion-margin-start">¿Padece alguna enfermedad crónica?</ion-label>
+      </ion-item>
+
+      <ion-item *ngIf="cliente.enfermedadCronicoa">
+        <ion-label position="stacked">Descripción de la enfermedad</ion-label>
+        <ion-textarea 
+          [(ngModel)]="cliente.descripcionEnfermedad" 
+          placeholder="Describa la enfermedad"
+          rows="3">
+        </ion-textarea>
+      </ion-item>
+
+      <!-- Condiciones específicas -->
+      <ion-item>
+        <ion-checkbox [(ngModel)]="cliente.diabetes"></ion-checkbox>
+        <ion-label class="ion-margin-start">Diabetes</ion-label>
+      </ion-item>
+
+      <ion-item>
+        <ion-checkbox [(ngModel)]="cliente.hipotension"></ion-checkbox>
+        <ion-label class="ion-margin-start">Hipotensión</ion-label>
+      </ion-item>
+
+      <ion-item>
+        <ion-checkbox [(ngModel)]="cliente.hipotiroide"></ion-checkbox>
+        <ion-label class="ion-margin-start">Hipotiroide</ion-label>
+      </ion-item>
+
+      <ion-item>
+        <ion-checkbox [(ngModel)]="cliente.hipotiroidismo"></ion-checkbox>
+        <ion-label class="ion-margin-start">Hipotiroidismo</ion-label>
+      </ion-item>
+
+      <!-- Medicación -->
+      <ion-item>
+        <ion-checkbox 
+          [(ngModel)]="cliente.medicacionRegular"
+          (ngModelChange)="onMedicacionChange()">
+        </ion-checkbox>
+        <ion-label class="ion-margin-start">¿Toma medicación regular?</ion-label>
+      </ion-item>
+
+      <ion-item *ngIf="cliente.medicacionRegular">
+        <ion-label position="stacked">Descripción de la medicación</ion-label>
+        <ion-textarea 
+          [(ngModel)]="cliente.descripcionMedicacion" 
+          placeholder="Describa la medicación"
+          rows="3">
+        </ion-textarea>
+      </ion-item>
+
+      <!-- Cirugías -->
+      <ion-item>
+        <ion-checkbox 
+          [(ngModel)]="cliente.cirugias"
+          (ngModelChange)="onCirugiasChange()">
+        </ion-checkbox>
+        <ion-label class="ion-margin-start">¿Ha tenido cirugías?</ion-label>
+      </ion-item>
+
+      <ion-item *ngIf="cliente.cirugias">
+        <ion-label position="stacked">Descripción de las cirugías</ion-label>
+        <ion-textarea 
+          [(ngModel)]="cliente.descripcionCirugias" 
+          placeholder="Describa las cirugías"
+          rows="3">
+        </ion-textarea>
+      </ion-item>
+
+      <!-- Lesiones -->
+      <ion-item>
+        <ion-checkbox 
+          [(ngModel)]="cliente.lesiones"
+          (ngModelChange)="onLesionesChange()">
+        </ion-checkbox>
+        <ion-label class="ion-margin-start">¿Ha tenido lesiones?</ion-label>
+      </ion-item>
+
+      <ion-item *ngIf="cliente.lesiones">
+        <ion-label position="stacked">Descripción de las lesiones</ion-label>
+        <ion-textarea 
+          [(ngModel)]="cliente.descripcionLesiones" 
+          placeholder="Describa las lesiones"
+          rows="3">
+        </ion-textarea>
+      </ion-item>
+    </div>
+
+    <!-- Hábitos -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <ion-icon name="restaurant-outline"></ion-icon>
+        Hábitos
+      </h3>
+      
+      <ion-item>
+        <ion-checkbox [(ngModel)]="cliente.fuma"></ion-checkbox>
+        <ion-label class="ion-margin-start">¿Fuma?</ion-label>
+      </ion-item>
+
+      <ion-item>
+        <ion-checkbox [(ngModel)]="cliente.alcohol"></ion-checkbox>
+        <ion-label class="ion-margin-start">¿Consume alcohol regularmente?</ion-label>
+      </ion-item>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="action-buttons">
+      <ion-button 
+        expand="block" 
+        fill="outline" 
+        (click)="cancelar()">
+        Cancelar
+      </ion-button>
+      
+      <ion-button 
+        expand="block" 
+        (click)="guardarCambios()" 
+        [disabled]="guardando">
+        <ion-spinner name="crescent" *ngIf="guardando"></ion-spinner>
+        <span *ngIf="!guardando">Guardar Cambios</span>
+        <span *ngIf="guardando">Guardando...</span>
+      </ion-button>
+    </div>
+
+  </div>
+</ion-content>

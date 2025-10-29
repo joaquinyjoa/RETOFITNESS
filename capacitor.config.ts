@@ -1,9 +1,13 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
+  appId: 'com.retofitness.app',
   appName: 'RetoFitness',
   webDir: 'www',
+  server: {
+    androidScheme: 'http',
+    cleartext: true
+  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2500,
@@ -18,8 +22,8 @@ const config: CapacitorConfig = {
       "resizeOnFullScreen": false
     },
     EdgeToEdge: {
-      "backgroundColor": "#000000ff"
-    }
+      backgroundColor: "#000000ff",
+    },
   }
 };
 

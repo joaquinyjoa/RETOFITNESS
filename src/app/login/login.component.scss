@@ -1,34 +1,17 @@
 /* ===== VARIABLES DE COLORES ===== */
-:root {
+:host {
   --primary-green: #00ff88;
   --secondary-green: #00cc6a;
   --dark-bg: #0a0a0a;
+  --card-bg: rgba(26, 26, 26, 0.95);
   --gradient-bg: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2a2a2a 100%);
   --accent-gradient: linear-gradient(45deg, #00ff88 0%, #00cc6a 50%, #ffffff 100%);
-  --glow-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
-}
-
-/* ===== EMOJIS VERDES ===== */
-.emoji-green {
-  display: inline-block;
-  filter: hue-rotate(120deg) saturate(2) brightness(1.3) contrast(1.2);
-  text-shadow: 0 0 15px rgba(0, 255, 136, 0.8);
-  transition: all 0.3s ease;
-  margin-right: 8px;
-  
-  &:hover {
-    filter: hue-rotate(120deg) saturate(2.5) brightness(1.5) contrast(1.3);
-    text-shadow: 0 0 20px rgba(0, 255, 136, 1);
-    transform: scale(1.1);
-  }
-}
-
-/* Aplicar filtro verde a emojis específicos */
-ion-card-title,
-.login-button span,
-.register-button {
-  /* Resetear filtros previos para evitar duplicación */
-  filter: none;
+  --border-color: rgba(0, 255, 136, 0.3);
+  --glow-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-focus-bg: rgba(0, 255, 136, 0.1);
 }
 
 /* ===== CONTENEDOR PRINCIPAL ===== */
@@ -51,13 +34,13 @@ ion-content {
 
 /* ===== TARJETA DE LOGIN ===== */
 .login-card {
-  background: rgba(20, 20, 20, 0.95);
+  background: var(--card-bg);
   backdrop-filter: blur(15px);
-  border: 1px solid rgba(0, 255, 136, 0.3);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   box-shadow: var(--glow-shadow);
   margin: 0 auto;
-  max-width: 420px; /* Aumentado ligeramente para acomodar el spacing */
+  max-width: 420px;
   width: 100%;
   position: relative;
   overflow: hidden;
@@ -75,7 +58,7 @@ ion-content {
 
   ion-card-header {
     text-align: center;
-    padding: 18px 16px 12px; /* más compacto y limpio */
+    padding: 18px 16px 12px;
     background: linear-gradient(180deg, rgba(0,0,0,0.02), transparent);
     border-bottom: none;
     z-index: 2;
@@ -89,10 +72,15 @@ ion-content {
       align-items: center;
       justify-content: center;
       gap: 8px;
+      text-shadow: 0 2px 10px rgba(0, 255, 136, 0.3);
+      background: var(--accent-gradient);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     ion-card-subtitle {
-      color: rgba(255, 255, 255, 0.65);
+      color: var(--text-secondary);
       font-size: 0.95rem;
       font-weight: 300;
       margin-top: 6px;
@@ -108,125 +96,124 @@ ion-content {
 ion-list {
   background: transparent;
   margin-bottom: 30px;
-  padding: 0; /* Remover padding por defecto */
+  padding: 0;
 }
 
 .input-item {
   --background: transparent;
-  --border-color: rgba(0, 255, 136, 0.2);
+  --border-color: transparent;
   --padding-start: 0;
   --padding-end: 0;
-  margin: 0 10px 20px 10px; /* Margen de 10px a los lados */
-  border-radius: 12px;
-  border: 1px solid rgba(0, 255, 136, 0.2);
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: rgba(0, 255, 136, 0.4);
-    box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
-  }
-
-  &.item-has-focus {
-    border-color: var(--primary-green);
-    box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
-  }
-}
-
-/* Mantener el estilo original para otros ion-item */
-ion-item:not(.input-item) {
-  --background: transparent;
-  --border-color: rgba(0, 255, 136, 0.2);
-  --padding-start: 0;
-  --padding-end: 0;
-  margin-bottom: 20px;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 255, 136, 0.2);
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: rgba(0, 255, 136, 0.4);
-    box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
-  }
-
-  &.item-has-focus {
-    border-color: var(--primary-green);
-    box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
-  }
+  margin: 0 0 20px 0;
+  display: flex;
+  justify-content: center;
 }
 
 /* ===== INPUT WRAPPER ===== */
 .input-wrapper {
   position: relative;
   width: 100%;
-  padding: 20px 15px 8px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+
+  .top-label {
+    display: block;
+    color: var(--primary-green);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-align: left;
+  }
+
+  .input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--input-bg);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    padding: 16px 20px;
+
+    &:focus-within {
+      border-color: var(--primary-green);
+      box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.15);
+      background: var(--card-bg);
+    }
+  }
 
   .native-input {
-    width: 100%;
+    flex: 1;
     background: transparent;
     border: none;
     outline: none;
-    color: #ffffff;
+    color: var(--text-primary);
     font-size: 1rem;
     font-weight: 400;
     padding: 0;
-    z-index: 2;
-    position: relative;
 
     &::placeholder {
       color: rgba(255, 255, 255, 0.4);
       font-weight: 300;
-    }
-
-    &:focus + .floating-label,
-    &:not(:placeholder-shown) + .floating-label {
-      transform: translateY(-12px) scale(0.8);
-      color: var(--primary-green);
-    }
-  }
-
-  .floating-label {
-    position: absolute;
-    left: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 1rem;
-    font-weight: 400;
-    transition: all 0.3s ease;
-    pointer-events: none;
-    z-index: 1;
-
-    &.active {
-      transform: translateY(-12px) scale(0.8);
-      color: var(--primary-green);
     }
   }
 }
 
 /* ===== EMAIL CON DOMINIO FIJO ===== */
 .email-wrapper {
-  display: flex;
-  align-items: center;
-  
-  .email-input {
-    flex: 1;
-    min-width: 0;
-    padding-right: 5px;
+  .input-container {
+    .email-input {
+      flex: 1;
+      min-width: 0;
+      padding-right: 5px;
+    }
+    
+    .email-domain {
+      color: rgba(0, 255, 136, 0.8);
+      font-size: 1rem;
+      font-weight: 500;
+      white-space: nowrap;
+      user-select: none;
+      pointer-events: none;
+    }
   }
-  
-  .email-domain {
-    color: rgba(0, 255, 136, 0.8);
-    font-size: 1rem;
-    font-weight: 500;
-    white-space: nowrap;
-    user-select: none;
-    pointer-events: none;
-    margin-left: 2px;
-  }
-  
-  .floating-label {
-    left: 15px;
-    z-index: 3;
+}
+
+/* ===== PASSWORD CON BOTÓN DE VISIBILIDAD ===== */
+.password-wrapper {
+  .input-container {
+    .password-input {
+      flex: 1;
+      min-width: 0;
+      padding-right: 45px;
+    }
+    
+    .password-toggle-btn {
+      position: absolute;
+      right: 15px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        transform: scale(1.1);
+      }
+      
+      .emoji-icon {
+        font-size: 1.0rem;
+        color: var(--primary-green);
+        filter: none;
+        text-shadow: none;
+      }
+    }
   }
 }
 
@@ -235,7 +222,7 @@ ion-item:not(.input-item) {
   color: #ff4757;
   font-size: 0.85rem;
   font-weight: 400;
-  margin: -15px 25px 15px 25px; /* Margen ajustado para alinearse con los inputs */
+  margin: 5px 0 0 0;
   opacity: 0;
   animation: fadeInError 0.3s ease forwards;
 }
@@ -251,20 +238,50 @@ ion-item:not(.input-item) {
   }
 }
 
+/* ===== ACCESO RÁPIDO ===== */
+.quick-access {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0 10px 0;
+  
+  .quick-access-button {
+    --background: transparent;
+    --border-radius: 12px;
+    --padding-top: 12px;
+    --padding-bottom: 12px;
+    --color: rgba(0, 255, 136, 0.8);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0.5px;
+    border: 1px dashed rgba(0, 255, 136, 0.4);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      --background: rgba(0, 255, 136, 0.05);
+      --color: rgba(0, 255, 136, 1);
+      border-color: rgba(0, 255, 136, 0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2);
+    }
+  }
+}
+
 /* ===== BOTONES DE ACCIÓN ===== */
 .action-buttons {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Centra los botones horizontalmente */
+  align-items: center;
   gap: 15px;
-  margin: 20px 10px 0 10px; /* Margen de 10px a los lados */
+  margin: 20px 0 0 0;
   padding: 0;
 
   .login-button,
   .register-button {
-    width: calc(100% - 20px); /* deja 10px de espacio a cada lado dentro del contenedor */
-    max-width: 380px; /* evita que el botón sea enorme en pantallas grandes */
-    margin: 0 auto; /* centrar horizontalmente */
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
     display: block;
   }
 
@@ -398,11 +415,9 @@ ion-item:not(.input-item) {
 @media (max-width: 768px) {
   .login-container {
     padding: 15px;
-    justify-content: flex-start;
-    padding-top: 40px;
+    justify-content: center;
+    padding-top: 0;
   }
-
-  /* Se removió el toolbar visual para simplificar la interfaz en móvil */
 
   .login-card {
     max-width: 100%;
@@ -426,14 +441,11 @@ ion-item:not(.input-item) {
   }
 
   .input-wrapper {
-    padding: 18px 12px 6px;
-
-    .native-input {
-      font-size: 0.95rem;
+    .input-container {
+      padding: 14px 16px;
     }
 
-    .floating-label {
-      left: 12px;
+    .native-input {
       font-size: 0.95rem;
     }
   }

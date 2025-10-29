@@ -1,0 +1,178 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>
+      Clientes
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding ver-clientes-content">
+  <div class="ver-clientes-container">
+
+    <ion-searchbar
+      class="clientes-search"
+      placeholder="Buscar por nombre o apellido"
+      [(ngModel)]="q"
+      (ionInput)="applyFilter()"
+      show-clear-button="focus">
+    </ion-searchbar>
+
+    <div *ngIf="loading" class="loading-placeholder">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+
+    <div *ngIf="!loading">
+      <div class="cards-grid">
+        <ion-card *ngFor="let c of filteredClientes" class="client-card">
+          <ion-card-content>
+            <div class="card-header">
+              <div class="client-main">
+                <h3 class="client-name">{{ c.nombre }} {{ c.apellido }}</h3>
+                <div class="client-sub">{{ c.correo || '' }}</div>
+              </div>
+            </div>
+
+            <div class="client-stats">
+              <div class="stat-item"><strong>Edad</strong><span>{{ c.edad ?? '-' }}</span></div>
+              <div class="stat-item"><strong>Altura</strong><span>{{ c.altura ?? '-' }} cm</span></div>
+              <div class="stat-item"><strong>Peso</strong><span>{{ c.peso ?? '-' }} kg</span></div>
+            </div>
+
+            <div class="card-actions">
+              <ion-button class="action-button outline" fill="outline" size="small" (click)="verMas(c)">Ver más</ion-button>
+              <ion-button class="action-button" fill="clear" size="small" (click)="verRutina(c)">Rutina</ion-button>
+              <ion-button class="action-button solid" fill="solid" size="small" color="tertiary" (click)="editarCliente(c)">Editar</ion-button>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </div>
+
+      <div *ngIf="filteredClientes.length === 0" class="no-results">
+        No se encontraron clientes.
+      </div>
+    </div>
+
+  </div>
+</ion-content>
+
+<!-- Modal de detalle del cliente -->
+<ion-modal [isOpen]="isModalOpen" (didDismiss)="cerrarModal()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Detalle del Cliente</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarModal()">
+            <ion-icon name="close"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    
+    <ion-content class="modal-content" *ngIf="clienteSeleccionado">
+      <div class="modal-container">
+        
+        <!-- Información Personal -->
+        <div class="info-section">
+          <h3 class="section-title">
+            <ion-icon name="person-outline"></ion-icon>
+            Información Personal
+          </h3>
+          
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">Nombre completo:</span>
+              <span class="value">{{ clienteSeleccionado.nombre }} {{ clienteSeleccionado.apellido }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Correo electrónico:</span>
+              <span class="value">{{ clienteSeleccionado.correo || 'No especificado' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Edad:</span>
+              <span class="value">{{ clienteSeleccionado.edad || 'No especificada' }} años</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Teléfono:</span>
+              <span class="value">{{ clienteSeleccionado.telefono || 'No especificado' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información Física -->
+        <div class="info-section">
+          <h3 class="section-title">
+            <ion-icon name="body-outline"></ion-icon>
+            Información Física
+          </h3>
+          
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">Altura:</span>
+              <span class="value">{{ clienteSeleccionado.altura || 'No especificada' }} cm</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Peso:</span>
+              <span class="value">{{ clienteSeleccionado.peso || 'No especificado' }} kg</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Objetivo:</span>
+              <span class="value">{{ clienteSeleccionado.objetivo || 'No especificado' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Nivel de actividad:</span>
+              <span class="value">{{ clienteSeleccionado.nivelActividad || 'No especificado' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información Médica -->
+        <div class="info-section">
+          <h3 class="section-title">
+            <ion-icon name="medical-outline"></ion-icon>
+            Información Médica
+          </h3>
+          
+          <div class="info-grid">
+            <div class="info-item full-width">
+              <span class="label">Enfermedades:</span>
+              <span class="value">{{ clienteSeleccionado.descripcionEnfermedad || 'Ninguna' }}</span>
+            </div>
+            <div class="info-item full-width">
+              <span class="label">Medicaciones:</span>
+              <span class="value">{{ clienteSeleccionado.descripcionMedicacion || 'Ninguna' }}</span>
+            </div>
+            <div class="info-item full-width">
+              <span class="label">Cirugías:</span>
+              <span class="value">{{ clienteSeleccionado.descripcionCirugias || 'Ninguna' }}</span>
+            </div>
+            <div class="info-item full-width">
+              <span class="label">Lesiones:</span>
+              <span class="value">{{ clienteSeleccionado.descripcionLesiones || 'Ninguna' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información Adicional -->
+        <div class="info-section">
+          <h3 class="section-title">
+            <ion-icon name="information-circle-outline"></ion-icon>
+            Información Adicional
+          </h3>
+          
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">Fecha de registro:</span>
+              <span class="value">{{ clienteSeleccionado.created_at ? (clienteSeleccionado.created_at | date:'dd/MM/yyyy') : 'No disponible' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">ID del cliente:</span>
+              <span class="value">{{ clienteSeleccionado.id || 'No disponible' }}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
