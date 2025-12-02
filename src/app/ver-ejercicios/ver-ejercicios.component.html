@@ -124,11 +124,11 @@
             </ion-card-subtitle>
           </div>
           <div class="actions">
-            <ion-button fill="clear" size="small" (click)="abrirModal(ejercicio)" class="action-btn edit-btn" style="font-size: 24px;">
-              <ion-icon name="create-outline" slot="icon-only" style="font-size: 24px;"></ion-icon>
+            <ion-button fill="clear" size="small" (click)="abrirModal(ejercicio)" class="action-btn edit-btn">
+              <ion-icon slot="icon-only" name="pencil" style="font-size: 24px;"></ion-icon>
             </ion-button>
-            <ion-button fill="clear" size="small" (click)="eliminarEjercicio(ejercicio)" class="action-btn delete-btn" color="danger" style="font-size: 24px;">
-              <ion-icon name="trash-outline" slot="icon-only" style="font-size: 24px;"></ion-icon>
+            <ion-button fill="clear" size="small" (click)="eliminarEjercicio(ejercicio)" class="action-btn delete-btn" color="danger">
+              <ion-icon slot="icon-only" name="trash" style="font-size: 24px;"></ion-icon>
             </ion-button>
           </div>
         </div>
