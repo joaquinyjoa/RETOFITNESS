@@ -185,7 +185,6 @@
     <div class="filters-section">
       <h2 style="color: var(--primary-green); text-align: center; padding: 40px;">
         Sección de Rutinas<br>
-        <small style="color: var(--light-gray); font-size: 0.9rem;">Próximamente disponible</small>
       </h2>
     </div>
   </div>
@@ -461,6 +460,153 @@
           <ion-button expand="block" type="submit" [disabled]="loading">
             <ion-spinner *ngIf="loading" name="crescent"></ion-spinner>
             <span *ngIf="!loading">{{ editMode ? 'Actualizar' : 'Crear' }} Ejercicio</span>
+          </ion-button>
+        </div>
+      </form>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- Modal Rutina -->
+<ion-modal [isOpen]="showModalRutina" (didDismiss)="cerrarModalRutina()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>{{ editModeRutina ? 'Editar' : 'Nueva' }} Rutina</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarModalRutina()">
+            <ion-icon name="close"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="modal-content">
+      <form (ngSubmit)="guardarRutina()">
+        
+        <!-- Información básica -->
+        <div class="form-section">
+          <h4>Información de la Rutina</h4>
+          
+          <ion-item>
+            <ion-label position="stacked">Nombre de la rutina *</ion-label>
+            <ion-input 
+              [(ngModel)]="rutinaActual.nombre" 
+              name="nombre"
+              placeholder="Ej: Rutina de fuerza 4 semanas"
+              required>
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Descripción</ion-label>
+            <ion-textarea 
+              [(ngModel)]="rutinaActual.descripcion" 
+              name="descripcion"
+              placeholder="Descripción breve de la rutina"
+              rows="3">
+            </ion-textarea>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Objetivo</ion-label>
+            <ion-input 
+              [(ngModel)]="rutinaActual.objetivo" 
+              name="objetivo"
+              placeholder="Ej: Ganar masa muscular">
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Duración (semanas)</ion-label>
+            <ion-input 
+              [(ngModel)]="rutinaActual.duracion_semanas" 
+              name="duracion_semanas"
+              type="number"
+              min="1"
+              placeholder="4">
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Nivel de dificultad *</ion-label>
+            <ion-select [(ngModel)]="rutinaActual.nivel_dificultad" name="nivel_dificultad" interface="popover">
+              <ion-select-option *ngFor="let nivel of nivesDificultad" [value]="nivel.value">
+                {{ nivel.label }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </div>
+
+        <!-- Ejercicios de la rutina -->
+        <div class="form-section">
+          <h4>Ejercicios de la Rutina</h4>
+          
+          <ion-item>
+            <ion-label position="stacked">Agregar ejercicio</ion-label>
+            <ion-select 
+              placeholder="Seleccionar ejercicio"
+              interface="popover"
+              (ionChange)="agregarEjercicioARutina($event.detail.value); $event.target.value = null">
+              <ion-select-option *ngFor="let ej of ejerciciosDisponibles" [value]="ej">
+                {{ ej.nombre }} - {{ ej.musculo_principal }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <div *ngIf="ejerciciosSeleccionados.length > 0" class="selected-exercises-list">
+            <div *ngFor="let ejSel of ejerciciosSeleccionados; let i = index" class="exercise-item">
+              <div class="exercise-header">
+                <span class="order-number">{{ i + 1 }}</span>
+                <strong style="color: var(--primary-green); flex: 1;">{{ ejSel.ejercicio?.nombre }}</strong>
+                <ion-button fill="clear" color="danger" size="small" (click)="eliminarEjercicioDeRutina(i)">
+                  <ion-icon name="trash"></ion-icon>
+                </ion-button>
+              </div>
+              
+              <div class="exercise-params">
+                <ion-item lines="none">
+                  <ion-label position="stacked">Series</ion-label>
+                  <ion-input 
+                    [(ngModel)]="ejSel.series" 
+                    [name]="'series_' + i"
+                    type="number"
+                    min="1"
+                    placeholder="3">
+                  </ion-input>
+                </ion-item>
+
+                <ion-item lines="none">
+                  <ion-label position="stacked">Repeticiones</ion-label>
+                  <ion-input 
+                    [(ngModel)]="ejSel.repeticiones" 
+                    [name]="'reps_' + i"
+                    placeholder="10-12">
+                  </ion-input>
+                </ion-item>
+
+                <ion-item lines="none">
+                  <ion-label position="stacked">Descanso (seg)</ion-label>
+                  <ion-input 
+                    [(ngModel)]="ejSel.descanso_segundos" 
+                    [name]="'descanso_' + i"
+                    type="number"
+                    placeholder="60">
+                  </ion-input>
+                </ion-item>
+              </div>
+            </div>
+          </div>
+
+          <ion-note *ngIf="ejerciciosSeleccionados.length === 0" class="empty-note">
+            No hay ejercicios agregados. Selecciona ejercicios para agregar a la rutina.
+          </ion-note>
+        </div>
+
+        <!-- Botones -->
+        <div class="form-actions">
+          <ion-button expand="block" type="submit" [disabled]="loadingRutinas">
+            <ion-spinner *ngIf="loadingRutinas" name="crescent"></ion-spinner>
+            <span *ngIf="!loadingRutinas">{{ editModeRutina ? 'Actualizar' : 'Crear' }} Rutina</span>
           </ion-button>
         </div>
       </form>
