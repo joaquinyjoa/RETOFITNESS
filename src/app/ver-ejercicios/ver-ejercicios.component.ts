@@ -61,6 +61,10 @@ export class VerEjerciciosComponent implements OnInit {
   fechaFinAsignacion: string = '';
   notasAsignacion: string = '';
 
+  // Modal para ver detalle de rutina
+  showModalDetalle = false;
+  rutinaDetalle: RutinaConDetalles | null = null;
+
   // Filtros de rutinas
   filtroTextoRutina = '';
   filtroNivelRutina = '';
@@ -813,5 +817,32 @@ export class VerEjerciciosComponent implements OnInit {
     } finally {
       this.loadingRutinas = false;
     }
+  }
+
+  // Abrir modal de detalle de rutina
+  async verDetalleRutina(rutina: RutinaConDetalles) {
+    console.log('📋 Abriendo detalle de rutina:', rutina);
+    console.log('📊 Ejercicios en la rutina:', rutina.ejercicios);
+    console.log('🔢 Cantidad de ejercicios:', rutina.ejercicios?.length || 0);
+    
+    // Si la rutina no tiene ejercicios cargados, cargarlos
+    if (!rutina.ejercicios || rutina.ejercicios.length === 0) {
+      console.log('⚠️ No hay ejercicios, intentando cargar...');
+      if (rutina.id) {
+        const { data: ejerciciosRutina } = await this.rutinaService.obtenerEjerciciosDeRutina(rutina.id);
+        console.log('✅ Ejercicios cargados:', ejerciciosRutina);
+        rutina.ejercicios = ejerciciosRutina || [];
+      }
+    }
+    
+    this.rutinaDetalle = rutina;
+    this.showModalDetalle = true;
+    console.log('✅ Modal abierto con rutina:', this.rutinaDetalle);
+  }
+
+  // Cerrar modal de detalle
+  cerrarModalDetalle() {
+    this.showModalDetalle = false;
+    this.rutinaDetalle = null;
   }
 }

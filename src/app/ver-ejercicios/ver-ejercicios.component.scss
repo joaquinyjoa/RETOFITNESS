@@ -1049,3 +1049,96 @@ ion-header {
   }
 }
 
+// Estilos para modal de detalle de rutina
+.modal-detalle-rutina {
+  --background: #000000;
+  
+  ion-content {
+    --background: #000000;
+    --color: #ffffff;
+  }
+  
+  ion-toolbar {
+    --background: #1a1a1a;
+    --color: #00ff88;
+  }
+  
+  ion-card {
+    --background: rgba(0, 255, 136, 0.08);
+    background: rgba(0, 255, 136, 0.08) !important;
+    --color: #ffffff;
+    color: #ffffff !important;
+  }
+  
+  ion-card-header {
+    --color: #00ff88;
+    color: #00ff88 !important;
+  }
+  
+  ion-card-title {
+    --color: #00ff88;
+    color: #00ff88 !important;
+  }
+  
+  ion-card-subtitle {
+    --color: #999999;
+    color: #999999 !important;
+  }
+  
+  ion-card-content {
+    --color: #e0e0e0;
+    color: #e0e0e0 !important;
+  }
+}
+
+.detalle-rutina-container {
+  max-width: 900px;
+  margin: 0 auto;
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+.ejercicio-detalle-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  margin-bottom: 20px;
+  
+  ion-card-header {
+    border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+  }
+}
+
+.ejercicio-numero-badge {
+  background: var(--primary-green);
+  color: var(--black-bg);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.ejercicio-params-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+  
+  .param-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(0, 255, 136, 0.05);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    border-radius: 10px;
+    
+    ion-icon {
+      font-size: 28px;
+    }
+  }
+}

@@ -247,41 +247,45 @@
       </ion-card-header>
 
       <ion-card-content>
-        <p *ngIf="rutina.descripcion" style="margin-bottom: 10px;">{{ rutina.descripcion }}</p>
-        <p *ngIf="rutina.objetivo"><strong>Objetivo:</strong> {{ rutina.objetivo }}</p>
+        <p *ngIf="rutina.descripcion" style="margin-bottom: 10px; color: var(--ion-color-medium);">{{ rutina.descripcion }}</p>
+        <p *ngIf="rutina.objetivo" style="color: var(--ion-color-medium);"><strong style="color: var(--primary-green);">Objetivo:</strong> {{ rutina.objetivo }}</p>
 
-        <!-- Ejercicios de la rutina -->
+        <!-- Resumen de ejercicios -->
         <div *ngIf="rutina.ejercicios && rutina.ejercicios.length > 0" style="margin-top: 15px;">
-          <h4 style="color: var(--primary-green); margin-bottom: 10px;">
-            Ejercicios ({{ rutina.ejercicios.length }})
-          </h4>
-          
-          <div class="rutina-ejercicios-list">
-            <div *ngFor="let ej of rutina.ejercicios; let i = index" class="rutina-ejercicio-item">
-              <div class="ejercicio-info">
-                <span class="ejercicio-numero">{{ i + 1 }}.</span>
-                <div class="ejercicio-detalles">
-                  <strong>{{ ej.ejercicio?.nombre }}</strong>
-                  <div class="ejercicio-params">
-                    <span>{{ ej.series }} series</span>
-                    <span>{{ ej.repeticiones }} reps</span>
-                    <span>{{ ej.descanso_segundos }}s descanso</span>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Video del ejercicio -->
-              <div *ngIf="ej.ejercicio?.enlace_video" class="ejercicio-video">
-                <iframe
-                  [src]="getSafeUrl(ej.ejercicio.enlace_video)"
-                  frameborder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen
-                  style="width: 100%; height: 200px; border-radius: 8px;">
-                </iframe>
-              </div>
-            </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <h4 style="color: var(--primary-green); margin: 0;">
+              <ion-icon name="barbell-outline" style="vertical-align: middle;"></ion-icon>
+              {{ rutina.ejercicios.length }} ejercicio(s)
+            </h4>
           </div>
+          
+          <!-- Lista resumida (primeros 3) -->
+          <ion-list style="background: transparent;">
+            <ion-item *ngFor="let ej of rutina.ejercicios.slice(0, 3); let i = index" lines="none" style="--background: rgba(0, 255, 136, 0.05); margin-bottom: 5px; border-radius: 8px;">
+              <ion-label>
+                <h3 style="color: var(--primary-green); font-size: 0.95rem;">{{ i + 1 }}. {{ ej.ejercicio?.nombre }}</h3>
+                <p style="color: var(--ion-color-medium); font-size: 0.85rem;">
+                  {{ ej.series }} series × {{ ej.repeticiones }} reps
+                </p>
+              </ion-label>
+            </ion-item>
+            
+            <ion-note *ngIf="rutina.ejercicios.length > 3" style="display: block; text-align: center; color: var(--ion-color-medium); margin-top: 5px; font-size: 0.85rem;">
+              + {{ rutina.ejercicios.length - 3 }} ejercicio(s) más...
+            </ion-note>
+          </ion-list>
+        </div>
+
+        <!-- Botones de acción -->
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+          <ion-button expand="block" fill="outline" (click)="verDetalleRutina(rutina)" style="flex: 1;">
+            <ion-icon name="eye-outline" slot="start"></ion-icon>
+            Ver más
+          </ion-button>
+          <ion-button expand="block" fill="solid" color="success" (click)="abrirModalAsignar(rutina)" style="flex: 1;">
+            <ion-icon name="person-add-outline" slot="start"></ion-icon>
+            Asignar
+          </ion-button>
         </div>
       </ion-card-content>
     </ion-card>
@@ -297,7 +301,7 @@
         <ion-title>{{ editMode ? 'Editar' : 'Nuevo' }} Ejercicio</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="cerrarModal()">
-            <ion-icon name="close"></ion-icon>
+            Volver
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -573,7 +577,7 @@
         <ion-title>{{ editModeRutina ? 'Editar' : 'Nueva' }} Rutina</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="cerrarModalRutina()">
-            <ion-icon name="close"></ion-icon>
+            Volver
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -774,6 +778,171 @@
           </ion-button>
         </div>
       </form>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- Modal para ver detalle completo de rutina -->
+<ion-modal [isOpen]="showModalDetalle" (didDismiss)="cerrarModalDetalle()" class="modal-detalle-rutina">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="dark">
+        <ion-title style="color: #00ff88;">{{ rutinaDetalle?.nombre || 'Detalle de Rutina' }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarModalDetalle()" style="color: #00ff88; font-weight: 600;">
+            Volver
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="ion-padding" style="--background: #000000; background: #000000;">
+      <div *ngIf="rutinaDetalle" class="detalle-rutina-container">
+        <!-- Información general -->
+        <div class="detalle-header">
+          <h2 style="color: #00ff88; margin-bottom: 10px; margin-top: 0;">{{ rutinaDetalle.nombre }}</h2>
+          
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+            <ion-chip [color]="rutinaDetalle.nivel_dificultad === 'principiante' ? 'success' : rutinaDetalle.nivel_dificultad === 'intermedio' ? 'warning' : 'danger'" style="font-weight: 600;">
+              <ion-icon name="fitness-outline"></ion-icon>
+              <ion-label>{{ getNivelLabel(rutinaDetalle.nivel_dificultad) }}</ion-label>
+            </ion-chip>
+            
+            <ion-chip color="primary" *ngIf="rutinaDetalle.duracion_semanas" style="font-weight: 600;">
+              <ion-icon name="calendar-outline"></ion-icon>
+              <ion-label>{{ rutinaDetalle.duracion_semanas }} semanas</ion-label>
+            </ion-chip>
+            
+            <ion-chip color="tertiary" *ngIf="rutinaDetalle.ejercicios?.length" style="font-weight: 600;">
+              <ion-icon name="barbell-outline"></ion-icon>
+              <ion-label>{{ rutinaDetalle.ejercicios?.length }} ejercicios</ion-label>
+            </ion-chip>
+          </div>
+
+          <ion-card *ngIf="rutinaDetalle.descripcion" style="background: rgba(0, 255, 136, 0.1) !important; border: 2px solid rgba(0, 255, 136, 0.4); margin: 10px 0;">
+            <ion-card-header style="padding-bottom: 10px;">
+              <ion-card-title style="font-size: 1.1rem; color: #00ff88 !important; font-weight: 600;">
+                <ion-icon name="document-text-outline" style="vertical-align: middle;"></ion-icon> Descripción
+              </ion-card-title>
+            </ion-card-header>
+            <ion-card-content style="color: #ffffff !important; line-height: 1.6; font-size: 0.95rem;">
+              {{ rutinaDetalle.descripcion }}
+            </ion-card-content>
+          </ion-card>
+
+          <ion-card *ngIf="rutinaDetalle.objetivo" style="background: rgba(0, 255, 136, 0.1) !important; border: 2px solid rgba(0, 255, 136, 0.4); margin: 10px 0;">
+            <ion-card-header style="padding-bottom: 10px;">
+              <ion-card-title style="font-size: 1.1rem; color: #00ff88 !important; font-weight: 600;">
+                <ion-icon name="trophy-outline" style="vertical-align: middle;"></ion-icon> Objetivo
+              </ion-card-title>
+            </ion-card-header>
+            <ion-card-content style="color: #ffffff !important; line-height: 1.6; font-size: 0.95rem;">
+              {{ rutinaDetalle.objetivo }}
+            </ion-card-content>
+          </ion-card>
+        </div>
+
+        <!-- Lista completa de ejercicios con videos -->
+        <div class="ejercicios-detalle" style="margin-top: 20px;">
+          <h3 style="color: #00ff88; margin-bottom: 15px; font-size: 1.3rem;">
+            <ion-icon name="list-outline" style="vertical-align: middle;"></ion-icon>
+            Ejercicios de la rutina
+          </h3>
+
+          <div *ngIf="rutinaDetalle.ejercicios && rutinaDetalle.ejercicios.length > 0" class="rutina-ejercicios-list">
+            <ion-card *ngFor="let ej of rutinaDetalle.ejercicios; let i = index" 
+                      style="background: rgba(0, 255, 136, 0.1) !important; border: 2px solid rgba(0, 255, 136, 0.4); margin-bottom: 20px;">
+              <ion-card-header style="border-bottom: 2px solid rgba(0, 255, 136, 0.3); padding: 16px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="background: #00ff88; color: #000000; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.3rem; flex-shrink: 0;">
+                    {{ i + 1 }}
+                  </div>
+                  <div style="flex: 1;">
+                    <ion-card-title style="color: #00ff88 !important; font-size: 1.2rem; margin: 0; font-weight: 700;">
+                      {{ ej.ejercicio?.nombre || 'Ejercicio sin nombre' }}
+                    </ion-card-title>
+                    <ion-card-subtitle style="color: #cccccc !important; margin-top: 5px; font-size: 0.9rem;">
+                      <ion-icon name="body-outline" style="vertical-align: middle;"></ion-icon>
+                      {{ ej.ejercicio?.musculo_principal || 'N/A' }}
+                    </ion-card-subtitle>
+                  </div>
+                </div>
+              </ion-card-header>
+
+              <ion-card-content style="padding: 20px; color: #ffffff !important;">
+                <!-- Parámetros del ejercicio -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px;">
+                  <div style="display: flex; align-items: center; gap: 10px; padding: 14px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 10px;">
+                    <ion-icon name="repeat-outline" style="color: #00ff88; font-size: 32px;"></ion-icon>
+                    <div>
+                      <div style="font-size: 0.75rem; color: #cccccc; margin-bottom: 3px;">Series</div>
+                      <div style="font-weight: bold; color: #00ff88; font-size: 1.1rem;">{{ ej.series || 'N/A' }}</div>
+                    </div>
+                  </div>
+                  
+                  <div style="display: flex; align-items: center; gap: 10px; padding: 14px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 10px;">
+                    <ion-icon name="fitness-outline" style="color: #00ff88; font-size: 32px;"></ion-icon>
+                    <div>
+                      <div style="font-size: 0.75rem; color: #cccccc; margin-bottom: 3px;">Repeticiones</div>
+                      <div style="font-weight: bold; color: #00ff88; font-size: 1.1rem;">{{ ej.repeticiones || 'N/A' }}</div>
+                    </div>
+                  </div>
+                  
+                  <div style="display: flex; align-items: center; gap: 10px; padding: 14px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 10px;">
+                    <ion-icon name="time-outline" style="color: #00ff88; font-size: 32px;"></ion-icon>
+                    <div>
+                      <div style="font-size: 0.75rem; color: #cccccc; margin-bottom: 3px;">Descanso</div>
+                      <div style="font-weight: bold; color: #00ff88; font-size: 1.1rem;">{{ ej.descanso_segundos || 60 }}s</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Notas del ejercicio -->
+                <div *ngIf="ej.notas" style="margin: 15px 0; padding: 14px; background: rgba(0, 255, 136, 0.08); border-left: 4px solid #00ff88; border-radius: 6px; color: #ffffff;">
+                  <ion-icon name="information-circle-outline" style="vertical-align: middle; color: #00ff88; font-size: 1.2rem;"></ion-icon>
+                  <strong style="color: #00ff88;"> Nota:</strong> {{ ej.notas }}
+                </div>
+
+                <!-- Video del ejercicio -->
+                <div *ngIf="ej.ejercicio?.enlace_video" style="margin-top: 20px;">
+                  <div style="background: #000000; border: 2px solid rgba(0, 255, 136, 0.3); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 255, 136, 0.2);">
+                    <iframe
+                      [src]="getSafeUrl(ej.ejercicio.enlace_video)"
+                      frameborder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowfullscreen
+                      style="width: 100%; height: 300px; display: block;">
+                    </iframe>
+                  </div>
+                </div>
+
+                <div *ngIf="!ej.ejercicio?.enlace_video" style="text-align: center; color: #999999; margin-top: 20px; padding: 30px; background: rgba(255, 255, 255, 0.03); border-radius: 10px; border: 1px dashed rgba(255, 255, 255, 0.2);">
+                  <ion-icon name="videocam-off-outline" style="font-size: 48px; display: block; margin-bottom: 10px; color: #666666;"></ion-icon>
+                  <div style="font-size: 0.9rem;">Sin video disponible</div>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </div>
+
+          <ion-note *ngIf="!rutinaDetalle.ejercicios || rutinaDetalle.ejercicios.length === 0" 
+                    style="display: block; text-align: center; padding: 40px; color: #999999; background: rgba(255, 255, 255, 0.03); border-radius: 12px; margin-top: 20px;">
+            <ion-icon name="barbell-outline" style="font-size: 64px; margin-bottom: 15px; display: block; color: #666666;"></ion-icon>
+            <div style="font-size: 1.1rem;">No hay ejercicios en esta rutina</div>
+          </ion-note>
+        </div>
+
+        <!-- Botones de acción al final -->
+        <div style="margin-top: 30px; display: flex; gap: 10px;">
+          <ion-button expand="block" fill="outline" (click)="cerrarModalDetalle(); abrirModalRutina(rutinaDetalle)" style="flex: 1;">
+            <ion-icon name="create-outline" slot="start"></ion-icon>
+            Editar Rutina
+          </ion-button>
+          <ion-button expand="block" fill="solid" color="success" (click)="cerrarModalDetalle(); abrirModalAsignar(rutinaDetalle)" style="flex: 1;">
+            <ion-icon name="person-add-outline" slot="start"></ion-icon>
+            Asignar Clientes
+          </ion-button>
+        </div>
+      </div>
     </ion-content>
   </ng-template>
 </ion-modal>
