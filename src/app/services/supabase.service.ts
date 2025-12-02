@@ -1,6 +1,18 @@
 import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
+// Instancia única de Supabase compartida por toda la aplicación
+let supabaseInstance: SupabaseClient | null = null;
+
+function getSupabaseClient(): SupabaseClient {
+  if (!supabaseInstance) {
+    const supabaseUrl = 'https://tylyzyivlvibfyvetchr.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5bHl6eWl2bHZpYmZ5dmV0Y2hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExODQzODIsImV4cCI6MjA3Njc2MDM4Mn0.Q0jRpYSJlunENflglEtVtKURBVn_W6KrVEaXZvnCY3o';
+    supabaseInstance = createClient(supabaseUrl, supabaseKey);
+  }
+  return supabaseInstance!; // Non-null assertion porque siempre se inicializa arriba
+}
+
 // Interfaz para el cliente
 export interface Cliente {
   id?: number;
@@ -36,12 +48,11 @@ export interface Cliente {
   providedIn: 'root'
 })
 export class SupabaseService {
-  private supabaseUrl = 'https://tylyzyivlvibfyvetchr.supabase.co';
-  private supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5bHl6eWl2bHZpYmZ5dmV0Y2hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExODQzODIsImV4cCI6MjA3Njc2MDM4Mn0.Q0jRpYSJlunENflglEtVtKURBVn_W6KrVEaXZvnCY3o';
   private supabase: SupabaseClient;
 
   constructor() {
-    this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
+    // Usar la instancia compartida en lugar de crear una nueva
+    this.supabase = getSupabaseClient();
   }
 
   // Helper para aplicar timeout a promesas de fetch
@@ -103,12 +114,19 @@ export class SupabaseService {
   async loginCliente(correo: string, contraseña: string): Promise<{ success: boolean; data?: Cliente; error?: string }> {
     try {
       console.log('SupabaseService: Intentando login de cliente con correo:', correo);
+      console.log('SupabaseService: Longitud de contraseña recibida:', contraseña.length);
+      
+      // Asegurar que no hay espacios en blanco
+      const correoLimpio = correo.trim();
+      const contraseñaLimpia = contraseña.trim();
+      
+      console.log('SupabaseService: Buscando cliente con correo:', correoLimpio);
       
       const query = this.supabase
         .from('clientes')
         .select('*')
-        .eq('correo', correo)
-        .eq('contraseña', contraseña)
+        .eq('correo', correoLimpio)
+        .eq('contraseña', contraseñaLimpia)
         .single();
 
       // Ejecutar la consulta con timeout para evitar colgar en dispositivos
@@ -116,6 +134,7 @@ export class SupabaseService {
 
       if (error) {
         if (error.code === 'PGRST116') {
+          console.log('SupabaseService: No se encontró cliente con esas credenciales');
           return { success: false, error: 'Credenciales incorrectas' };
         }
         console.error('SupabaseService: Error en login de cliente:', error);

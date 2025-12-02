@@ -19,18 +19,18 @@
           <!-- Campo de Correo -->
           <ion-item class="input-item">
             <div class="input-wrapper email-wrapper">
-              <label class="top-label" for="emailPrefix">Correo Electrónico</label>
+              <label class="top-label" for="email">Correo Electrónico</label>
               <div class="input-container">
                 <input 
-                  id="emailPrefix"
+                  id="email"
                   class="native-input email-input"
-                  [(ngModel)]="emailPrefix"
-                  name="emailPrefix"
-                  type="text" 
-                  placeholder="nombre"
+                  [(ngModel)]="credenciales.correo"
+                  name="correo"
+                  type="email" 
+                  placeholder="ejemplo@retofitness.com"
                   autocomplete="email"
                   autocapitalize="none"
-                  (input)="onEmailPrefixChange($event)"
+                  (input)="onInputChange('correo', $event)"
                   (blur)="onInputBlur('correo')"
                   (focus)="onInputFocus('correo')"
                   required>

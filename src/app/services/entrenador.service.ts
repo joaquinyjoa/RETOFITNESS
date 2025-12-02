@@ -1,6 +1,18 @@
 import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
+// Instancia única de Supabase compartida por toda la aplicación
+let supabaseSharedInstance: SupabaseClient | null = null;
+
+function getSharedSupabaseClient(): SupabaseClient {
+  if (!supabaseSharedInstance) {
+    const supabaseUrl = 'https://tylyzyivlvibfyvetchr.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5bHl6eWl2bHZpYmZ5dmV0Y2hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExODQzODIsImV4cCI6MjA3Njc2MDM4Mn0.Q0jRpYSJlunENflglEtVtKURBVn_W6KrVEaXZvnCY3o';
+    supabaseSharedInstance = createClient(supabaseUrl, supabaseKey);
+  }
+  return supabaseSharedInstance!; // Non-null assertion porque siempre se inicializa arriba
+}
+
 // Interfaz para el entrenador
 export interface Entrenador {
   id?: number;
@@ -14,12 +26,11 @@ export interface Entrenador {
   providedIn: 'root'
 })
 export class EntrenadorService {
-  private supabaseUrl = 'https://tylyzyivlvibfyvetchr.supabase.co';
-  private supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5bHl6eWl2bHZpYmZ5dmV0Y2hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExODQzODIsImV4cCI6MjA3Njc2MDM4Mn0.Q0jRpYSJlunENflglEtVtKURBVn_W6KrVEaXZvnCY3o';
   private supabase: SupabaseClient;
 
   constructor() {
-    this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
+    // Usar la instancia compartida
+    this.supabase = getSharedSupabaseClient();
   }
 
   // Helper para aplicar timeout a promesas de fetch

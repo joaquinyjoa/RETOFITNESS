@@ -7,13 +7,14 @@ import { Cliente } from '../models/cliente/cliente.interface';
 import { Cliente as ClienteSupabase } from '../services/supabase.service';
 import { ClienteService } from '../services/cliente.service';
 import { ToastService } from '../services/toast.service';
+import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule]
+  imports: [CommonModule, IonicModule, FormsModule, SpinnerComponent]
 })
 export class RegisterComponent implements OnInit {
 
@@ -109,11 +110,83 @@ export class RegisterComponent implements OnInit {
     console.log('Cliente inicializado:', this.cliente);
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    // Resetear el formulario al estado inicial cuando se carga el componente
+    this.resetForm();
+  }
 
   ngAfterViewInit() {
     // Inicializar lista cacheada de condiciones
     this.refreshSelectedConditions();
+  }
+
+  // Método para resetear el formulario a su estado inicial
+  resetForm() {
+    this.currentStep = 1;
+    this.showSuccess = false;
+    this.showSpinner = false;
+    this.isSubmitting = false;
+    this.attemptedNextStep = false;
+    
+    // Resetear datos del cliente a valores iniciales
+    this.cliente = {
+      nombre: '',
+      apellido: '',
+      edad: 25,
+      correo: '@retofitness.com',
+      password: '',
+      enfermedadCronica: false,
+      descripcionEnfermedad: '',
+      diabetes: false,
+      hipotension: false,
+      hipotiroide: false,
+      hipotiroidismo: false,
+      medicacionRegular: false,
+      descripcionMedicacion: '',
+      cirugias: false,
+      descripcionCirugias: '',
+      lesiones: false,
+      descripcionLesiones: '',
+      fuma: false,
+      alcohol: false,
+      horasSueno: '7',
+      peso: 70,
+      objetivo: '',
+      altura: 170,
+      nivelActividad: 'Medio',
+      genero: 'Hombre',
+      qr: ''
+    };
+    
+    // Resetear objetivos
+    this.objetivos = {
+      bajarPeso: false,
+      aumentarMasa: false,
+      mejorarFuerza: false,
+      mejorarResistencia: false,
+      mejorarSalud: false,
+      otro: false
+    };
+    this.objetivoOtro = '';
+    
+    // Resetear validación de campos
+    this.fieldsTouched = {
+      nombre: false,
+      apellido: false,
+      edad: false,
+      correo: false,
+      password: false,
+      genero: false
+    };
+    
+    this.validationErrors = {
+      nombre: '',
+      apellido: '',
+      edad: '',
+      correo: '',
+      password: '',
+      genero: ''
+    };
   }
 
 
@@ -234,7 +307,7 @@ export class RegisterComponent implements OnInit {
     }
   }
 
-  nextStep() {
+  async nextStep() {
     if (this.currentStep < this.totalSteps && !this.isAnimating) {
       // Si estamos en el paso 1, validar antes de avanzar
       if (this.currentStep === 1) {
@@ -250,6 +323,24 @@ export class RegisterComponent implements OnInit {
         
         // Solo avanzar si todos los campos son válidos
         if (!this.isStep1Valid()) {
+          return;
+        }
+
+        // Validar que el correo no esté registrado en la base de datos
+        this.showSpinner = true;
+        try {
+          const emailExists = await this.clienteService.verificarEmailExistente(this.cliente.correo.trim());
+          this.showSpinner = false;
+          
+          if (emailExists) {
+            this.validationErrors.correo = 'Este correo ya está registrado. Por favor usa otro.';
+            await this.toastService.mostrarError('El correo ya está en uso');
+            return;
+          }
+        } catch (error) {
+          this.showSpinner = false;
+          console.error('Error verificando correo:', error);
+          await this.toastService.mostrarError('Error al verificar el correo. Intenta nuevamente.');
           return;
         }
       }
@@ -396,7 +487,7 @@ export class RegisterComponent implements OnInit {
         apellido: this.cliente.apellido.trim(),
         edad: this.cliente.edad,
         correo: this.cliente.correo.trim(),
-        contraseña: this.cliente.password,
+        contraseña: this.cliente.password.trim(),
         enfermedadCronicoa: this.cliente.enfermedadCronica,
         descripcionEnfermedad: this.cliente.descripcionEnfermedad?.trim() || '',
         diabetes: this.cliente.diabetes,
@@ -434,22 +525,19 @@ export class RegisterComponent implements OnInit {
         return;
       }
 
-      // Mostrar éxito
-      await this.toastService.mostrarExito('¡Registro completado exitosamente!');
-      
       // Limpiar timeout de seguridad
       clearTimeout(timeoutId);
       
-      // Pequeña pausa antes de mostrar éxito
+      // Ocultar spinner y navegar al login inmediatamente
+      this.showSpinner = false;
+      
+      // Mostrar toast de éxito y navegar
+      await this.toastService.mostrarExito('¡Registro completado! Redirigiendo al login...');
+      
+      // Navegar al login después de breve pausa
       setTimeout(() => {
-        this.showSpinner = false;
-        this.showSuccess = true;
-        
-        // Navegar automáticamente al login después de 3 segundos
-        setTimeout(() => {
-          this.goToLogin();
-        }, 3000);
-      }, 1000);
+        this.router.navigate(['/login']);
+      }, 1500);
       
       console.log('Proceso completado exitosamente');
       
@@ -529,7 +617,10 @@ export class RegisterComponent implements OnInit {
     const isValid = includesDomain && hasPrefix;
     
     if (showError || this.fieldsTouched.correo || this.attemptedNextStep) {
-      if (!includesDomain) {
+      // Verificar si el usuario eliminó el dominio completo
+      if (this.cliente.correo.length > 0 && !includesDomain) {
+        this.validationErrors.correo = 'El correo debe incluir el dominio @retofitness.com';
+      } else if (!includesDomain) {
         this.validationErrors.correo = 'El correo debe terminar en @retofitness.com';
       } else if (emailPrefix.length === 0) {
         this.validationErrors.correo = 'Debe ingresar caracteres antes de @retofitness.com';

@@ -21,12 +21,9 @@ export class LoginComponent implements OnInit {
 
   // Datos del formulario
   credenciales = {
-    correo: '@retofitness.com',
+    correo: '',
     password: ''
   };
-
-  // Prefijo del email (la parte antes de @retofitness.com)
-  emailPrefix: string = '';
 
   // Mensajes de error para validación
   validationErrors = {
@@ -54,22 +51,6 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit() {}
-
-  // Método para manejar el cambio del prefijo del email
-  onEmailPrefixChange(event: any) {
-    const prefix = event.target?.value || '';
-    this.emailPrefix = prefix;
-    
-    // Actualizar el correo completo
-    this.credenciales.correo = prefix + '@retofitness.com';
-    
-    // Validar si ya fue tocado
-    if (this.fieldsTouched.correo || this.attemptedLogin) {
-      this.validateCorreo();
-    }
-    
-    console.log('Email completo:', this.credenciales.correo);
-  }
 
   // Método para actualizar valores sin validar automáticamente
   onInputChange(field: string, event: any) {
@@ -194,7 +175,7 @@ export class LoginComponent implements OnInit {
       console.log('📤 Enviando credenciales a AuthService...');
       const result = await this.authService.login(
         this.credenciales.correo.trim(),
-        this.credenciales.password
+        this.credenciales.password.trim()
       );
       
       console.log('📥 Respuesta recibida:', result);
@@ -275,11 +256,8 @@ export class LoginComponent implements OnInit {
 
   // Método para acceso rápido como entrenador
   async accesoRapidoEntrenador() {
-
     // Establecer credenciales predefinidas
     this.credenciales.correo = 'gus@retofitness.com';
-    // También actualizar el campo enlazado `emailPrefix` para que el input muestre el valor
-    this.emailPrefix = 'gus@retofitness.com';
     this.credenciales.password = 'gus1209';
     
     // Mostrar mensaje de acceso rápido

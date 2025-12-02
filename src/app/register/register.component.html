@@ -7,18 +7,6 @@
 <ion-content class="ion-padding">
   <div class="register-container">
 
-    <!-- Toolbar visual dentro del contenido -->
-    <div class="content-toolbar" role="banner">
-      <div class="toolbar-left">
-        <!-- Sin botón de volver aquí -->
-      </div>
-      <div class="toolbar-center">
-        <h1 class="toolbar-title">Crear cuenta</h1>
-        <div class="toolbar-sub">Rápido • Seguro • Personalizado</div>
-      </div>
-      <div class="toolbar-right"></div>
-    </div>
-
   <!-- Paso 1: Información Personal -->
   <ion-card *ngIf="currentStep === 1" [class]="animationClass" class="step-container">
     <ion-card-header>
@@ -210,7 +198,7 @@
         <!-- Objetivos múltiples -->
         <ion-item>
           <div class="checkbox-group">
-            <label class="section-label">Objetivos Fitness (opcional - puedes elegir varios)</label>
+            <label class="section-label">Objetivos</label>
             
             <div class="checkbox-option">
               <input 
@@ -342,7 +330,7 @@
         <!-- Enfermedad Crónica -->
         <ion-item>
           <div class="toggle-question">
-            <label class="question-label">¿Tienes alguna enfermedad crónica?</label>
+            <label class="question-label">¿Enfermedad crónica?</label>
             <div class="toggle-switch">
               <input 
                 type="checkbox" 
@@ -601,111 +589,123 @@
       <ion-card-title>
         Confirmar Registro
       </ion-card-title>
+      <ion-card-subtitle>Desliza para ver toda tu información</ion-card-subtitle>
     </ion-card-header>
     
     <ion-card-content class="confirmation-content">
-      <!-- Información Personal -->
-      <div class="info-section personal-info">
-        <div class="section-header">
-          <h3>👤 Información Personal</h3>
-        </div>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">Nombre y apellido</span>
-            <span class="info-value">{{cliente.nombre}} {{cliente.apellido}}</span>
+      <!-- Carrusel de información -->
+      <div class="carousel-container">
+        <div class="carousel-track">
+          <!-- Card 1: Información Personal -->
+          <div class="carousel-card">
+            <div class="info-section personal-info">
+              <div class="section-header">
+                <h3>👤 Información Personal</h3>
+              </div>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">Nombre y apellido</span>
+                  <span class="info-value">{{cliente.nombre}} {{cliente.apellido}}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Edad</span>
+                  <span class="info-value">{{cliente.edad}} años</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Email</span>
+                  <span class="info-value">{{cliente.correo}}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Género</span>
+                  <span class="info-value">{{cliente.genero}}</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="info-item">
-            <span class="info-label">Edad</span>
-            <span class="info-value">{{cliente.edad}} años</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Email</span>
-            <span class="info-value">{{cliente.correo}}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Género</span>
-            <span class="info-value">{{cliente.genero}}</span>
-          </div>
-        </div>
-      </div>
 
-      <!-- Información Física -->
-      <div class="info-section physical-info">
-        <div class="section-header">
-          <h3>💪 Información Física</h3>
-        </div>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">Peso</span>
-            <span class="info-value">{{cliente.peso}} kg</span>
+          <!-- Card 2: Información Física -->
+          <div class="carousel-card">
+            <div class="info-section physical-info">
+              <div class="section-header">
+                <h3>💪 Información Física</h3>
+              </div>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">Peso</span>
+                  <span class="info-value">{{cliente.peso}} kg</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Altura</span>
+                  <span class="info-value">{{cliente.altura}} cm</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Objetivos</span>
+                  <span class="info-value">{{cliente.objetivo}}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Nivel de Actividad</span>
+                  <span class="info-value">{{cliente.nivelActividad}}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Horas de Sueño</span>
+                  <span class="info-value">{{cliente.horasSueno}}</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="info-item">
-            <span class="info-label">Altura</span>
-            <span class="info-value">{{cliente.altura}} cm</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Objetivos</span>
-            <span class="info-value">{{cliente.objetivo}}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Nivel de Actividad</span>
-            <span class="info-value">{{cliente.nivelActividad}}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Horas de Sueño</span>
-            <span class="info-value">{{cliente.horasSueno}}</span>
-          </div>
-        </div>
-      </div>
 
-      <!-- Condiciones Médicas -->
-      <div class="info-section medical-info" *ngIf="hasAnyMedicalCondition()">
-        <div class="section-header">
-          <h3>❤️ Condiciones Médicas</h3>
-        </div>
-        <div class="medical-conditions">
-          <!-- Lista directa de condiciones médicas activas -->
-          <div class="selected-conditions">
-            <ion-item *ngIf="cliente.enfermedadCronica" lines="none">
-              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
-              <ion-label>Enfermedad crónica</ion-label>
-            </ion-item>
-            <ion-item *ngIf="cliente.diabetes" lines="none">
-              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
-              <ion-label>Diabetes</ion-label>
-            </ion-item>
-            <ion-item *ngIf="cliente.hipotension" lines="none">
-              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
-              <ion-label>Hipotensión</ion-label>
-            </ion-item>
-            <ion-item *ngIf="cliente.hipotiroide" lines="none">
-              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
-              <ion-label>Hipotiroides</ion-label>
-            </ion-item>
-            <ion-item *ngIf="cliente.hipotiroidismo" lines="none">
-              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
-              <ion-label>Hipotiroidismo</ion-label>
-            </ion-item>
-            <ion-item *ngIf="cliente.medicacionRegular" lines="none">
-              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
-              <ion-label>Medicación regular</ion-label>
-            </ion-item>
-            <ion-item *ngIf="cliente.cirugias" lines="none">
-              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
-              <ion-label>Cirugías</ion-label>
-            </ion-item>
-            <ion-item *ngIf="cliente.lesiones" lines="none">
-              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
-              <ion-label>Lesiones</ion-label>
-            </ion-item>
-            <ion-item *ngIf="cliente.fuma" lines="none">
-              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
-              <ion-label>Fumador</ion-label>
-            </ion-item>
-            <ion-item *ngIf="cliente.alcohol" lines="none">
-              <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
-              <ion-label>Consumo de alcohol</ion-label>
-            </ion-item>
+          <!-- Card 3: Condiciones Médicas -->
+          <div class="carousel-card" *ngIf="hasAnyMedicalCondition()">
+            <div class="info-section medical-info">
+              <div class="section-header">
+                <h3>❤️ Condiciones Médicas</h3>
+              </div>
+              <div class="medical-conditions">
+                <!-- Lista directa de condiciones médicas activas -->
+                <div class="selected-conditions">
+                  <ion-item *ngIf="cliente.enfermedadCronica" lines="none">
+                    <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+                    <ion-label>Enfermedad crónica</ion-label>
+                  </ion-item>
+                  <ion-item *ngIf="cliente.diabetes" lines="none">
+                    <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+                    <ion-label>Diabetes</ion-label>
+                  </ion-item>
+                  <ion-item *ngIf="cliente.hipotension" lines="none">
+                    <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+                    <ion-label>Hipotensión</ion-label>
+                  </ion-item>
+                  <ion-item *ngIf="cliente.hipotiroide" lines="none">
+                    <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+                    <ion-label>Hipotiroides</ion-label>
+                  </ion-item>
+                  <ion-item *ngIf="cliente.hipotiroidismo" lines="none">
+                    <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+                    <ion-label>Hipotiroidismo</ion-label>
+                  </ion-item>
+                  <ion-item *ngIf="cliente.medicacionRegular" lines="none">
+                    <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+                    <ion-label>Medicación regular</ion-label>
+                  </ion-item>
+                  <ion-item *ngIf="cliente.cirugias" lines="none">
+                    <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+                    <ion-label>Cirugías</ion-label>
+                  </ion-item>
+                  <ion-item *ngIf="cliente.lesiones" lines="none">
+                    <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+                    <ion-label>Lesiones</ion-label>
+                  </ion-item>
+                  <ion-item *ngIf="cliente.fuma" lines="none">
+                    <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+                    <ion-label>Fumador</ion-label>
+                  </ion-item>
+                  <ion-item *ngIf="cliente.alcohol" lines="none">
+                    <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+                    <ion-label>Consumo de alcohol</ion-label>
+                  </ion-item>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -724,28 +724,12 @@
     </ion-card-content>
   </ion-card>
 
-  <!-- Pantalla de Éxito -->
-  <ion-card *ngIf="showSuccess">
-    <ion-card-content class="ion-text-center">
-      <ion-icon name="checkmark-circle" color="success" style="font-size: 4rem;"></ion-icon>
-      <h2>¡Registro Exitoso!</h2>
-      <p>Tu cuenta ha sido creada correctamente.</p>
-      <p>Tu código QR se generará automáticamente.</p>
-      <p><small>Serás redirigido al login en unos segundos...</small></p>
-      
-      <ion-button expand="full" (click)="goToLogin()" color="success">
-        Ir al Login Ahora
-      </ion-button>
-    </ion-card-content>
-  </ion-card>
-
   </div>
 </ion-content>
 
-<!-- Spinner de carga centrado - fuera del ion-content -->
-<div class="loading-overlay" *ngIf="showSpinner">
-  <div class="spinner-container">
-    <ion-spinner name="crescent" class="custom-spinner"></ion-spinner>
-    <p class="loading-text">Registrando tu cuenta...</p>
+<!-- Spinner de carga personalizado - fuera del ion-content -->
+<div class="spinner-overlay-transparent" *ngIf="showSpinner">
+  <app-spinner></app-spinner>
+  <div class="loading-text" style="color: #ffffff; margin-top: 20px; font-size: 1.2rem; font-weight: 600;">
   </div>
 </div>
