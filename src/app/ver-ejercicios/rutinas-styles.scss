@@ -1,0 +1,146 @@
+// ============================================
+// ESTILOS PARA RUTINAS
+// ============================================
+
+// Buscador de ejercicios en modal
+.ejercicios-busqueda {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+  background: var(--medium-gray);
+  border-radius: 8px;
+  
+  ion-list {
+    background: transparent;
+  }
+  
+  ion-item {
+    --background: transparent;
+    --color: var(--primary-green);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    
+    &:hover {
+      --background: rgba(0, 255, 136, 0.1);
+    }
+    
+    h3 {
+      color: var(--primary-green);
+      font-weight: 600;
+    }
+    
+    p {
+      color: var(--light-gray);
+      font-size: 0.9rem;
+    }
+  }
+}
+
+// Tarjetas de rutinas
+.rutina-card {
+  --background: var(--dark-gray);
+  border: 1px solid var(--medium-gray);
+  border-radius: 16px;
+  margin: 16px;
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.1);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: var(--primary-green);
+    box-shadow: 0 6px 20px rgba(0, 255, 136, 0.2);
+    transform: translateY(-2px);
+  }
+  
+  ion-card-header {
+    padding-bottom: 12px;
+  }
+  
+  ion-card-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  
+  ion-card-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--light-gray);
+  }
+  
+  .rutina-actions {
+    display: flex;
+    gap: 4px;
+  }
+}
+
+// Lista de ejercicios en rutina
+.rutina-ejercicios-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.rutina-ejercicio-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 12px;
+  padding: 15px;
+  
+  .ejercicio-info {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    
+    .ejercicio-numero {
+      color: var(--primary-green);
+      font-weight: bold;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    
+    .ejercicio-detalles {
+      flex: 1;
+      
+      strong {
+        color: var(--primary-green);
+        font-size: 1.1rem;
+        display: block;
+        margin-bottom: 6px;
+      }
+      
+      .ejercicio-params {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        
+        span {
+          color: var(--light-gray);
+          font-size: 0.9rem;
+          padding: 4px 10px;
+          background: rgba(0, 255, 136, 0.1);
+          border-radius: 6px;
+          border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+      }
+    }
+  }
+  
+  .ejercicio-video {
+    margin-top: 12px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .rutina-ejercicio-item {
+    .ejercicio-video {
+      iframe {
+        height: 180px !important;
+      }
+    }
+  }
+}

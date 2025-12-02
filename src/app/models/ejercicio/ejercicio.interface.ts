@@ -18,6 +18,7 @@ export interface Ejercicio {
 }
 
 export interface EjercicioFormData {
+  id?: number;
   nombre: string;
   descripcion: string;
   categoria: string;

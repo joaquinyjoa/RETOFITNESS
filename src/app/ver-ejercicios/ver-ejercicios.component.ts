@@ -65,6 +65,10 @@ export class VerEjerciciosComponent implements OnInit {
   filtroTextoRutina = '';
   filtroNivelRutina = '';
 
+  // Buscador de ejercicios en el modal
+  filtroEjercicioModal = '';
+  ejerciciosDisponiblesFiltrados: Ejercicio[] = [];
+
   // Opciones para los select
   categorias = [
     { value: 'cardio', label: 'Cardio' },
@@ -96,6 +100,7 @@ export class VerEjerciciosComponent implements OnInit {
 
   ngOnInit() {
     this.cargarEjercicios();
+    this.cargarRutinas();
   }
 
   async cargarEjercicios() {
@@ -193,10 +198,22 @@ export class VerEjerciciosComponent implements OnInit {
         equipamiento: this.ejercicioActual.equipamiento.filter(e => e.trim())
       };
 
-      const result = await this.ejercicioService.crearEjercicio(ejercicioData);
+      let result;
+      
+      if (this.editMode && this.ejercicioActual.id) {
+        // Actualizar ejercicio existente
+        console.log('Actualizando ejercicio ID:', this.ejercicioActual.id);
+        result = await this.ejercicioService.actualizarEjercicio(this.ejercicioActual.id, ejercicioData);
+      } else {
+        // Crear nuevo ejercicio
+        console.log('Creando nuevo ejercicio');
+        result = await this.ejercicioService.crearEjercicio(ejercicioData);
+      }
 
       if (result.success) {
-        await this.toastService.mostrarExito('Ejercicio guardado correctamente');
+        await this.toastService.mostrarExito(
+          this.editMode ? 'Ejercicio actualizado correctamente' : 'Ejercicio creado correctamente'
+        );
         this.cerrarModal();
         await this.cargarEjercicios();
       } else {
@@ -327,6 +344,11 @@ export class VerEjerciciosComponent implements OnInit {
 
     // Si no se puede convertir, sanitizar la URL original
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+
+  // Alias para usar en el HTML de rutinas
+  getSafeUrl(url: string): SafeResourceUrl {
+    return this.getVideoEmbedUrl(url);
   }
 
   // Métodos para manejar arrays dinámicos
@@ -483,11 +505,16 @@ export class VerEjerciciosComponent implements OnInit {
   async abrirModalRutina(rutina?: Rutina) {
     this.editModeRutina = !!rutina;
     
-    // Cargar ejercicios disponibles si no están cargados
-    if (this.ejercicios.length === 0) {
-      await this.cargarEjercicios();
-    }
+    // Siempre recargar ejercicios para tener los datos más actualizados
+    await this.cargarEjercicios();
+    
+    // Asignar ejercicios disponibles
     this.ejerciciosDisponibles = [...this.ejercicios];
+    this.ejerciciosDisponiblesFiltrados = [...this.ejercicios];
+    this.filtroEjercicioModal = '';
+    
+    console.log('✅ Modal abierto - Ejercicios disponibles:', this.ejerciciosDisponibles.length);
+    console.log('📋 Primeros 3 ejercicios:', this.ejerciciosDisponibles.slice(0, 3).map(e => e.nombre));
 
     if (rutina && rutina.id) {
       // Modo edición: cargar datos de la rutina
@@ -511,7 +538,8 @@ export class VerEjerciciosComponent implements OnInit {
         series: re.series || 3,
         repeticiones: re.repeticiones || '10-12',
         descanso_segundos: re.descanso_segundos || 60,
-        notas: re.notas || ''
+        notas: re.notas || '',
+        enlace_video: re.ejercicio?.enlace_video
       }));
     } else {
       // Modo creación
@@ -619,8 +647,39 @@ export class VerEjerciciosComponent implements OnInit {
     }
   }
 
+  // Filtrar ejercicios disponibles en el modal
+  filtrarEjerciciosModal() {
+    const filtro = this.filtroEjercicioModal?.toLowerCase().trim() || '';
+    
+    console.log('🔍 Filtrando ejercicios:', {
+      filtro,
+      totalDisponibles: this.ejerciciosDisponibles.length,
+      hayEjercicios: this.ejerciciosDisponibles.length > 0
+    });
+    
+    if (!filtro) {
+      this.ejerciciosDisponiblesFiltrados = [...this.ejerciciosDisponibles];
+      console.log('⚪ Sin filtro - Mostrando todos:', this.ejerciciosDisponiblesFiltrados.length);
+      return;
+    }
+    
+    this.ejerciciosDisponiblesFiltrados = this.ejerciciosDisponibles.filter(ej => {
+      const nombreMatch = ej.nombre?.toLowerCase().includes(filtro);
+      const musculoMatch = ej.musculo_principal?.toLowerCase().includes(filtro);
+      const categoriaMatch = ej.categoria?.toLowerCase().includes(filtro);
+      return nombreMatch || musculoMatch || categoriaMatch;
+    });
+    
+    console.log('✅ Resultados filtrados:', this.ejerciciosDisponiblesFiltrados.length);
+    if (this.ejerciciosDisponiblesFiltrados.length > 0) {
+      console.log('📋 Primeros 3 resultados:', this.ejerciciosDisponiblesFiltrados.slice(0, 3).map(e => e.nombre));
+    }
+  }
+
   // Agregar ejercicio a la rutina
   agregarEjercicioARutina(ejercicio: Ejercicio) {
+    console.log('Intentando agregar ejercicio:', ejercicio);
+    
     // Verificar si ya está agregado
     const yaAgregado = this.ejerciciosSeleccionados.some(e => e.ejercicio_id === ejercicio.id);
     if (yaAgregado) {
@@ -628,15 +687,30 @@ export class VerEjerciciosComponent implements OnInit {
       return;
     }
 
-    this.ejerciciosSeleccionados.push({
+    const nuevoEjercicio = {
       ejercicio_id: ejercicio.id,
       ejercicio: ejercicio,
       orden: this.ejerciciosSeleccionados.length + 1,
       series: 3,
       repeticiones: '10-12',
       descanso_segundos: 60,
-      notas: ''
-    });
+      notas: '',
+      enlace_video: ejercicio.enlace_video
+    };
+    
+    this.ejerciciosSeleccionados.push(nuevoEjercicio);
+    
+    console.log('✅ Ejercicio agregado:', nuevoEjercicio);
+    console.log('📊 Total ejercicios seleccionados:', this.ejerciciosSeleccionados.length);
+    
+    // Mostrar confirmación
+    this.toastService.mostrarExito(`${ejercicio.nombre} agregado a la rutina`);
+  }
+
+  // Verificar si un ejercicio ya fue agregado
+  isEjercicioYaAgregado(ejercicioId?: number): boolean {
+    if (!ejercicioId) return false;
+    return this.ejerciciosSeleccionados.some(e => e.ejercicio_id === ejercicioId);
   }
 
   eliminarEjercicioDeRutina(index: number) {

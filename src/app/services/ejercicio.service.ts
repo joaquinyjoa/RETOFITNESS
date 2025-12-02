@@ -57,6 +57,16 @@ export class EjercicioService {
 
       if (error) {
         console.error('EjercicioService: Error al crear ejercicio:', error);
+        
+        // Manejo específico de errores
+        if (error.code === '23505') {
+          // Error de clave duplicada
+          if (error.message.includes('ejercicios_nombre_key')) {
+            return { success: false, error: 'Ya existe un ejercicio con ese nombre. Por favor, usa un nombre diferente.' };
+          }
+          return { success: false, error: 'Ya existe un registro con esos datos.' };
+        }
+        
         return { success: false, error: error.message };
       }
 
@@ -87,6 +97,15 @@ export class EjercicioService {
 
       if (error) {
         console.error('EjercicioService: Error al actualizar ejercicio:', error);
+        
+        // Manejo específico de errores
+        if (error.code === '23505') {
+          if (error.message.includes('ejercicios_nombre_key')) {
+            return { success: false, error: 'Ya existe otro ejercicio con ese nombre. Por favor, usa un nombre diferente.' };
+          }
+          return { success: false, error: 'Ya existe un registro con esos datos.' };
+        }
+        
         return { success: false, error: error.message };
       }
 

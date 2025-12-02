@@ -1,24 +1,26 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
+<ion-header [translucent]="true" class="custom-header">
+  <ion-toolbar color="dark">
     <ion-buttons slot="start">
       <ion-button (click)="goBack()">
         <ion-icon name="arrow-back"></ion-icon>
       </ion-button>
     </ion-buttons>
-    <ion-title>Gestión de Entrenamientos</ion-title>
+    <ion-title>Entrenamientos</ion-title>
     <ion-buttons slot="end">
       <ion-button *ngIf="segmentValue === 'ejercicios'" (click)="abrirModal()">
-        Agregar
+        <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+        Agregar Ejercicio
       </ion-button>
       <ion-button *ngIf="segmentValue === 'rutinas'" (click)="abrirModalRutina()">
+        <ion-icon slot="start" name="add-circle-outline"></ion-icon>
         Nueva Rutina
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
   
   <!-- Segment para cambiar entre Ejercicios y Rutinas -->
-  <ion-toolbar>
-    <ion-segment [(ngModel)]="segmentValue" (ionChange)="onSegmentChange($event)">
+  <ion-toolbar color="dark" class="segment-toolbar">
+    <ion-segment [(ngModel)]="segmentValue" (ionChange)="onSegmentChange($event)" mode="md">
       <ion-segment-button value="ejercicios">
         <ion-label>Ejercicios</ion-label>
       </ion-segment-button>
@@ -183,10 +185,106 @@
   <!-- ============================================ -->
   <div *ngIf="segmentValue === 'rutinas'">
     <div class="filters-section">
-      <h2 style="color: var(--primary-green); text-align: center; padding: 40px;">
-        Sección de Rutinas<br>
+      <h2 style="color: var(--primary-green); text-align: center; margin-bottom: 20px;">
+        Rutinas de Entrenamiento
       </h2>
+
+      <!-- Filtros -->
+      <div class="filters-row">
+        <ion-searchbar
+          [(ngModel)]="filtroTextoRutina"
+          (ionInput)="aplicarFiltrosRutinas()"
+          placeholder="Buscar rutina..."
+          [debounce]="300">
+        </ion-searchbar>
+
+        <ion-select
+          [(ngModel)]="filtroNivelRutina"
+          (ionChange)="aplicarFiltrosRutinas()"
+          placeholder="Nivel"
+          interface="popover">
+          <ion-select-option value="">Todos los niveles</ion-select-option>
+          <ion-select-option *ngFor="let nivel of nivesDificultad" [value]="nivel.value">
+            {{ nivel.label }}
+          </ion-select-option>
+        </ion-select>
+      </div>
     </div>
+
+    <!-- Lista de rutinas -->
+    <div *ngIf="loadingRutinas" style="text-align: center; padding: 40px;">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p style="color: var(--ion-color-medium);">Cargando rutinas...</p>
+    </div>
+
+    <div *ngIf="!loadingRutinas && rutinasFiltradas.length === 0" style="text-align: center; padding: 40px;">
+      <ion-icon name="barbell-outline" style="font-size: 64px; color: var(--ion-color-medium);"></ion-icon>
+      <p style="color: var(--ion-color-medium);">No hay rutinas creadas aún.</p>
+      <p style="color: var(--ion-color-medium);">Presiona el botón + para crear una.</p>
+    </div>
+
+    <ion-card *ngFor="let rutina of rutinasFiltradas" class="rutina-card">
+      <ion-card-header>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <ion-card-title style="color: var(--primary-green);">{{ rutina.nombre }}</ion-card-title>
+            <ion-card-subtitle>
+              <ion-chip [color]="rutina.nivel_dificultad === 'principiante' ? 'success' : rutina.nivel_dificultad === 'intermedio' ? 'warning' : 'danger'">
+                <ion-label>{{ rutina.nivel_dificultad }}</ion-label>
+              </ion-chip>
+              <span *ngIf="rutina.duracion_semanas">{{ rutina.duracion_semanas }} semanas</span>
+            </ion-card-subtitle>
+          </div>
+          <div class="rutina-actions">
+            <ion-button fill="clear" (click)="abrirModalRutina(rutina)">
+              <ion-icon name="create" slot="icon-only"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" color="danger" (click)="eliminarRutina(rutina)">
+              <ion-icon name="trash" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+      </ion-card-header>
+
+      <ion-card-content>
+        <p *ngIf="rutina.descripcion" style="margin-bottom: 10px;">{{ rutina.descripcion }}</p>
+        <p *ngIf="rutina.objetivo"><strong>Objetivo:</strong> {{ rutina.objetivo }}</p>
+
+        <!-- Ejercicios de la rutina -->
+        <div *ngIf="rutina.ejercicios && rutina.ejercicios.length > 0" style="margin-top: 15px;">
+          <h4 style="color: var(--primary-green); margin-bottom: 10px;">
+            Ejercicios ({{ rutina.ejercicios.length }})
+          </h4>
+          
+          <div class="rutina-ejercicios-list">
+            <div *ngFor="let ej of rutina.ejercicios; let i = index" class="rutina-ejercicio-item">
+              <div class="ejercicio-info">
+                <span class="ejercicio-numero">{{ i + 1 }}.</span>
+                <div class="ejercicio-detalles">
+                  <strong>{{ ej.ejercicio?.nombre }}</strong>
+                  <div class="ejercicio-params">
+                    <span>{{ ej.series }} series</span>
+                    <span>{{ ej.repeticiones }} reps</span>
+                    <span>{{ ej.descanso_segundos }}s descanso</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Video del ejercicio -->
+              <div *ngIf="ej.ejercicio?.enlace_video" class="ejercicio-video">
+                <iframe
+                  [src]="getSafeUrl(ej.ejercicio.enlace_video)"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                  style="width: 100%; height: 200px; border-radius: 8px;">
+                </iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
   </div>
 
 </ion-content>
@@ -541,23 +639,89 @@
         <div class="form-section">
           <h4>Ejercicios de la Rutina</h4>
           
-          <ion-item>
-            <ion-label position="stacked">Agregar ejercicio</ion-label>
-            <ion-select 
-              placeholder="Seleccionar ejercicio"
-              interface="popover"
-              (ionChange)="agregarEjercicioARutina($event.detail.value); $event.target.value = null">
-              <ion-select-option *ngFor="let ej of ejerciciosDisponibles" [value]="ej">
-                {{ ej.nombre }} - {{ ej.musculo_principal }}
-              </ion-select-option>
-            </ion-select>
-          </ion-item>
+          <!-- Buscador de ejercicios -->
+          <ion-searchbar
+            [(ngModel)]="filtroEjercicioModal"
+            (ionInput)="filtrarEjerciciosModal()"
+            (ionChange)="filtrarEjerciciosModal()"
+            placeholder="Buscar ejercicios por nombre, músculo o categoría..."
+            [debounce]="200"
+            animated="true"
+            show-cancel-button="focus">
+          </ion-searchbar>
+
+          <!-- Lista de ejercicios disponibles -->
+          <div class="ejercicios-busqueda">
+            <!-- Cuando hay resultados -->
+            <div *ngIf="ejerciciosDisponiblesFiltrados.length > 0">
+              <ion-text color="medium" style="display: block; padding: 10px 16px; font-size: 0.9rem;">
+                <ion-icon name="list-outline"></ion-icon>
+                {{ ejerciciosDisponiblesFiltrados.length }} ejercicio(s) disponible(s)
+                <span *ngIf="filtroEjercicioModal">(filtrado por "{{ filtroEjercicioModal }}")</span>
+              </ion-text>
+              
+              <ion-list style="max-height: 300px; overflow-y: auto;">
+                <ion-item 
+                  *ngFor="let ej of ejerciciosDisponiblesFiltrados.slice(0, 20)" 
+                  button 
+                  (click)="agregarEjercicioARutina(ej)"
+                  [disabled]="isEjercicioYaAgregado(ej.id)">
+                  <ion-icon 
+                    name="add-circle" 
+                    slot="start" 
+                    [color]="isEjercicioYaAgregado(ej.id) ? 'medium' : 'success'">
+                  </ion-icon>
+                  <ion-label>
+                    <h3 [style.color]="isEjercicioYaAgregado(ej.id) ? 'var(--ion-color-medium)' : 'var(--primary-green)'">
+                      {{ ej.nombre }}
+                      <ion-badge *ngIf="isEjercicioYaAgregado(ej.id)" color="medium" style="margin-left: 8px; font-size: 0.7rem;">
+                        Ya agregado
+                      </ion-badge>
+                    </h3>
+                    <p style="color: var(--ion-color-medium);">
+                      <ion-icon name="fitness-outline" style="font-size: 12px; vertical-align: middle;"></ion-icon>
+                      {{ ej.musculo_principal }} • 
+                      <ion-icon name="barbell-outline" style="font-size: 12px; vertical-align: middle;"></ion-icon>
+                      {{ getCategoriaLabel(ej.categoria) }}
+                    </p>
+                  </ion-label>
+                </ion-item>
+              </ion-list>
+            </div>
+            
+            <!-- Cuando no hay resultados -->
+            <ion-note *ngIf="ejerciciosDisponiblesFiltrados.length === 0 && ejerciciosDisponibles.length > 0" 
+                      style="display: block; padding: 30px; text-align: center; color: var(--ion-color-medium);">
+              <ion-icon name="sad-outline" style="font-size: 48px; margin-bottom: 10px; display: block;"></ion-icon>
+              <p>No se encontraron ejercicios con "{{ filtroEjercicioModal }}"</p>
+              <ion-button fill="clear" size="small" (click)="filtroEjercicioModal = ''; filtrarEjerciciosModal()">
+                Limpiar búsqueda
+              </ion-button>
+            </ion-note>
+            
+            <!-- Cuando no hay ejercicios en la base de datos -->
+            <ion-note *ngIf="ejerciciosDisponibles.length === 0" 
+                      style="display: block; padding: 30px; text-align: center; color: var(--ion-color-warning);">
+              <ion-icon name="alert-circle-outline" style="font-size: 48px; margin-bottom: 10px; display: block;"></ion-icon>
+              <p>No hay ejercicios disponibles.</p>
+              <p style="font-size: 0.9rem;">Crea ejercicios primero en la pestaña "Ejercicios"</p>
+            </ion-note>
+          </div>
+
+          <!-- Ejercicios seleccionados -->
+          <div style="margin-top: 20px;">
+            <h4 style="color: var(--primary-green); margin-bottom: 10px;">
+              Ejercicios en la rutina ({{ ejerciciosSeleccionados.length }})
+            </h4>
+          </div>
 
           <div *ngIf="ejerciciosSeleccionados.length > 0" class="selected-exercises-list">
             <div *ngFor="let ejSel of ejerciciosSeleccionados; let i = index" class="exercise-item">
               <div class="exercise-header">
                 <span class="order-number">{{ i + 1 }}</span>
-                <strong style="color: var(--primary-green); flex: 1;">{{ ejSel.ejercicio?.nombre }}</strong>
+                <strong style="color: var(--primary-green); flex: 1;">
+                  {{ ejSel.ejercicio?.nombre || 'Nombre no disponible' }}
+                </strong>
                 <ion-button fill="clear" color="danger" size="small" (click)="eliminarEjercicioDeRutina(i)">
                   <ion-icon name="trash"></ion-icon>
                 </ion-button>
