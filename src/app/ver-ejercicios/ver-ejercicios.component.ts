@@ -506,7 +506,11 @@ export class VerEjerciciosComponent implements OnInit {
     this.aplicarFiltrosRutinas();
   }
 
-  async abrirModalRutina(rutina?: Rutina) {
+  async abrirModalRutina(rutina?: Rutina | RutinaConDetalles) {
+    console.log('🔧 Abriendo modal rutina con:', rutina);
+    console.log('🔧 Tiene ID?', rutina?.id);
+    console.log('🔧 Modo edición?', !!rutina);
+    
     this.editModeRutina = !!rutina;
     
     // Siempre recargar ejercicios para tener los datos más actualizados
@@ -521,6 +525,7 @@ export class VerEjerciciosComponent implements OnInit {
     console.log('📋 Primeros 3 ejercicios:', this.ejerciciosDisponibles.slice(0, 3).map(e => e.nombre));
 
     if (rutina && rutina.id) {
+      console.log('✏️ MODO EDICIÓN - Cargando datos de rutina ID:', rutina.id);
       // Modo edición: cargar datos de la rutina
       this.rutinaActual = {
         id: rutina.id,
@@ -532,8 +537,12 @@ export class VerEjerciciosComponent implements OnInit {
         activo: rutina.activo !== false
       };
 
+      console.log('📝 Datos de rutina cargados:', this.rutinaActual);
+
       // Cargar ejercicios de la rutina
       const { data: ejerciciosRutina } = await this.rutinaService.obtenerEjerciciosDeRutina(rutina.id);
+      console.log('🏋️ Ejercicios de la rutina:', ejerciciosRutina);
+      
       this.ejerciciosSeleccionados = (ejerciciosRutina || []).map((re: any) => ({
         id: re.id,
         ejercicio_id: re.ejercicio_id,
@@ -545,7 +554,10 @@ export class VerEjerciciosComponent implements OnInit {
         notas: re.notas || '',
         enlace_video: re.ejercicio?.enlace_video
       }));
+      
+      console.log('✅ Ejercicios seleccionados cargados:', this.ejerciciosSeleccionados.length);
     } else {
+      console.log('➕ MODO CREACIÓN - Nueva rutina');
       // Modo creación
       this.rutinaActual = this.getEmptyRutinaForm();
       this.ejerciciosSeleccionados = [];

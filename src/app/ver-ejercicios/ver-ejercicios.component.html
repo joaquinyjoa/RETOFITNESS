@@ -9,7 +9,7 @@
     <ion-buttons slot="end">
       <ion-button *ngIf="segmentValue === 'ejercicios'" (click)="abrirModal()">
         <ion-icon slot="start" name="add-circle-outline"></ion-icon>
-        Agregar Ejercicio
+        Nuevo Ejercicio
       </ion-button>
       <ion-button *ngIf="segmentValue === 'rutinas'" (click)="abrirModalRutina()">
         <ion-icon slot="start" name="add-circle-outline"></ion-icon>
@@ -124,11 +124,11 @@
             </ion-card-subtitle>
           </div>
           <div class="actions">
-            <ion-button fill="clear" size="small" (click)="abrirModal(ejercicio)" class="action-btn edit-btn">
-              Modificar
+            <ion-button fill="clear" size="small" (click)="abrirModal(ejercicio)" class="action-btn edit-btn" style="font-size: 24px;">
+              <ion-icon name="create-outline" slot="icon-only" style="font-size: 24px;"></ion-icon>
             </ion-button>
-            <ion-button fill="clear" size="small" (click)="eliminarEjercicio(ejercicio)" class="action-btn delete-btn">
-              <ion-icon name="trash"></ion-icon>
+            <ion-button fill="clear" size="small" (click)="eliminarEjercicio(ejercicio)" class="action-btn delete-btn" color="danger" style="font-size: 24px;">
+              <ion-icon name="trash-outline" slot="icon-only" style="font-size: 24px;"></ion-icon>
             </ion-button>
           </div>
         </div>
@@ -726,8 +726,9 @@
                 <strong style="color: var(--primary-green); flex: 1;">
                   {{ ejSel.ejercicio?.nombre || 'Nombre no disponible' }}
                 </strong>
-                <ion-button fill="clear" color="danger" size="small" (click)="eliminarEjercicioDeRutina(i)">
-                  <ion-icon name="trash"></ion-icon>
+                <ion-button fill="clear" color="danger" size="small" (click)="eliminarEjercicioDeRutina(i)" title="Eliminar ejercicio" style="margin-right: 10px;">
+                  <ion-icon name="trash" slot="icon-only"></ion-icon>
+                  Eliminar
                 </ion-button>
               </div>
               
@@ -789,6 +790,14 @@
       <ion-toolbar color="dark">
         <ion-title style="color: #00ff88;">{{ rutinaDetalle?.nombre || 'Detalle de Rutina' }}</ion-title>
         <ion-buttons slot="end">
+          <ion-button *ngIf="rutinaDetalle" (click)="abrirModalRutina(rutinaDetalle); cerrarModalDetalle()" fill="outline" style="--color: #00ff88; --border-color: #00ff88; margin-right: 8px;">
+            <ion-icon slot="start" name="create-outline"></ion-icon>
+            Editar
+          </ion-button>
+          <ion-button *ngIf="rutinaDetalle" (click)="abrirModalAsignar(rutinaDetalle); cerrarModalDetalle()" fill="solid" color="success" style="margin-right: 8px;">
+            <ion-icon slot="start" name="person-add-outline"></ion-icon>
+            Asignar
+          </ion-button>
           <ion-button (click)="cerrarModalDetalle()" style="color: #00ff88; font-weight: 600;">
             Volver
           </ion-button>
@@ -929,18 +938,6 @@
             <ion-icon name="barbell-outline" style="font-size: 64px; margin-bottom: 15px; display: block; color: #666666;"></ion-icon>
             <div style="font-size: 1.1rem;">No hay ejercicios en esta rutina</div>
           </ion-note>
-        </div>
-
-        <!-- Botones de acción al final -->
-        <div style="margin-top: 30px; display: flex; gap: 10px;">
-          <ion-button expand="block" fill="outline" (click)="cerrarModalDetalle(); abrirModalRutina(rutinaDetalle)" style="flex: 1;">
-            <ion-icon name="create-outline" slot="start"></ion-icon>
-            Editar Rutina
-          </ion-button>
-          <ion-button expand="block" fill="solid" color="success" (click)="cerrarModalDetalle(); abrirModalAsignar(rutinaDetalle)" style="flex: 1;">
-            <ion-icon name="person-add-outline" slot="start"></ion-icon>
-            Asignar Clientes
-          </ion-button>
         </div>
       </div>
     </ion-content>
