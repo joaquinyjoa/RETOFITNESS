@@ -1,7 +1,13 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>
-      Clientes
+<ion-header class="custom-header">
+  <ion-toolbar class="custom-toolbar">
+    <ion-buttons slot="start">
+      <ion-button (click)="volver()" class="back-button">
+        <ion-icon name="arrow-back" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title class="custom-title">
+      <ion-icon name="people-outline" class="title-icon"></ion-icon>
+      Mis Clientes
     </ion-title>
   </ion-toolbar>
 </ion-header>
@@ -26,29 +32,63 @@
         <ion-card *ngFor="let c of filteredClientes" class="client-card">
           <ion-card-content>
             <div class="card-header">
+              <div class="avatar-circle">
+                <ion-icon name="person-circle" class="avatar-icon"></ion-icon>
+              </div>
               <div class="client-main">
                 <h3 class="client-name">{{ c.nombre }} {{ c.apellido }}</h3>
-                <div class="client-sub">{{ c.correo || '' }}</div>
+                <div class="client-sub">
+                  <ion-icon name="mail-outline" class="sub-icon"></ion-icon>
+                  {{ c.correo || 'Sin correo' }}
+                </div>
               </div>
             </div>
 
             <div class="client-stats">
-              <div class="stat-item"><strong>Edad</strong><span>{{ c.edad ?? '-' }}</span></div>
-              <div class="stat-item"><strong>Altura</strong><span>{{ c.altura ?? '-' }} cm</span></div>
-              <div class="stat-item"><strong>Peso</strong><span>{{ c.peso ?? '-' }} kg</span></div>
+              <div class="stat-item">
+                <ion-icon name="calendar-outline" class="stat-icon"></ion-icon>
+                <div class="stat-content">
+                  <strong>Edad</strong>
+                  <span>{{ c.edad ?? '-' }}</span>
+                </div>
+              </div>
+              <div class="stat-item">
+                <ion-icon name="body-outline" class="stat-icon"></ion-icon>
+                <div class="stat-content">
+                  <strong>Altura</strong>
+                  <span>{{ c.altura ?? '-' }} cm</span>
+                </div>
+              </div>
+              <div class="stat-item">
+                <ion-icon name="fitness-outline" class="stat-icon"></ion-icon>
+                <div class="stat-content">
+                  <strong>Peso</strong>
+                  <span>{{ c.peso ?? '-' }} kg</span>
+                </div>
+              </div>
             </div>
 
             <div class="card-actions">
-              <ion-button class="action-button outline" fill="outline" size="small" (click)="verMas(c)">Ver más</ion-button>
-              <ion-button class="action-button" fill="clear" size="small" (click)="verRutina(c)">Rutina</ion-button>
-              <ion-button class="action-button solid" fill="solid" size="small" color="tertiary" (click)="editarCliente(c)">Editar</ion-button>
+              <ion-button class="action-button info" fill="clear" size="small" (click)="verMas(c)">
+                <ion-icon name="information-circle-outline" slot="start"></ion-icon>
+                Ver más
+              </ion-button>
+              <ion-button class="action-button routine" fill="clear" size="small" (click)="verRutina(c)">
+                <ion-icon name="barbell-outline" slot="start"></ion-icon>
+                Rutina
+              </ion-button>
+              <ion-button class="action-button edit" fill="solid" size="small" (click)="editarCliente(c)">
+                <ion-icon name="create-outline" slot="start"></ion-icon>
+                Editar
+              </ion-button>
             </div>
           </ion-card-content>
         </ion-card>
       </div>
 
       <div *ngIf="filteredClientes.length === 0" class="no-results">
-        No se encontraron clientes.
+        <ion-icon name="sad-outline" class="no-results-icon"></ion-icon>
+        <p>No se encontraron clientes.</p>
       </div>
     </div>
 

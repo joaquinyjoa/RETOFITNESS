@@ -5,15 +5,19 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService, UsuarioLogueado } from '../services/auth.service';
 import { NgIf } from '@angular/common';
+import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule, NgIf]
+  imports: [CommonModule, IonicModule, FormsModule, NgIf, SpinnerComponent]
 })
 export class LoginComponent implements OnInit {
+
+  // Estado del spinner
+  mostrarSpinner = false;
 
   // Datos del formulario
   credenciales = {
@@ -168,6 +172,7 @@ export class LoginComponent implements OnInit {
     
     this.attemptedLogin = true;
     this.isSubmitting = true;
+    this.mostrarSpinner = true;
     
     try {
       // Validar datos antes del login
@@ -179,6 +184,7 @@ export class LoginComponent implements OnInit {
         this.validatePassword(true);
         
         this.isSubmitting = false;
+        this.mostrarSpinner = false;
         return;
       }
 
@@ -197,6 +203,7 @@ export class LoginComponent implements OnInit {
         console.error('❌ ERROR EN LOGIN:', result.error);
         
         this.isSubmitting = false;
+        this.mostrarSpinner = false;
         
         // Mostrar error con toast en la parte superior
         await this.presentToast(result.error || 'Error al iniciar sesión', 'top');
@@ -256,6 +263,7 @@ export class LoginComponent implements OnInit {
       // Este finally se ejecuta siempre
       console.log('🔚 Finally ejecutado - isSubmitting se establece a false');
       this.isSubmitting = false;
+      this.mostrarSpinner = false;
     }
   }
 

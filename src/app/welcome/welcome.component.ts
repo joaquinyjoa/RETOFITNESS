@@ -3,15 +3,17 @@ import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { AnimationController } from '@ionic/angular';
+import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
   selector: 'app-welcome',
   templateUrl: './welcome.component.html',
   styleUrls: ['./welcome.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule]
+  imports: [CommonModule, IonicModule, SpinnerComponent]
 })
 export class WelcomeComponent implements OnInit {
+  mostrarSpinner = false;
   
   constructor(
     private router: Router,
@@ -78,10 +80,18 @@ export class WelcomeComponent implements OnInit {
   }
 
   navigateToLogin() {
-    this.router.navigate(['/login']);
+    this.mostrarSpinner = true;
+    setTimeout(() => {
+      this.router.navigate(['/login']);
+      
+    }, 2000);
   }
 
   navigateToRegister() {
-    this.router.navigate(['/register']);
+    this.mostrarSpinner = true;
+    setTimeout(() => {
+      this.router.navigate(['/register']);
+      this.mostrarSpinner = false;
+    }, 2000);
   }
 }

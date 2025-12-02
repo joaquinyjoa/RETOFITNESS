@@ -1,4 +1,9 @@
 <ion-content class="ion-padding">
+  <!-- Spinner de carga -->
+  <div *ngIf="mostrarSpinner" class="spinner-overlay-transparent">
+    <app-spinner></app-spinner>
+  </div>
+
   <div class="login-container">
 
     <!-- Formulario de Login -->

@@ -1,4 +1,9 @@
 <ion-content class="welcome-content" [fullscreen]="true">
+  <!-- Spinner de carga -->
+  <div *ngIf="mostrarSpinner" class="spinner-overlay-transparent">
+    <app-spinner></app-spinner>
+  </div>
+
   <!-- Fondo animado con formas geométricas -->
   <div class="background-shapes">
     <div class="shape shape-1"></div>
@@ -82,7 +87,6 @@
         Ya tengo cuenta
       </ion-button>
     </div>
-
-  
   </div>
+
 </ion-content>

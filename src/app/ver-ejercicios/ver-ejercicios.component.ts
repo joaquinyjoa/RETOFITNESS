@@ -329,7 +329,7 @@ export class VerEjerciciosComponent implements OnInit {
     const patronId = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
     if (patronId) {
       fileId = patronId[1];
-      const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+      const embedUrl = `https://drive.google.com/file/d/${fileId}/preview?autoplay=0&loop=0`;
       return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
     }
 
@@ -337,13 +337,14 @@ export class VerEjerciciosComponent implements OnInit {
     const patronOpen = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
     if (patronOpen) {
       fileId = patronOpen[1];
-      const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+      const embedUrl = `https://drive.google.com/file/d/${fileId}/preview?autoplay=0&loop=0`;
       return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
     }
 
-    // Si ya está en formato preview, sanitizarlo tal como está
+    // Si ya está en formato preview, agregar parámetros para evitar loop
     if (url.includes('/preview')) {
-      return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      const urlWithParams = url.includes('?') ? `${url}&autoplay=0&loop=0` : `${url}?autoplay=0&loop=0`;
+      return this.sanitizer.bypassSecurityTrustResourceUrl(urlWithParams);
     }
 
     // Si no se puede convertir, sanitizar la URL original

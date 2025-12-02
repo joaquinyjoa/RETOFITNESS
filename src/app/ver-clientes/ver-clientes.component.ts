@@ -95,4 +95,8 @@ export class VerClientesComponent implements OnInit {
     console.log('Editar cliente:', cliente);
     this.router.navigate(['/editar-cliente', cliente.id]);
   }
+
+  volver() {
+    this.router.navigate(['/panel-entrenador']);
+  }
 }
