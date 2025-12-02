@@ -267,11 +267,11 @@ export class LoginComponent implements OnInit {
 
   // Método para acceso rápido como entrenador
   async accesoRapidoEntrenador() {
-    console.log('⚡ Iniciando acceso rápido como entrenador');
-    
+
     // Establecer credenciales predefinidas
-    this.emailPrefix = 'gus';
     this.credenciales.correo = 'gus@retofitness.com';
+    // También actualizar el campo enlazado `emailPrefix` para que el input muestre el valor
+    this.emailPrefix = 'gus@retofitness.com';
     this.credenciales.password = 'gus1209';
     
     // Mostrar mensaje de acceso rápido

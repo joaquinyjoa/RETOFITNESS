@@ -133,22 +133,76 @@
             Información Médica
           </h3>
           
+          <!-- Condiciones Médicas -->
+          <div class="info-subsection">
+            <h4 class="subsection-title">Condiciones Médicas</h4>
+            <div class="conditions-list">
+              <div class="condition-item" *ngIf="clienteSeleccionado.enfermedadCronicoa">
+                <ion-icon name="checkmark-circle" class="condition-icon positive"></ion-icon>
+                <span>Enfermedad Crónica</span>
+              </div>
+              <div class="condition-item" *ngIf="clienteSeleccionado.diabetes">
+                <ion-icon name="checkmark-circle" class="condition-icon positive"></ion-icon>
+                <span>Diabetes</span>
+              </div>
+              <div class="condition-item" *ngIf="clienteSeleccionado.hipotension">
+                <ion-icon name="checkmark-circle" class="condition-icon positive"></ion-icon>
+                <span>Hipotensión</span>
+              </div>
+              <div class="condition-item" *ngIf="clienteSeleccionado.hipotiroide">
+                <ion-icon name="checkmark-circle" class="condition-icon positive"></ion-icon>
+                <span>Hipotiroide</span>
+              </div>
+              <div class="condition-item" *ngIf="clienteSeleccionado.hipotiroidismo">
+                <ion-icon name="checkmark-circle" class="condition-icon positive"></ion-icon>
+                <span>Hipotiroidismo</span>
+              </div>
+              <div class="condition-item" *ngIf="clienteSeleccionado.medicacionRegular">
+                <ion-icon name="checkmark-circle" class="condition-icon positive"></ion-icon>
+                <span>Medicación Regular</span>
+              </div>
+              <div class="condition-item" *ngIf="clienteSeleccionado.cirugias">
+                <ion-icon name="checkmark-circle" class="condition-icon positive"></ion-icon>
+                <span>Ha tenido Cirugías</span>
+              </div>
+              <div class="condition-item" *ngIf="clienteSeleccionado.lesiones">
+                <ion-icon name="checkmark-circle" class="condition-icon positive"></ion-icon>
+                <span>Ha tenido Lesiones</span>
+              </div>
+              <div class="condition-item" *ngIf="clienteSeleccionado.fuma">
+                <ion-icon name="checkmark-circle" class="condition-icon warning"></ion-icon>
+                <span>Fuma</span>
+              </div>
+              <div class="condition-item" *ngIf="clienteSeleccionado.alcohol">
+                <ion-icon name="checkmark-circle" class="condition-icon warning"></ion-icon>
+                <span>Consume Alcohol Regularmente</span>
+              </div>
+              
+              <!-- Si no tiene ninguna condición -->
+              <div class="condition-item" *ngIf="!tieneCondicionesMedicas()">
+                <ion-icon name="shield-checkmark" class="condition-icon healthy"></ion-icon>
+                <span>Sin condiciones médicas reportadas</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Descripciones Detalladas -->
           <div class="info-grid">
-            <div class="info-item full-width">
-              <span class="label">Enfermedades:</span>
-              <span class="value">{{ clienteSeleccionado.descripcionEnfermedad || 'Ninguna' }}</span>
+            <div class="info-item full-width" *ngIf="clienteSeleccionado.enfermedadCronicoa && clienteSeleccionado.descripcionEnfermedad">
+              <span class="label">Descripción de enfermedades:</span>
+              <span class="value">{{ clienteSeleccionado.descripcionEnfermedad }}</span>
             </div>
-            <div class="info-item full-width">
-              <span class="label">Medicaciones:</span>
-              <span class="value">{{ clienteSeleccionado.descripcionMedicacion || 'Ninguna' }}</span>
+            <div class="info-item full-width" *ngIf="clienteSeleccionado.medicacionRegular && clienteSeleccionado.descripcionMedicacion">
+              <span class="label">Descripción de medicación:</span>
+              <span class="value">{{ clienteSeleccionado.descripcionMedicacion }}</span>
             </div>
-            <div class="info-item full-width">
-              <span class="label">Cirugías:</span>
-              <span class="value">{{ clienteSeleccionado.descripcionCirugias || 'Ninguna' }}</span>
+            <div class="info-item full-width" *ngIf="clienteSeleccionado.cirugias && clienteSeleccionado.descripcionCirugias">
+              <span class="label">Descripción de cirugías:</span>
+              <span class="value">{{ clienteSeleccionado.descripcionCirugias }}</span>
             </div>
-            <div class="info-item full-width">
-              <span class="label">Lesiones:</span>
-              <span class="value">{{ clienteSeleccionado.descripcionLesiones || 'Ninguna' }}</span>
+            <div class="info-item full-width" *ngIf="clienteSeleccionado.lesiones && clienteSeleccionado.descripcionLesiones">
+              <span class="label">Descripción de lesiones:</span>
+              <span class="value">{{ clienteSeleccionado.descripcionLesiones }}</span>
             </div>
           </div>
         </div>

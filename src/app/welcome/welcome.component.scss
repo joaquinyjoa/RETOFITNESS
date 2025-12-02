@@ -137,7 +137,7 @@
 
   /* make features grid compact or hide if needed */
   .features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
-  .feature-item { font-size: 0.82rem; }
+  .feature-item { font-size: 0.82rem; color: #ffffff; }
 }
 
 @media (min-width: 481px) and (max-width: 768px) {

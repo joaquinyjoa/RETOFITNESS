@@ -288,7 +288,8 @@ ion-list {
   .login-button {
     --background: var(--accent-gradient);
     --color: #000000;
-    --border-radius: 12px;
+    --border-radius: 999px; /* botón completamente redondeado */
+    border-radius: 999px; /* respaldo por compatibilidad */
     --box-shadow: var(--glow-shadow);
     --padding-top: 15px;
     --padding-bottom: 15px;

@@ -5,19 +5,39 @@
         <ion-icon name="arrow-back"></ion-icon>
       </ion-button>
     </ion-buttons>
-    <ion-title>Ejercicios</ion-title>
+    <ion-title>Gestión de Entrenamientos</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="abrirModal()">
-        <ion-icon name="add"></ion-icon>
+      <ion-button *ngIf="segmentValue === 'ejercicios'" (click)="abrirModal()">
+        Agregar
+      </ion-button>
+      <ion-button *ngIf="segmentValue === 'rutinas'" (click)="abrirModalRutina()">
+        Nueva Rutina
       </ion-button>
     </ion-buttons>
+  </ion-toolbar>
+  
+  <!-- Segment para cambiar entre Ejercicios y Rutinas -->
+  <ion-toolbar>
+    <ion-segment [(ngModel)]="segmentValue" (ionChange)="onSegmentChange($event)">
+      <ion-segment-button value="ejercicios">
+        <ion-label>Ejercicios</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="rutinas">
+        <ion-label>Rutinas</ion-label>
+      </ion-segment-button>
+    </ion-segment>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true" class="main-content">
   
-  <!-- Filtros -->
-  <div class="filters-section">
+  <!-- ============================================ -->
+  <!-- TAB DE EJERCICIOS -->
+  <!-- ============================================ -->
+  <div *ngIf="segmentValue === 'ejercicios'">
+    
+    <!-- Filtros -->
+    <div class="filters-section">
     <ion-searchbar 
       [(ngModel)]="filtroTexto" 
       (ionInput)="aplicarFiltros()"
@@ -74,7 +94,6 @@
         Aún no has agregado ejercicios
       </p>
       <ion-button fill="outline" (click)="abrirModal()">
-        <ion-icon name="add" slot="start"></ion-icon>
         Agregar primer ejercicio
       </ion-button>
     </div>
@@ -103,11 +122,8 @@
             </ion-card-subtitle>
           </div>
           <div class="actions">
-            <ion-button fill="clear" size="small" (click)="verVideo(ejercicio)" class="action-btn video-btn">
-              <ion-icon name="play-circle"></ion-icon>
-            </ion-button>
             <ion-button fill="clear" size="small" (click)="abrirModal(ejercicio)" class="action-btn edit-btn">
-              <ion-icon name="create"></ion-icon>
+              Modificar
             </ion-button>
             <ion-button fill="clear" size="small" (click)="eliminarEjercicio(ejercicio)" class="action-btn delete-btn">
               <ion-icon name="trash"></ion-icon>
@@ -133,9 +149,17 @@
             <span>{{ getEquipamientoText(ejercicio.equipamiento) }}</span>
           </div>
 
-          <div class="detail-item">
-            <ion-icon name="link-outline"></ion-icon>
-            <span class="video-link">Video disponible</span>
+          <!-- Mostrar video directamente en la tarjeta -->
+          <div *ngIf="ejercicio.enlace_video" class="video-preview">
+            <iframe 
+              [src]="getVideoEmbedUrl(ejercicio.enlace_video)" 
+              width="100%" 
+              height="250" 
+              frameborder="0" 
+              allowfullscreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              class="video-frame">
+            </iframe>
           </div>
         </div>
 
@@ -149,6 +173,21 @@
         </div>
       </ion-card-content>
     </ion-card>
+  </div>
+
+  </div>
+  <!-- FIN TAB DE EJERCICIOS -->
+
+  <!-- ============================================ -->
+  <!-- TAB DE RUTINAS -->
+  <!-- ============================================ -->
+  <div *ngIf="segmentValue === 'rutinas'">
+    <div class="filters-section">
+      <h2 style="color: var(--primary-green); text-align: center; padding: 40px;">
+        Sección de Rutinas<br>
+        <small style="color: var(--light-gray); font-size: 0.9rem;">Próximamente disponible</small>
+      </h2>
+    </div>
   </div>
 
 </ion-content>

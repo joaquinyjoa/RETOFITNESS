@@ -192,6 +192,67 @@
   }
 }
 
+// Estilos para condiciones médicas
+.info-subsection {
+  margin-bottom: 20px;
+
+  .subsection-title {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-color);
+  }
+}
+
+.conditions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.condition-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+  border-left: 3px solid var(--primary-green);
+
+  .condition-icon {
+    font-size: 1.1rem;
+    
+    &.positive {
+      color: var(--primary-green);
+    }
+    
+    &.warning {
+      color: #ffa500;
+    }
+    
+    &.healthy {
+      color: #4CAF50;
+    }
+  }
+
+  span {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  &:has(.warning) {
+    border-left-color: #ffa500;
+  }
+
+  &:has(.healthy) {
+    border-left-color: #4CAF50;
+  }
+}
+
 /* Responsive para modal */
 @media (max-width: 768px) {
   .info-grid {

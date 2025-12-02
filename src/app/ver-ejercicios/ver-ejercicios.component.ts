@@ -3,8 +3,11 @@ import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { EjercicioService } from '../services/ejercicio.service';
 import { ToastService } from '../services/toast.service';
+import { RutinaService, Rutina, RutinaEjercicio, RutinaConDetalles } from '../services/rutina.service';
+import { ClienteService } from '../services/cliente.service';
 import { Ejercicio, EjercicioFormData } from '../models/ejercicio/ejercicio.interface';
 
 @Component({
@@ -16,6 +19,10 @@ import { Ejercicio, EjercicioFormData } from '../models/ejercicio/ejercicio.inte
 })
 export class VerEjerciciosComponent implements OnInit {
 
+  // Control de tabs
+  segmentValue = 'ejercicios';
+
+  // === EJERCICIOS ===
   ejercicios: Ejercicio[] = [];
   ejerciciosFiltrados: Ejercicio[] = [];
   loading = false;
@@ -32,6 +39,31 @@ export class VerEjerciciosComponent implements OnInit {
   filtroTexto = '';
   filtroCategoria = '';
   filtroMusculo = '';
+
+  // === RUTINAS ===
+  rutinas: RutinaConDetalles[] = [];
+  rutinasFiltradas: RutinaConDetalles[] = [];
+  loadingRutinas = false;
+
+  // Modal para agregar/editar rutina
+  showModalRutina = false;
+  editModeRutina = false;
+  rutinaActual: any = this.getEmptyRutinaForm();
+  ejerciciosDisponibles: Ejercicio[] = [];
+  ejerciciosSeleccionados: any[] = [];
+
+  // Modal para asignar rutina a clientes
+  showModalAsignar = false;
+  rutinaParaAsignar: Rutina | null = null;
+  clientesDisponibles: any[] = [];
+  clientesSeleccionados: number[] = [];
+  fechaInicioAsignacion: string = '';
+  fechaFinAsignacion: string = '';
+  notasAsignacion: string = '';
+
+  // Filtros de rutinas
+  filtroTextoRutina = '';
+  filtroNivelRutina = '';
 
   // Opciones para los select
   categorias = [
@@ -56,7 +88,10 @@ export class VerEjerciciosComponent implements OnInit {
   constructor(
     private ejercicioService: EjercicioService,
     private toastService: ToastService,
-    private router: Router
+    private rutinaService: RutinaService,
+    private clienteService: ClienteService,
+    private router: Router,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit() {
@@ -262,9 +297,36 @@ export class VerEjerciciosComponent implements OnInit {
     }
   }
 
-  verVideo(ejercicio: Ejercicio) {
-    const url = this.ejercicioService.convertToDirectViewUrl(ejercicio.enlace_video);
-    window.open(url, '_blank');
+  // Convertir URL de Google Drive a formato embed para mostrar en iframe
+  getVideoEmbedUrl(url: string): SafeResourceUrl {
+    if (!url) return this.sanitizer.bypassSecurityTrustResourceUrl('');
+    
+    // Extraer el ID del archivo de Google Drive
+    let fileId = '';
+    
+    // Patrón para URLs como: https://drive.google.com/file/d/FILE_ID/view
+    const patronId = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+    if (patronId) {
+      fileId = patronId[1];
+      const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+      return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
+    }
+
+    // Patrón para URLs como: https://drive.google.com/open?id=FILE_ID
+    const patronOpen = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+    if (patronOpen) {
+      fileId = patronOpen[1];
+      const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+      return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
+    }
+
+    // Si ya está en formato preview, sanitizarlo tal como está
+    if (url.includes('/preview')) {
+      return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+    }
+
+    // Si no se puede convertir, sanitizar la URL original
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 
   // Métodos para manejar arrays dinámicos
@@ -360,5 +422,322 @@ export class VerEjerciciosComponent implements OnInit {
       instrucciones: '',
       consejos: ''
     };
+  }
+
+  private getEmptyRutinaForm(): any {
+    return {
+      nombre: '',
+      descripcion: '',
+      objetivo: '',
+      duracion_semanas: 4,
+      nivel_dificultad: 'principiante',
+      activo: true
+    };
+  }
+
+  // ============================================
+  // MÉTODOS PARA RUTINAS
+  // ============================================
+
+  onSegmentChange(event: any) {
+    this.segmentValue = event.detail.value;
+    if (this.segmentValue === 'rutinas' && this.rutinas.length === 0) {
+      this.cargarRutinas();
+    }
+  }
+
+  async cargarRutinas() {
+    this.loadingRutinas = true;
+    try {
+      const { data, error } = await this.rutinaService.obtenerRutinasConDetalles();
+      if (error) throw error;
+      this.rutinas = data || [];
+      this.aplicarFiltrosRutinas();
+      console.log('Rutinas cargadas:', this.rutinas);
+    } catch (error) {
+      console.error('Error al cargar rutinas:', error);
+      await this.toastService.mostrarError('Error al cargar rutinas');
+    } finally {
+      this.loadingRutinas = false;
+    }
+  }
+
+  aplicarFiltrosRutinas() {
+    this.rutinasFiltradas = this.rutinas.filter(rutina => {
+      const coincideTexto = !this.filtroTextoRutina ||
+        rutina.nombre.toLowerCase().includes(this.filtroTextoRutina.toLowerCase()) ||
+        rutina.descripcion?.toLowerCase().includes(this.filtroTextoRutina.toLowerCase());
+      
+      const coincideNivel = !this.filtroNivelRutina || rutina.nivel_dificultad === this.filtroNivelRutina;
+
+      return coincideTexto && coincideNivel;
+    });
+  }
+
+  limpiarFiltrosRutinas() {
+    this.filtroTextoRutina = '';
+    this.filtroNivelRutina = '';
+    this.aplicarFiltrosRutinas();
+  }
+
+  async abrirModalRutina(rutina?: Rutina) {
+    this.editModeRutina = !!rutina;
+    
+    // Cargar ejercicios disponibles si no están cargados
+    if (this.ejercicios.length === 0) {
+      await this.cargarEjercicios();
+    }
+    this.ejerciciosDisponibles = [...this.ejercicios];
+
+    if (rutina && rutina.id) {
+      // Modo edición: cargar datos de la rutina
+      this.rutinaActual = {
+        id: rutina.id,
+        nombre: rutina.nombre,
+        descripcion: rutina.descripcion || '',
+        objetivo: rutina.objetivo || '',
+        duracion_semanas: rutina.duracion_semanas || 4,
+        nivel_dificultad: rutina.nivel_dificultad,
+        activo: rutina.activo !== false
+      };
+
+      // Cargar ejercicios de la rutina
+      const { data: ejerciciosRutina } = await this.rutinaService.obtenerEjerciciosDeRutina(rutina.id);
+      this.ejerciciosSeleccionados = (ejerciciosRutina || []).map((re: any) => ({
+        id: re.id,
+        ejercicio_id: re.ejercicio_id,
+        ejercicio: re.ejercicio,
+        orden: re.orden,
+        series: re.series || 3,
+        repeticiones: re.repeticiones || '10-12',
+        descanso_segundos: re.descanso_segundos || 60,
+        notas: re.notas || ''
+      }));
+    } else {
+      // Modo creación
+      this.rutinaActual = this.getEmptyRutinaForm();
+      this.ejerciciosSeleccionados = [];
+    }
+
+    this.showModalRutina = true;
+  }
+
+  cerrarModalRutina() {
+    this.showModalRutina = false;
+    this.rutinaActual = this.getEmptyRutinaForm();
+    this.ejerciciosSeleccionados = [];
+  }
+
+  async guardarRutina() {
+    try {
+      // Validaciones
+      if (!this.rutinaActual.nombre.trim()) {
+        await this.toastService.mostrarError('El nombre de la rutina es obligatorio');
+        return;
+      }
+
+      if (this.ejerciciosSeleccionados.length === 0) {
+        await this.toastService.mostrarError('Debe agregar al menos un ejercicio a la rutina');
+        return;
+      }
+
+      this.loadingRutinas = true;
+
+      let rutinaId: number;
+
+      if (this.editModeRutina && this.rutinaActual.id) {
+        // Actualizar rutina existente
+        const { data, error } = await this.rutinaService.actualizarRutina(this.rutinaActual.id, {
+          nombre: this.rutinaActual.nombre,
+          descripcion: this.rutinaActual.descripcion,
+          objetivo: this.rutinaActual.objetivo,
+          duracion_semanas: this.rutinaActual.duracion_semanas,
+          nivel_dificultad: this.rutinaActual.nivel_dificultad
+        });
+
+        if (error) throw error;
+        rutinaId = this.rutinaActual.id;
+      } else {
+        // Crear nueva rutina
+        const { data, error } = await this.rutinaService.crearRutina({
+          nombre: this.rutinaActual.nombre,
+          descripcion: this.rutinaActual.descripcion,
+          objetivo: this.rutinaActual.objetivo,
+          duracion_semanas: this.rutinaActual.duracion_semanas,
+          nivel_dificultad: this.rutinaActual.nivel_dificultad,
+          activo: true
+        });
+
+        if (error || !data) throw error;
+        rutinaId = data.id!;
+      }
+
+      // Guardar ejercicios de la rutina
+      const ejerciciosParaGuardar: RutinaEjercicio[] = this.ejerciciosSeleccionados.map((ej, index) => ({
+        rutina_id: rutinaId,
+        ejercicio_id: ej.ejercicio_id,
+        orden: index + 1,
+        series: ej.series,
+        repeticiones: ej.repeticiones,
+        descanso_segundos: ej.descanso_segundos,
+        notas: ej.notas
+      }));
+
+      const { success, error: errorEjercicios } = await this.rutinaService.guardarEjerciciosEnRutina(rutinaId, ejerciciosParaGuardar);
+
+      if (!success) throw errorEjercicios;
+
+      await this.toastService.mostrarExito(this.editModeRutina ? 'Rutina actualizada' : 'Rutina creada correctamente');
+      this.cerrarModalRutina();
+      await this.cargarRutinas();
+    } catch (error) {
+      console.error('Error al guardar rutina:', error);
+      await this.toastService.mostrarError('Error al guardar rutina');
+    } finally {
+      this.loadingRutinas = false;
+    }
+  }
+
+  async eliminarRutina(rutina: Rutina) {
+    if (!rutina.id) return;
+
+    try {
+      this.loadingRutinas = true;
+      const { success, error } = await this.rutinaService.eliminarRutina(rutina.id);
+
+      if (success) {
+        await this.toastService.mostrarExito('Rutina eliminada');
+        await this.cargarRutinas();
+      } else {
+        await this.toastService.mostrarError(error || 'Error al eliminar rutina');
+      }
+    } catch (error) {
+      console.error('Error al eliminar rutina:', error);
+      await this.toastService.mostrarError('Error inesperado');
+    } finally {
+      this.loadingRutinas = false;
+    }
+  }
+
+  // Agregar ejercicio a la rutina
+  agregarEjercicioARutina(ejercicio: Ejercicio) {
+    // Verificar si ya está agregado
+    const yaAgregado = this.ejerciciosSeleccionados.some(e => e.ejercicio_id === ejercicio.id);
+    if (yaAgregado) {
+      this.toastService.mostrarInfo('Este ejercicio ya está en la rutina');
+      return;
+    }
+
+    this.ejerciciosSeleccionados.push({
+      ejercicio_id: ejercicio.id,
+      ejercicio: ejercicio,
+      orden: this.ejerciciosSeleccionados.length + 1,
+      series: 3,
+      repeticiones: '10-12',
+      descanso_segundos: 60,
+      notas: ''
+    });
+  }
+
+  eliminarEjercicioDeRutina(index: number) {
+    this.ejerciciosSeleccionados.splice(index, 1);
+    // Reordenar
+    this.ejerciciosSeleccionados.forEach((ej, i) => {
+      ej.orden = i + 1;
+    });
+  }
+
+  moverEjercicioArriba(index: number) {
+    if (index === 0) return;
+    const temp = this.ejerciciosSeleccionados[index];
+    this.ejerciciosSeleccionados[index] = this.ejerciciosSeleccionados[index - 1];
+    this.ejerciciosSeleccionados[index - 1] = temp;
+    // Reordenar
+    this.ejerciciosSeleccionados.forEach((ej, i) => {
+      ej.orden = i + 1;
+    });
+  }
+
+  moverEjercicioAbajo(index: number) {
+    if (index === this.ejerciciosSeleccionados.length - 1) return;
+    const temp = this.ejerciciosSeleccionados[index];
+    this.ejerciciosSeleccionados[index] = this.ejerciciosSeleccionados[index + 1];
+    this.ejerciciosSeleccionados[index + 1] = temp;
+    // Reordenar
+    this.ejerciciosSeleccionados.forEach((ej, i) => {
+      ej.orden = i + 1;
+    });
+  }
+
+  // Modal para asignar rutina a clientes
+  async abrirModalAsignar(rutina: Rutina) {
+    this.rutinaParaAsignar = rutina;
+    this.clientesSeleccionados = [];
+    this.fechaInicioAsignacion = new Date().toISOString().split('T')[0];
+    this.fechaFinAsignacion = '';
+    this.notasAsignacion = '';
+
+    // Cargar clientes disponibles
+    try {
+      const clientes = await this.clienteService.listarClientes();
+      this.clientesDisponibles = clientes;
+    } catch (error) {
+      console.error('Error al cargar clientes:', error);
+      await this.toastService.mostrarError('Error al cargar clientes');
+    }
+
+    this.showModalAsignar = true;
+  }
+
+  cerrarModalAsignar() {
+    this.showModalAsignar = false;
+    this.rutinaParaAsignar = null;
+    this.clientesSeleccionados = [];
+  }
+
+  toggleClienteSeleccionado(clienteId: number) {
+    const index = this.clientesSeleccionados.indexOf(clienteId);
+    if (index === -1) {
+      this.clientesSeleccionados.push(clienteId);
+    } else {
+      this.clientesSeleccionados.splice(index, 1);
+    }
+  }
+
+  isClienteSeleccionado(clienteId: number): boolean {
+    return this.clientesSeleccionados.includes(clienteId);
+  }
+
+  async confirmarAsignacion() {
+    if (!this.rutinaParaAsignar || !this.rutinaParaAsignar.id) return;
+
+    if (this.clientesSeleccionados.length === 0) {
+      await this.toastService.mostrarError('Debe seleccionar al menos un cliente');
+      return;
+    }
+
+    try {
+      this.loadingRutinas = true;
+      const { success, error } = await this.rutinaService.asignarRutinaAClientes(
+        this.rutinaParaAsignar.id,
+        this.clientesSeleccionados,
+        this.fechaInicioAsignacion,
+        this.fechaFinAsignacion,
+        this.notasAsignacion
+      );
+
+      if (success) {
+        await this.toastService.mostrarExito(`Rutina asignada a ${this.clientesSeleccionados.length} cliente(s)`);
+        this.cerrarModalAsignar();
+        await this.cargarRutinas();
+      } else {
+        await this.toastService.mostrarError(error || 'Error al asignar rutina');
+      }
+    } catch (error) {
+      console.error('Error al asignar rutina:', error);
+      await this.toastService.mostrarError('Error inesperado');
+    } finally {
+      this.loadingRutinas = false;
+    }
   }
 }

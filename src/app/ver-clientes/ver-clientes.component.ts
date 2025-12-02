@@ -4,14 +4,13 @@ import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ClienteService } from '../services/cliente.service';
-import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-ver-clientes',
   templateUrl: './ver-clientes.component.html',
   styleUrls: ['./ver-clientes.component.scss'],
   standalone: true,
-  imports: [NgIf,CommonModule, IonicModule, FormsModule]
+  imports: [CommonModule, IonicModule, FormsModule]
 })
 export class VerClientesComponent implements OnInit {
   clientes: any[] = [];
@@ -69,6 +68,22 @@ export class VerClientesComponent implements OnInit {
   cerrarModal() {
     this.isModalOpen = false;
     this.clienteSeleccionado = null;
+  }
+
+  // Verificar si el cliente tiene alguna condición médica marcada como true
+  tieneCondicionesMedicas(): boolean {
+    if (!this.clienteSeleccionado) return false;
+    
+    return this.clienteSeleccionado.enfermedadCronicoa ||
+           this.clienteSeleccionado.diabetes ||
+           this.clienteSeleccionado.hipotension ||
+           this.clienteSeleccionado.hipotiroide ||
+           this.clienteSeleccionado.hipotiroidismo ||
+           this.clienteSeleccionado.medicacionRegular ||
+           this.clienteSeleccionado.cirugias ||
+           this.clienteSeleccionado.lesiones ||
+           this.clienteSeleccionado.fuma ||
+           this.clienteSeleccionado.alcohol;
   }
 
   verRutina(cliente: any) {
