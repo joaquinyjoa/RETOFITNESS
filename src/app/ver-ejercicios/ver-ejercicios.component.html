@@ -788,7 +788,6 @@
   <ng-template>
     <ion-header>
       <ion-toolbar color="dark">
-        <ion-title style="color: #00ff88;">{{ rutinaDetalle?.nombre || 'Detalle de Rutina' }}</ion-title>
         <ion-buttons slot="end">
           <ion-button *ngIf="rutinaDetalle" (click)="abrirModalRutina(rutinaDetalle); cerrarModalDetalle()" fill="outline" style="--color: #00ff88; --border-color: #00ff88; margin-right: 8px;">
             <ion-icon slot="start" name="create-outline"></ion-icon>
