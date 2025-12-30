@@ -91,7 +91,8 @@ import {
   shieldCheckmark,
   shieldCheckmarkOutline,
   chevronUp,
-  chevronDown
+  chevronDown,
+  rocket
 } from 'ionicons/icons';
 
 import { routes } from './app/app.routes';
@@ -99,6 +100,7 @@ import { AppComponent } from './app/app.component';
 
 // Registrar iconos (todos los necesarios para el proyecto)
 addIcons({
+  'rocket': rocket,
   'arrow-back-outline': arrowBackOutline,
   'arrow-back': arrowBack,
   'arrow-forward': arrowForward,

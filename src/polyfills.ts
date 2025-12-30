@@ -53,3 +53,63 @@ import 'zone.js';  // Included with Angular CLI.
 /***************************************************************************************************
  * APPLICATION IMPORTS
  */
+
+// Hacer que todos los event listeners de touch/wheel sean pasivos por defecto
+// Esto mejora el rendimiento del scroll y elimina warnings de Chrome
+if (typeof window !== 'undefined') {
+  const supportsPassive = (() => {
+    let passive = false;
+    try {
+      const opts = Object.defineProperty({}, 'passive', {
+        get: () => {
+          passive = true;
+          return passive;
+        }
+      });
+      window.addEventListener('test' as any, null as any, opts);
+      window.removeEventListener('test' as any, null as any, opts);
+    } catch (e) {
+      // Navegador no soporta passive
+    }
+    return passive;
+  })();
+
+  if (supportsPassive) {
+    const addEventListenerOriginal = EventTarget.prototype.addEventListener;
+    const removeEventListenerOriginal = EventTarget.prototype.removeEventListener;
+
+    EventTarget.prototype.addEventListener = function(
+      type: string,
+      listener: any,
+      options?: any
+    ) {
+      const usesListenerOptions = typeof options === 'object' && options !== null;
+      const useCapture = usesListenerOptions ? options.capture : options;
+
+      // Hacer pasivos los eventos touch y wheel por defecto
+      if (
+        (type === 'touchstart' || 
+         type === 'touchmove' || 
+         type === 'touchend' || 
+         type === 'wheel' || 
+         type === 'mousewheel') &&
+        !usesListenerOptions
+      ) {
+        options = {
+          passive: true,
+          capture: useCapture
+        };
+      }
+
+      return addEventListenerOriginal.call(this, type, listener, options);
+    };
+
+    EventTarget.prototype.removeEventListener = function(
+      type: string,
+      listener: any,
+      options?: any
+    ) {
+      return removeEventListenerOriginal.call(this, type, listener, options);
+    };
+  }
+}

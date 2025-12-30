@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
@@ -52,7 +52,8 @@ export class EditarClienteComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private clienteService: ClienteService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -68,23 +69,48 @@ export class EditarClienteComponent implements OnInit {
   }
 
   async cargarCliente() {
+    console.log('🟡 [EditarCliente] === INICIO cargarCliente ===');
+    console.log('🟡 [EditarCliente] Activando spinner (loading = true)...');
     this.loading = true;
+    this.cdr.detectChanges();
+    
     try {
-      const clientes = await this.clienteService.listarClientes();
-      const clienteEncontrado = clientes.find(c => c.id === this.clienteId);
+      console.log('🟡 [EditarCliente] Cargando cliente ID:', this.clienteId);
+      const tiempoInicio = performance.now();
+      
+      const clienteEncontrado = await this.clienteService.obtenerClientePorId(this.clienteId!);
+      
+      const tiempoFin = performance.now();
+      const duracion = (tiempoFin - tiempoInicio).toFixed(2);
+      console.log(`🟢 [EditarCliente] Cliente cargado en ${duracion}ms`);
       
       if (clienteEncontrado) {
+        console.log('🟢 [EditarCliente] Cliente encontrado:', clienteEncontrado.nombre, clienteEncontrado.apellido);
         this.cliente = { ...clienteEncontrado };
-        console.log('Cliente cargado:', this.cliente);
       } else {
-        this.toastService.mostrarError('Cliente no encontrado');
-        this.router.navigate(['/ver-clientes']);
+        console.error('🔴 [EditarCliente] Cliente no encontrado');
+        await this.toastService.mostrarError('Cliente no encontrado');
+        this.router.navigate(['/ver-clientes'], { replaceUrl: true });
       }
     } catch (error) {
-      console.error('Error al cargar cliente:', error);
-      this.toastService.mostrarError('Error al cargar la información del cliente');
+      console.error('🔴 [EditarCliente] Error al cargar cliente:', error);
+      await this.toastService.mostrarError('Error al cargar la información del cliente');
     } finally {
+      console.log('🟡 [EditarCliente] Desactivando spinner (loading = false)...');
       this.loading = false;
+      console.log('🟡 [EditarCliente] Forzando detección de cambios...');
+      
+      // Forzar detección de cambios
+      this.cdr.detectChanges();
+      
+      // Timeout adicional para asegurar que la UI se actualice
+      setTimeout(() => {
+        this.loading = false;
+        this.cdr.detectChanges();
+        console.log('🟡 [EditarCliente] Segunda detección de cambios ejecutada');
+      }, 0);
+      
+      console.log('🟡 [EditarCliente] === FIN cargarCliente ===\n');
     }
   }
 
@@ -93,21 +119,35 @@ export class EditarClienteComponent implements OnInit {
       return;
     }
 
+    console.log('💾 [EditarCliente] Guardando cambios...');
     this.guardando = true;
+    this.cdr.detectChanges();
+    
     try {
+      const tiempoInicio = performance.now();
       const resultado = await this.clienteService.actualizarCliente(this.clienteId!, this.cliente);
+      const tiempoFin = performance.now();
+      
+      console.log(`💾 [EditarCliente] Actualización completada en ${(tiempoFin - tiempoInicio).toFixed(2)}ms`);
       
       if (resultado.success) {
+        console.log('✅ [EditarCliente] Cliente actualizado exitosamente');
+        this.guardando = false;
+        this.cdr.detectChanges();
         this.toastService.mostrarExito('Cliente actualizado exitosamente');
-        this.router.navigate(['/ver-clientes']);
+        // Navegar inmediatamente
+        this.router.navigate(['/ver-clientes'], { replaceUrl: true });
       } else {
-        this.toastService.mostrarError(resultado.error || 'Error al actualizar cliente');
+        console.error('🔴 [EditarCliente] Error:', resultado.error);
+        await this.toastService.mostrarError(resultado.error || 'Error al actualizar cliente');
+        this.guardando = false;
+        this.cdr.detectChanges();
       }
     } catch (error) {
-      console.error('Error al guardar cliente:', error);
-      this.toastService.mostrarError('Error inesperado al guardar');
-    } finally {
+      console.error('🔴 [EditarCliente] Error al guardar cliente:', error);
+      await this.toastService.mostrarError('Error inesperado al guardar');
       this.guardando = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -146,7 +186,7 @@ export class EditarClienteComponent implements OnInit {
   }
 
   cancelar() {
-    this.router.navigate(['/ver-clientes']);
+    this.router.navigate(['/ver-clientes'], { replaceUrl: true });
   }
 
   // Método para manejar cambios en checkboxes

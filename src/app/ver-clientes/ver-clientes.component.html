@@ -17,7 +17,7 @@
 
     <ion-searchbar
       class="clientes-search"
-      placeholder="Buscar por nombre o apellido"
+      placeholder="Buscar por nombre, apellido o correo"
       [(ngModel)]="q"
       (ionInput)="applyFilter()"
       show-clear-button="focus">
@@ -29,7 +29,7 @@
 
     <div *ngIf="!loading">
       <div class="cards-grid">
-        <ion-card *ngFor="let c of filteredClientes" class="client-card">
+        <ion-card *ngFor="let c of filteredClientes; trackBy: trackByClienteId" class="client-card">
           <ion-card-content>
             <div class="card-header">
               <div class="avatar-circle">
@@ -131,10 +131,6 @@
             <div class="info-item">
               <span class="label">Edad:</span>
               <span class="value">{{ clienteSeleccionado.edad || 'No especificada' }} años</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Teléfono:</span>
-              <span class="value">{{ clienteSeleccionado.telefono || 'No especificado' }}</span>
             </div>
           </div>
         </div>
@@ -243,25 +239,6 @@
             <div class="info-item full-width" *ngIf="clienteSeleccionado.lesiones && clienteSeleccionado.descripcionLesiones">
               <span class="label">Descripción de lesiones:</span>
               <span class="value">{{ clienteSeleccionado.descripcionLesiones }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Información Adicional -->
-        <div class="info-section">
-          <h3 class="section-title">
-            <ion-icon name="information-circle-outline"></ion-icon>
-            Información Adicional
-          </h3>
-          
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="label">Fecha de registro:</span>
-              <span class="value">{{ clienteSeleccionado.created_at ? (clienteSeleccionado.created_at | date:'dd/MM/yyyy') : 'No disponible' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">ID del cliente:</span>
-              <span class="value">{{ clienteSeleccionado.id || 'No disponible' }}</span>
             </div>
           </div>
         </div>

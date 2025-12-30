@@ -150,19 +150,18 @@
             <ion-icon name="barbell-outline"></ion-icon>
             <span>{{ getEquipamientoText(ejercicio.equipamiento) }}</span>
           </div>
+        </div>
 
-          <!-- Mostrar video directamente en la tarjeta -->
-          <div *ngIf="ejercicio.enlace_video" class="video-preview">
-            <iframe 
-              [src]="getVideoEmbedUrl(ejercicio.enlace_video)" 
-              width="100%" 
-              height="250" 
-              frameborder="0" 
-              allowfullscreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              class="video-frame">
-            </iframe>
-          </div>
+        <!-- Video embebido directamente -->
+        <div *ngIf="ejercicio.enlace_video" class="video-container">
+          <iframe 
+            [src]="getVideoEmbedUrl(ejercicio.enlace_video)" 
+            frameborder="0" 
+            allowfullscreen
+            allow="autoplay"
+            loading="lazy"
+            class="exercise-video">
+          </iframe>
         </div>
 
         <div *ngIf="ejercicio.musculos_secundarios && ejercicio.musculos_secundarios.length > 0" class="secondary-muscles">
@@ -185,10 +184,6 @@
   <!-- ============================================ -->
   <div *ngIf="segmentValue === 'rutinas'">
     <div class="filters-section">
-      <h2 style="color: var(--primary-green); text-align: center; margin-bottom: 20px;">
-        Rutinas de Entrenamiento
-      </h2>
-
       <!-- Filtros -->
       <div class="filters-row">
         <ion-searchbar
@@ -282,7 +277,7 @@
             <ion-icon name="eye-outline" slot="start"></ion-icon>
             Ver más
           </ion-button>
-          <ion-button expand="block" fill="solid" color="success" (click)="abrirModalAsignar(rutina)" style="flex: 1;">
+          <ion-button expand="block" fill="solid" color="success" [routerLink]="['/asignar-rutina', rutina.id]" style="flex: 1;">
             <ion-icon name="person-add-outline" slot="start"></ion-icon>
             Asignar
           </ion-button>
@@ -793,7 +788,7 @@
             <ion-icon slot="start" name="create-outline"></ion-icon>
             Editar
           </ion-button>
-          <ion-button *ngIf="rutinaDetalle" (click)="abrirModalAsignar(rutinaDetalle); cerrarModalDetalle()" fill="solid" color="success" style="margin-right: 8px;">
+          <ion-button *ngIf="rutinaDetalle" [routerLink]="['/asignar-rutina', rutinaDetalle.id]" (click)="cerrarModalDetalle()" fill="solid" color="success" style="margin-right: 8px;">
             <ion-icon slot="start" name="person-add-outline"></ion-icon>
             Asignar
           </ion-button>
@@ -942,3 +937,56 @@
     </ion-content>
   </ng-template>
 </ion-modal>
+
+<!-- Modal para ver video (lazy loading) -->
+<ion-modal [isOpen]="showModalVideo" (didDismiss)="cerrarVideoModal()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="dark">
+        <ion-title>{{ ejercicioVideo?.nombre }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarVideoModal()">
+            <ion-icon name="close"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="modal-content">
+      <div class="video-modal-container" *ngIf="ejercicioVideo">
+        <div class="video-wrapper">
+          <iframe 
+            [src]="getVideoEmbedUrl(ejercicioVideo.enlace_video)" 
+            width="100%" 
+            height="400" 
+            frameborder="0" 
+            allowfullscreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            class="video-frame">
+          </iframe>
+        </div>
+        
+        <div class="video-info">
+          <h3>{{ ejercicioVideo.nombre }}</h3>
+          <p *ngIf="ejercicioVideo.descripcion">{{ ejercicioVideo.descripcion }}</p>
+          
+          <div class="info-grid">
+            <div class="info-item">
+              <ion-icon name="body-outline"></ion-icon>
+              <span>{{ ejercicioVideo.musculo_principal }}</span>
+            </div>
+            <div class="info-item" *ngIf="ejercicioVideo.categoria">
+              <ion-icon name="fitness-outline"></ion-icon>
+              <span>{{ ejercicioVideo.categoria }}</span>
+            </div>
+            <div class="info-item" *ngIf="ejercicioVideo.nivel_dificultad">
+              <ion-icon name="speedometer-outline"></ion-icon>
+              <span>{{ ejercicioVideo.nivel_dificultad }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+

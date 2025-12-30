@@ -113,6 +113,51 @@ export class ClienteService {
   }
 
   /**
+   * Listar clientes con solo los campos necesarios para la vista de lista (optimizado)
+   */
+  async listarClientesResumido(): Promise<any[]> {
+    try {
+      const { data, error } = await this.supabaseService['supabase']
+        .from('clientes')
+        .select('*')
+        .order('nombre', { ascending: true });
+
+      if (error) {
+        console.error('❌ Error al listar clientes:', error.message);
+        return [];
+      }
+
+      return Array.isArray(data) ? data : [];
+    } catch (error: any) {
+      console.error('❌ Error en listarClientesResumido:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Obtener un cliente por su ID con todos los detalles
+   */
+  async obtenerClientePorId(id: number): Promise<any> {
+    try {
+      const { data, error } = await this.supabaseService['supabase']
+        .from('clientes')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error('ClienteService.obtenerClientePorId error:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('Error en obtenerClientePorId:', error);
+      return null;
+    }
+  }
+
+  /**
    * Convertir DataURL a Blob para subir archivo
    */
   private dataURLtoBlob(dataurl: string): Blob {
@@ -167,7 +212,7 @@ export class ClienteService {
 
       // Verificar si el email ya existe (excluyendo el cliente actual)
       if (dataToUpdate.correo) {
-        const { data: existingClients, error: checkError } = await this.supabaseService.getClient()
+        const { data: existingClients, error: checkError } = await this.supabaseService['supabase']
           .from('clientes')
           .select('id, correo')
           .eq('correo', dataToUpdate.correo)
@@ -184,7 +229,7 @@ export class ClienteService {
       }
 
       // Actualizar el cliente en la base de datos
-      const { data, error } = await this.supabaseService.getClient()
+      const { data, error } = await this.supabaseService['supabase']
         .from('clientes')
         .update(dataToUpdate)
         .eq('id', id)

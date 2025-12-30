@@ -1,0 +1,300 @@
+// Estilos globales heredados
+.custom-header {
+  ion-toolbar {
+    --background: #000000;
+    --color: #00ff88;
+  }
+}
+
+.main-content {
+  --background: #000000;
+}
+
+.content-wrapper {
+  padding: 16px;
+  padding-bottom: 100px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: var(--ion-color-medium);
+
+  ion-spinner {
+    margin-bottom: 16px;
+    --color: var(--primary-green);
+  }
+}
+
+// Card de información de rutina
+.rutina-info-card {
+  background: rgba(0, 255, 136, 0.1);
+  border: 2px solid rgba(0, 255, 136, 0.3);
+  margin-bottom: 16px;
+
+  ion-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.3rem;
+  }
+
+  ion-card-subtitle {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+// Card de parámetros
+.params-card {
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 16px;
+
+  ion-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+  }
+
+  ion-item {
+    --background: transparent;
+    --border-color: rgba(0, 255, 136, 0.2);
+    margin-bottom: 12px;
+
+    ion-label {
+      color: var(--primary-green);
+      font-weight: 600;
+    }
+  }
+}
+
+// Card de clientes
+.clientes-card {
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 16px;
+
+  .header-with-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  ion-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    flex: 1;
+  }
+
+  ion-searchbar {
+    --background: rgba(0, 255, 136, 0.1);
+    --border-radius: 8px;
+    --box-shadow: none;
+    --color: #ffffff;
+    --placeholder-color: rgba(255, 255, 255, 0.5);
+    --icon-color: var(--primary-green);
+    padding: 0;
+    margin-bottom: 12px;
+  }
+
+  .select-all-item {
+    --background: rgba(0, 255, 136, 0.15);
+    --border-color: rgba(0, 255, 136, 0.3);
+    margin-bottom: 8px;
+    border-radius: 8px;
+
+    ion-label {
+      color: var(--primary-green);
+    }
+
+    ion-checkbox {
+      --border-color: var(--primary-green);
+      --checkmark-color: #000000;
+    }
+  }
+
+  ion-list {
+    background: transparent;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .cliente-item {
+    --background: rgba(255, 255, 255, 0.03);
+    --border-color: rgba(255, 255, 255, 0.1);
+    margin-bottom: 4px;
+    border-radius: 6px;
+
+    ion-checkbox {
+      --border-color: rgba(255, 255, 255, 0.4);
+      --checkmark-color: #000000;
+
+      &.checkbox-checked {
+        --background: var(--primary-green);
+        --border-color: var(--primary-green);
+      }
+    }
+
+    ion-label {
+      h3 {
+        color: #ffffff;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      p {
+        color: var(--ion-color-medium);
+        font-size: 0.9rem;
+      }
+    }
+
+    &:hover {
+      --background: rgba(0, 255, 136, 0.08);
+    }
+  }
+
+  .no-results,
+  .no-clientes {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--ion-color-medium);
+
+    ion-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    p {
+      margin: 0;
+      font-size: 1rem;
+    }
+  }
+}
+
+// Botón de acción
+.action-button {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.9) 70%, transparent 100%);
+  z-index: 10;
+
+  ion-button {
+    --box-shadow: 0 4px 16px rgba(0, 255, 136, 0.3);
+    font-weight: 600;
+    font-size: 1.05rem;
+
+    &:disabled {
+      --box-shadow: none;
+      opacity: 0.5;
+    }
+  }
+}
+
+// Scrollbar personalizado
+ion-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+ion-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+ion-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 136, 0.3);
+  border-radius: 4px;
+
+  &:hover {
+    background: rgba(0, 255, 136, 0.5);
+  }
+}
+
+// Estilos personalizados para el Alert
+::ng-deep .custom-alert {
+  --background: #1a1a1a;
+  --max-width: 400px;
+  
+  .alert-wrapper {
+    background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%);
+    border: 2px solid rgba(0, 255, 136, 0.4);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 255, 136, 0.2);
+  }
+
+  .alert-head {
+    background: rgba(0, 255, 136, 0.15);
+    border-bottom: 2px solid rgba(0, 255, 136, 0.3);
+    padding: 20px;
+
+    h2 {
+      color: var(--primary-green) !important;
+      font-size: 1.4rem;
+      font-weight: 700;
+      text-align: center;
+      margin: 0;
+    }
+  }
+
+  .alert-message {
+    padding: 20px;
+    color: #ffffff;
+    
+    ion-icon {
+      display: block;
+    }
+  }
+
+  .alert-button-group {
+    padding: 16px;
+    display: flex;
+    gap: 12px;
+    border-top: 2px solid rgba(0, 255, 136, 0.2);
+
+    button {
+      flex: 1;
+      height: 48px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      text-transform: none;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+  }
+
+  .alert-button-cancel {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #cccccc !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.15) !important;
+      border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+  }
+
+  .alert-button-confirm {
+    background: var(--primary-green) !important;
+    color: #000000 !important;
+    border: 2px solid var(--primary-green) !important;
+    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+
+    &:hover {
+      background: #00dd77 !important;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 255, 136, 0.4);
+    }
+  }
+}

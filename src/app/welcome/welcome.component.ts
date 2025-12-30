@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, ViewWillEnter, ViewWillLeave } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { AnimationController } from '@ionic/angular';
 import { SpinnerComponent } from '../spinner/spinner.component';
@@ -12,18 +12,34 @@ import { SpinnerComponent } from '../spinner/spinner.component';
   standalone: true,
   imports: [CommonModule, IonicModule, SpinnerComponent]
 })
-export class WelcomeComponent implements OnInit {
+export class WelcomeComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWillLeave {
   mostrarSpinner = false;
   
-  constructor(
-    private router: Router,
-    private animationCtrl: AnimationController
-  ) { }
+  private router = inject(Router);
+  private animationCtrl = inject(AnimationController);
+  private cdr = inject(ChangeDetectorRef);
 
   ngOnInit() {
+    // Resetear spinner por si volvemos al componente
+    this.mostrarSpinner = false;
+    
     setTimeout(() => {
       this.playWelcomeAnimation();
     }, 100);
+  }
+
+  ionViewWillEnter() {
+    // Usar setTimeout(0) para diferir al siguiente ciclo y evitar ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
+    }, 0);
+  }
+
+  ionViewWillLeave() {
+    // Apagar spinner al salir de la vista
+    console.log('🔴 WELCOME: ionViewWillLeave - Apagando spinner');
+    this.mostrarSpinner = false;
   }
 
   playWelcomeAnimation() {
@@ -79,19 +95,20 @@ export class WelcomeComponent implements OnInit {
     }
   }
 
-  navigateToLogin() {
-    this.mostrarSpinner = true;
-    setTimeout(() => {
-      this.router.navigate(['/login']);
-      
-    }, 2000);
+  ngOnDestroy() {
+    // Asegurar que el spinner se apague al destruir el componente
+    this.mostrarSpinner = false;
   }
 
-  navigateToRegister() {
+  navegarAlLogin() {
+
     this.mostrarSpinner = true;
-    setTimeout(() => {
-      this.router.navigate(['/register']);
-      this.mostrarSpinner = false;
-    }, 2000);
+    // Navegar inmediatamente, el spinner se apagará en ngOnDestroy
+    setTimeout(() => this.router.navigate(['/login']), 500);
+  }
+
+  navegarAlRegistro() {
+    this.mostrarSpinner = true;
+    setTimeout(() => this.router.navigate(['/register']), 500);
   }
 }

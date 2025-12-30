@@ -1,0 +1,172 @@
+<ion-header [translucent]="true" class="custom-header">
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-button (click)="goBack()">
+        <ion-icon name="arrow-back"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Asignar Rutina</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="main-content">
+  
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Cargando...</p>
+  </div>
+
+  <div *ngIf="!loading" class="content-wrapper">
+    
+    <!-- Información de la rutina -->
+    <ion-card class="rutina-info-card" *ngIf="rutina">
+      <ion-card-header>
+        <ion-card-title style="color: var(--primary-green);">
+          <ion-icon name="barbell-outline"></ion-icon>
+          {{ rutina.nombre }}
+        </ion-card-title>
+        <ion-card-subtitle>
+          <ion-chip [color]="rutina.nivel_dificultad === 'principiante' ? 'success' : rutina.nivel_dificultad === 'intermedio' ? 'warning' : 'danger'">
+            {{ rutina.nivel_dificultad }}
+          </ion-chip>
+          <ion-chip *ngIf="rutina.duracion_semanas" color="primary">
+            {{ rutina.duracion_semanas }} semanas
+          </ion-chip>
+        </ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content *ngIf="rutina.descripcion || rutina.objetivo">
+        <p *ngIf="rutina.descripcion" style="margin-bottom: 8px;">
+          <strong style="color: var(--primary-green);">Descripción:</strong> {{ rutina.descripcion }}
+        </p>
+        <p *ngIf="rutina.objetivo" style="margin: 0;">
+          <strong style="color: var(--primary-green);">Objetivo:</strong> {{ rutina.objetivo }}
+        </p>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Parámetros de asignación -->
+    <ion-card class="params-card">
+      <ion-card-header>
+        <ion-card-title style="color: var(--primary-green);">
+          <ion-icon name="calendar-outline"></ion-icon>
+          Parámetros de Asignación
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-item>
+          <ion-label position="stacked">Fecha de Inicio (Opcional)</ion-label>
+          <ion-datetime
+            [(ngModel)]="fechaInicio"
+            displayFormat="DD/MM/YYYY"
+            placeholder="Seleccionar fecha">
+          </ion-datetime>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Fecha de Fin (Opcional)</ion-label>
+          <ion-datetime
+            [(ngModel)]="fechaFin"
+            displayFormat="DD/MM/YYYY"
+            placeholder="Seleccionar fecha">
+          </ion-datetime>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Notas (Opcional)</ion-label>
+          <ion-textarea
+            [(ngModel)]="notas"
+            placeholder="Agregar notas para los clientes..."
+            rows="3">
+          </ion-textarea>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Selección de clientes -->
+    <ion-card class="clientes-card">
+      <ion-card-header>
+        <div class="header-with-actions">
+          <ion-card-title style="color: var(--primary-green);">
+            <ion-icon name="people-outline"></ion-icon>
+            Seleccionar Clientes
+          </ion-card-title>
+          <ion-badge [color]="clientesSeleccionados.size > 0 ? 'success' : 'medium'">
+            {{ clientesSeleccionados.size }} seleccionado(s)
+          </ion-badge>
+        </div>
+      </ion-card-header>
+      <ion-card-content>
+        
+        <!-- Buscador -->
+        <ion-searchbar
+          [(ngModel)]="filtroTexto"
+          (ionInput)="aplicarFiltro()"
+          placeholder="Buscar por nombre o correo..."
+          show-clear-button="focus">
+        </ion-searchbar>
+
+        <!-- Seleccionar todos -->
+        <ion-item *ngIf="clientesFiltrados.length > 0" lines="full" class="select-all-item">
+          <ion-checkbox
+            slot="start"
+            [checked]="todosSeleccionados"
+            [indeterminate]="algunosSeleccionados"
+            (ionChange)="seleccionarTodos()">
+          </ion-checkbox>
+          <ion-label>
+            <strong>Seleccionar todos ({{ clientesFiltrados.length }})</strong>
+          </ion-label>
+        </ion-item>
+
+        <!-- Lista de clientes -->
+        <ion-list *ngIf="clientesFiltrados.length > 0">
+          <ion-item 
+            *ngFor="let cliente of clientesFiltrados; trackBy: trackByClienteId"
+            lines="full"
+            class="cliente-item">
+            <ion-checkbox
+              slot="start"
+              [checked]="isClienteSeleccionado(cliente.id)"
+              (ionChange)="toggleCliente(cliente.id)">
+            </ion-checkbox>
+            <ion-label>
+              <h3>{{ cliente.nombre }} {{ cliente.apellido }}</h3>
+              <p *ngIf="cliente.correo">{{ cliente.correo }}</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+
+        <!-- Sin resultados -->
+        <div *ngIf="clientesFiltrados.length === 0 && clientes.length > 0" class="no-results">
+          <ion-icon name="search-outline"></ion-icon>
+          <p>No se encontraron clientes con "{{ filtroTexto }}"</p>
+        </div>
+
+        <!-- Sin clientes -->
+        <div *ngIf="clientes.length === 0" class="no-clientes">
+          <ion-icon name="people-outline"></ion-icon>
+          <p>No hay clientes registrados</p>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Botón de acción -->
+    <div class="action-button">
+      <ion-button
+        expand="block"
+        size="large"
+        color="success"
+        (click)="asignarRutina()"
+        [disabled]="guardando || clientesSeleccionados.size === 0">
+        <ion-spinner *ngIf="guardando" name="crescent"></ion-spinner>
+        <span *ngIf="!guardando">
+          <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+          Asignar Rutina ({{ clientesSeleccionados.size }})
+        </span>
+      </ion-button>
+    </div>
+
+  </div>
+
+</ion-content>

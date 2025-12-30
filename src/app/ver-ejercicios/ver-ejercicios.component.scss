@@ -334,6 +334,37 @@
       }
     }
 
+    // Contenedor del video embebido
+    .video-container {
+      width: 100%;
+      margin: 16px 0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 255, 136, 0.15);
+      border: 2px solid var(--medium-gray);
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: var(--primary-green);
+        box-shadow: 0 6px 20px rgba(0, 255, 136, 0.25);
+      }
+
+      .exercise-video {
+        width: 100%;
+        height: 300px;
+        display: block;
+        background: var(--black-bg);
+        
+        @media (max-width: 768px) {
+          height: 250px;
+        }
+        
+        @media (max-width: 480px) {
+          height: 200px;
+        }
+      }
+    }
+
     .secondary-muscles {
       background: rgba(255, 255, 255, 0.03);
       padding: 12px;
@@ -1151,3 +1182,83 @@ ion-header {
     }
   }
 }
+
+// Estilos para botón de video preview
+.video-preview-button {
+  margin-top: 15px;
+  
+  ion-button {
+    --background: rgba(0, 255, 136, 0.1);
+    --color: var(--primary-green);
+    --border-color: var(--primary-green);
+    --border-width: 1px;
+    --border-style: solid;
+    
+    &:hover {
+      --background: rgba(0, 255, 136, 0.2);
+    }
+    
+    ion-icon {
+      font-size: 24px;
+    }
+  }
+}
+
+// Estilos para modal de video
+.video-modal-container {
+  padding: 20px;
+  
+  .video-wrapper {
+    width: 100%;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.2);
+    
+    iframe {
+      border-radius: 12px;
+    }
+  }
+  
+  .video-info {
+    h3 {
+      color: var(--primary-green);
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+    
+    p {
+      color: var(--light-gray);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+      
+      .info-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px;
+        background: rgba(0, 255, 136, 0.05);
+        border: 1px solid rgba(0, 255, 136, 0.2);
+        border-radius: 10px;
+        
+        ion-icon {
+          color: var(--primary-green);
+          font-size: 24px;
+        }
+        
+        span {
+          color: white;
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+}
+

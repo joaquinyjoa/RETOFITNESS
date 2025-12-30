@@ -1,17 +1,8 @@
 import { Injectable } from '@angular/core';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { getSupabaseClient } from './supabase-client';
 
-// Instancia única de Supabase compartida por toda la aplicación
-let supabaseSharedInstance: SupabaseClient | null = null;
-
-function getSharedSupabaseClient(): SupabaseClient {
-  if (!supabaseSharedInstance) {
-    const supabaseUrl = 'https://tylyzyivlvibfyvetchr.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5bHl6eWl2bHZpYmZ5dmV0Y2hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExODQzODIsImV4cCI6MjA3Njc2MDM4Mn0.Q0jRpYSJlunENflglEtVtKURBVn_W6KrVEaXZvnCY3o';
-    supabaseSharedInstance = createClient(supabaseUrl, supabaseKey);
-  }
-  return supabaseSharedInstance!; // Non-null assertion porque siempre se inicializa arriba
-}
+// NO crear instancia aquí, usar la del archivo centralizado
 
 // Interfaz para el entrenador
 export interface Entrenador {
@@ -29,17 +20,11 @@ export class EntrenadorService {
   private supabase: SupabaseClient;
 
   constructor() {
-    // Usar la instancia compartida
-    this.supabase = getSharedSupabaseClient();
+    this.supabase = getSupabaseClient();
   }
 
   // Helper para aplicar timeout a promesas de fetch
-  private async withTimeout<T>(promise: Promise<T>, ms: number = 10000): Promise<T> {
-    const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), ms)
-    );
-    return Promise.race([promise, timeout]) as Promise<T>;
-  }
+
 
   // Verificar login de entrenador
   async loginEntrenador(correo: string, contraseña: string): Promise<{ success: boolean; data?: Entrenador; error?: string }> {
@@ -53,8 +38,8 @@ export class EntrenadorService {
         .eq('contraseña', contraseña)
         .single();
 
-      // Ejecutar la consulta con timeout para evitar colgar en dispositivos
-      const { data, error } = await this.withTimeout(Promise.resolve(query.then((r: any) => r)), 12000);
+      // Ejecutar la consulta directamente
+      const { data, error } = await query;
 
       if (error) {
         if (error.code === 'PGRST116') {

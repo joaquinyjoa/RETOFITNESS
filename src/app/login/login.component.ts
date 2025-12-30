@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, ToastController } from '@ionic/angular';
+import { IonicModule, ToastController, ViewWillEnter, ViewWillLeave } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService, UsuarioLogueado } from '../services/auth.service';
@@ -14,7 +14,7 @@ import { SpinnerComponent } from '../spinner/spinner.component';
   standalone: true,
   imports: [CommonModule, IonicModule, FormsModule, NgIf, SpinnerComponent]
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWillLeave {
 
   // Estado del spinner
   mostrarSpinner = false;
@@ -44,13 +44,33 @@ export class LoginComponent implements OnInit {
   // Control de visibilidad de contraseña
   showPassword: boolean = false;
 
-  constructor(
-    private router: Router,
-    private authService: AuthService,
-    private toastController: ToastController
-  ) {}
+  private router = inject(Router);
+  private authService = inject(AuthService);
+  private toastController = inject(ToastController);
+  private cdr = inject(ChangeDetectorRef);
 
-  ngOnInit() {}
+  ngOnInit() {
+    // Resetear spinner por si volvemos al componente
+    this.mostrarSpinner = false;
+  }
+
+  ionViewWillEnter() {
+    // Este hook se ejecuta SIEMPRE antes de entrar a la vista
+    setTimeout(() => {
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
+    }, 0);
+  }
+
+  ionViewWillLeave() {
+    // Apagar spinner al salir de la vista
+    this.mostrarSpinner = false;
+  }
+
+  ngOnDestroy() {
+    // Asegurar que el spinner se apague al destruir el componente
+    this.mostrarSpinner = false;
+  }
 
   // Método para actualizar valores sin validar automáticamente
   onInputChange(field: string, event: any) {
@@ -186,6 +206,15 @@ export class LoginComponent implements OnInit {
         this.isSubmitting = false;
         this.mostrarSpinner = false;
         
+        // Forzar detección de cambios para ocultar spinner inmediatamente
+        this.cdr.detectChanges();
+        
+        // Timeout adicional para asegurar que se actualice
+        setTimeout(() => {
+          this.mostrarSpinner = false;
+          this.cdr.detectChanges();
+        }, 0);
+        
         // Mostrar error con toast en la parte superior
         await this.presentToast(result.error || 'Error al iniciar sesión', 'top');
         
@@ -237,6 +266,16 @@ export class LoginComponent implements OnInit {
       console.error('💥 ERROR INESPERADO:', error);
       
       this.isSubmitting = false;
+      this.mostrarSpinner = false;
+      
+      // Forzar detección de cambios para ocultar spinner inmediatamente
+      this.cdr.detectChanges();
+      
+      // Timeout adicional para asegurar que se actualice
+      setTimeout(() => {
+        this.mostrarSpinner = false;
+        this.cdr.detectChanges();
+      }, 0);
       
       // Mostrar error
       await this.presentToast('Error inesperado durante el login', 'top');
@@ -245,6 +284,7 @@ export class LoginComponent implements OnInit {
       console.log('🔚 Finally ejecutado - isSubmitting se establece a false');
       this.isSubmitting = false;
       this.mostrarSpinner = false;
+      this.cdr.detectChanges();
     }
   }
 

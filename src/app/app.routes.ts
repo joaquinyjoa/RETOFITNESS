@@ -34,6 +34,14 @@ export const routes: Routes = [
     loadComponent: () => import('./ver-ejercicios/ver-ejercicios.component').then((m) => m.VerEjerciciosComponent),
   },
   {
+    path: 'asignar-rutina/:id',
+    loadComponent: () => import('./asignar-rutina/asignar-rutina.component').then((m) => m.AsignarRutinaComponent),
+  },
+  {
+    path: 'ver-rutina-cliente/:id',
+    loadComponent: () => import('./ver-rutina-cliente/ver-rutina-cliente.component').then((m) => m.VerRutinaClienteComponent),
+  },
+  {
     path: '',
     redirectTo: 'welcome',
     pathMatch: 'full',

@@ -1,3 +1,213 @@
-<p>
-  panel-cliente works!
-</p>
+<ion-header class="custom-header">
+  <ion-toolbar>
+    <ion-title>
+      <ion-icon name="fitness-outline" class="title-icon"></ion-icon>
+      Mi Entrenamiento
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="logout()">
+        <ion-icon name="log-out-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="panel-content">
+  
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Cargando tu rutina...</p>
+  </div>
+
+  <!-- Contenido principal -->
+  <div *ngIf="!loading" class="main-container">
+    
+    <!-- Saludo -->
+    <div class="welcome-section">
+      <h1>¡Hola, {{ nombreCliente }}! 💪</h1>
+      <p>Es hora de entrenar</p>
+    </div>
+
+    <!-- Con rutina asignada -->
+    <div *ngIf="rutinaAsignada" class="rutina-section">
+      
+      <!-- Info de la rutina -->
+      <ion-card class="rutina-card">
+        <ion-card-header>
+          <ion-card-title>{{ rutinaAsignada.detalles?.nombre }}</ion-card-title>
+          <ion-card-subtitle>
+            <ion-badge [color]="rutinaAsignada.estado === 'en_progreso' ? 'success' : 'medium'">
+              {{ rutinaAsignada.estado === 'en_progreso' ? 'En Progreso' : rutinaAsignada.estado }}
+            </ion-badge>
+            <ion-badge color="primary" style="margin-left: 8px;">
+              {{ getNivelLabel(rutinaAsignada.detalles?.nivel_dificultad) }}
+            </ion-badge>
+          </ion-card-subtitle>
+        </ion-card-header>
+
+        <ion-card-content>
+          <p *ngIf="rutinaAsignada.detalles?.descripcion">{{ rutinaAsignada.detalles.descripcion }}</p>
+          
+          <div class="info-grid">
+            <div class="info-item">
+              <ion-icon name="calendar-outline"></ion-icon>
+              <div>
+                <small>Duración</small>
+                <strong>{{ rutinaAsignada.detalles?.duracion_semanas || 0 }} semanas</strong>
+              </div>
+            </div>
+            <div class="info-item">
+              <ion-icon name="barbell-outline"></ion-icon>
+              <div>
+                <small>Ejercicios</small>
+                <strong>{{ rutinaAsignada.detalles?.ejercicios?.length || 0 }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="rutinaAsignada.notas" class="notas-trainer">
+            <ion-icon name="chatbox-ellipses-outline"></ion-icon>
+            <div>
+              <strong>Nota del entrenador:</strong>
+              <p>{{ rutinaAsignada.notas }}</p>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Lista de ejercicios -->
+      <div class="ejercicios-list">
+        <h2 class="section-title">
+          <ion-icon name="list-outline"></ion-icon>
+          Tus Ejercicios
+        </h2>
+
+        <ion-card *ngFor="let ej of rutinaAsignada.detalles?.ejercicios; let i = index" class="ejercicio-card">
+          <ion-card-header>
+            <div class="ejercicio-header">
+              <div class="ejercicio-numero">{{ i + 1 }}</div>
+              <div class="ejercicio-info">
+                <ion-card-title>{{ ej.ejercicio?.nombre }}</ion-card-title>
+                <ion-card-subtitle>{{ ej.ejercicio?.musculo_principal }}</ion-card-subtitle>
+              </div>
+            </div>
+          </ion-card-header>
+
+          <ion-card-content>
+            
+            <!-- Stats del ejercicio -->
+            <div class="ejercicio-stats">
+              <div class="stat-box">
+                <ion-icon name="repeat-outline"></ion-icon>
+                <div>
+                  <small>Series</small>
+                  <strong>{{ ej.series || 'N/A' }}</strong>
+                </div>
+              </div>
+              <div class="stat-box">
+                <ion-icon name="trending-up-outline"></ion-icon>
+                <div>
+                  <small>Reps</small>
+                  <strong>{{ ej.repeticiones || 'N/A' }}</strong>
+                </div>
+              </div>
+              <div class="stat-box">
+                <ion-icon name="time-outline"></ion-icon>
+                <div>
+                  <small>Descanso</small>
+                  <strong>{{ ej.descanso_segundos || 60 }}s</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Registrar peso -->
+            <div class="peso-section">
+              <ion-button expand="block" fill="outline" (click)="abrirModalRegistrarPeso(ej)">
+                <ion-icon name="fitness-outline" slot="start"></ion-icon>
+                {{ ej.peso_registrado ? 'Peso: ' + ej.peso_registrado + ' kg' : 'Registrar Peso' }}
+              </ion-button>
+            </div>
+
+            <!-- Video -->
+            <div *ngIf="ej.ejercicio?.enlace_video" class="video-container">
+              <iframe
+                [src]="getSafeUrl(ej.ejercicio.enlace_video)"
+                frameborder="0"
+                allowfullscreen
+                loading="lazy"
+                class="exercise-video">
+              </iframe>
+            </div>
+
+            <!-- Notas del ejercicio -->
+            <div *ngIf="ej.notas" class="ejercicio-notas">
+              <ion-icon name="information-circle-outline"></ion-icon>
+              <span>{{ ej.notas }}</span>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </div>
+    </div>
+
+    <!-- Sin rutina asignada -->
+    <div *ngIf="!rutinaAsignada" class="sin-rutina">
+      <div class="empty-state">
+        <ion-icon name="sad-outline" class="empty-icon"></ion-icon>
+        <h2>No tienes rutina asignada</h2>
+        <p>Contacta con tu entrenador para que te asigne una rutina personalizada</p>
+        <ion-icon name="barbell-outline" class="decoration-icon"></ion-icon>
+      </div>
+    </div>
+
+  </div>
+
+</ion-content>
+
+<!-- Modal para registrar peso -->
+<ion-modal [isOpen]="showModalRegistrarPeso" (didDismiss)="cerrarModalRegistrarPeso()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Registrar Peso</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarModalRegistrarPeso()">
+            <ion-icon name="close"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="modal-content">
+      <div class="modal-container" *ngIf="ejercicioSeleccionado">
+        
+        <div class="modal-ejercicio-info">
+          <h3>{{ ejercicioSeleccionado.ejercicio?.nombre }}</h3>
+          <p>{{ ejercicioSeleccionado.series }} series × {{ ejercicioSeleccionado.repeticiones }} reps</p>
+        </div>
+
+        <ion-item lines="none" class="peso-input">
+          <ion-label position="stacked">Peso utilizado (kg)</ion-label>
+          <ion-input
+            type="number"
+            [(ngModel)]="pesoRegistrado"
+            placeholder="Ej: 20"
+            min="0"
+            step="0.5">
+          </ion-input>
+        </ion-item>
+
+        <div class="modal-actions">
+          <ion-button expand="block" (click)="guardarPeso()" [disabled]="!pesoRegistrado">
+            <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+            Guardar Peso
+          </ion-button>
+          <ion-button expand="block" fill="clear" (click)="cerrarModalRegistrarPeso()">
+            Cancelar
+          </ion-button>
+        </div>
+
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

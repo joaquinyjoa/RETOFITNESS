@@ -217,7 +217,7 @@ export class RegisterComponent implements OnInit {
       'lesiones', 'descripcionLesiones', 'fuma', 'alcohol'
     ];
     if (healthFields.includes(field)) {
-      // small delay to ensure ngModel has propagated boolean values for checkboxes
+      // Usar setTimeout con delay mínimo para no bloquear el hilo principal
       setTimeout(() => this.refreshSelectedConditions(), 0);
     }
     

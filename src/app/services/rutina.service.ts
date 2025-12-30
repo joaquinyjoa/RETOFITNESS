@@ -66,7 +66,7 @@ export class RutinaService {
    */
   async obtenerRutinas(): Promise<{ data: Rutina[] | null; error: any }> {
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       const { data, error } = await supabase
         .from('rutinas')
         .select('*')
@@ -82,49 +82,58 @@ export class RutinaService {
 
   /**
    * Obtener rutinas con cantidad de ejercicios y clientes asignados
+   * OPTIMIZADO: Usa una sola query con JOIN en lugar de N+1 queries
    */
   async obtenerRutinasConDetalles(): Promise<{ data: RutinaConDetalles[] | null; error: any }> {
+    console.log('🟣 [RutinaService] Iniciando obtenerRutinasConDetalles...');
+    const tiempoInicio = performance.now();
+    
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       
-      // Obtener rutinas
+      console.log('🟣 [RutinaService] Realizando consulta a Supabase con JOINs...');
+      // Una sola query con JOIN para obtener todo
       const { data: rutinas, error: errorRutinas } = await supabase
         .from('rutinas')
-        .select('*')
+        .select(`
+          *,
+          ejercicios:rutinas_ejercicios(id, ejercicio_id, orden, series, repeticiones, descanso_segundos, notas, ejercicio:ejercicios(id, nombre, musculo_principal, enlace_video, categoria)),
+          clientes:rutinas_clientes(id, cliente_id)
+        `)
         .eq('activo', true)
         .order('created_at', { ascending: false });
 
       if (errorRutinas || !rutinas) {
+        console.error('🔴 [RutinaService] Error en consulta:', errorRutinas);
         return { data: null, error: errorRutinas };
       }
 
-      // Para cada rutina, obtener cantidad de ejercicios y clientes
-      const rutinasConDetalles: RutinaConDetalles[] = await Promise.all(
-        rutinas.map(async (rutina) => {
-          // Contar ejercicios
-          const { count: countEjercicios } = await supabase
-            .from('rutinas_ejercicios')
-            .select('*', { count: 'exact', head: true })
-            .eq('rutina_id', rutina.id);
+      const tiempoConsulta = performance.now();
+      console.log(`🟢 [RutinaService] Consulta completada en ${(tiempoConsulta - tiempoInicio).toFixed(2)}ms`);
+      console.log(`🟢 [RutinaService] Rutinas recibidas: ${rutinas.length}`);
 
-          // Contar clientes asignados
-          const { count: countClientes } = await supabase
-            .from('rutinas_clientes')
-            .select('*', { count: 'exact', head: true })
-            .eq('rutina_id', rutina.id);
+      // Mapear resultados agregando contadores
+      console.log('🟣 [RutinaService] Procesando rutinas...');
+      const rutinasConDetalles: RutinaConDetalles[] = rutinas.map((rutina: any) => ({
+        ...rutina,
+        ejercicios: rutina.ejercicios || [],
+        clientes_asignados: (rutina.clientes || []).length,
+        cantidad_ejercicios: (rutina.ejercicios || []).length
+      }));
 
-          return {
-            ...rutina,
-            ejercicios: [],
-            clientes_asignados: countClientes || 0,
-            cantidad_ejercicios: countEjercicios || 0
-          } as any;
-        })
-      );
+      const tiempoFin = performance.now();
+      console.log(`🟢 [RutinaService] Rutinas procesadas en ${(tiempoFin - tiempoConsulta).toFixed(2)}ms`);
+      console.log(`🟢 [RutinaService] Tiempo total: ${(tiempoFin - tiempoInicio).toFixed(2)}ms`);
+      console.log('🟢 [RutinaService] Primeras rutinas:', rutinasConDetalles.slice(0, 2).map(r => ({
+        nombre: r.nombre,
+        ejercicios: r.ejercicios?.length,
+        clientes: r.clientes_asignados
+      })));
 
       return { data: rutinasConDetalles, error: null };
     } catch (error) {
-      console.error('Error al obtener rutinas con detalles:', error);
+      const tiempoFin = performance.now();
+      console.error(`🔴 [RutinaService] Error en obtenerRutinasConDetalles después de ${(tiempoFin - tiempoInicio).toFixed(2)}ms:`, error);
       return { data: null, error };
     }
   }
@@ -134,7 +143,7 @@ export class RutinaService {
    */
   async obtenerRutinaPorId(id: number): Promise<{ data: RutinaConDetalles | null; error: any }> {
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       
       // Obtener rutina
       const { data: rutina, error: errorRutina } = await supabase
@@ -178,7 +187,7 @@ export class RutinaService {
    */
   async crearRutina(rutina: Rutina): Promise<{ data: Rutina | null; error: any }> {
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       const { data, error } = await supabase
         .from('rutinas')
         .insert([rutina])
@@ -197,7 +206,7 @@ export class RutinaService {
    */
   async actualizarRutina(id: number, rutina: Partial<Rutina>): Promise<{ data: Rutina | null; error: any }> {
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       const { data, error } = await supabase
         .from('rutinas')
         .update(rutina)
@@ -217,7 +226,7 @@ export class RutinaService {
    */
   async eliminarRutina(id: number): Promise<{ success: boolean; error: any }> {
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       const { error } = await supabase
         .from('rutinas')
         .update({ activo: false })
@@ -239,7 +248,7 @@ export class RutinaService {
    */
   async obtenerEjerciciosDeRutina(rutinaId: number): Promise<{ data: RutinaEjercicio[] | null; error: any }> {
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       const { data, error } = await supabase
         .from('rutinas_ejercicios')
         .select(`
@@ -261,7 +270,7 @@ export class RutinaService {
    */
   async agregarEjercicioARutina(rutinaEjercicio: RutinaEjercicio): Promise<{ data: RutinaEjercicio | null; error: any }> {
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       const { data, error } = await supabase
         .from('rutinas_ejercicios')
         .insert([rutinaEjercicio])
@@ -280,7 +289,7 @@ export class RutinaService {
    */
   async actualizarEjercicioEnRutina(id: number, datos: Partial<RutinaEjercicio>): Promise<{ data: RutinaEjercicio | null; error: any }> {
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       const { data, error } = await supabase
         .from('rutinas_ejercicios')
         .update(datos)
@@ -300,7 +309,7 @@ export class RutinaService {
    */
   async eliminarEjercicioDeRutina(id: number): Promise<{ success: boolean; error: any }> {
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       const { error } = await supabase
         .from('rutinas_ejercicios')
         .delete()
@@ -318,7 +327,7 @@ export class RutinaService {
    */
   async guardarEjerciciosEnRutina(rutinaId: number, ejercicios: RutinaEjercicio[]): Promise<{ success: boolean; error: any }> {
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       
       // Primero eliminar los ejercicios existentes
       await supabase
@@ -358,7 +367,7 @@ export class RutinaService {
     notas?: string
   ): Promise<{ success: boolean; error: any }> {
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       
       const asignaciones = clienteIds.map(clienteId => ({
         rutina_id: rutinaId,
@@ -386,7 +395,7 @@ export class RutinaService {
    */
   async obtenerClientesConRutina(rutinaId: number): Promise<{ data: RutinaCliente[] | null; error: any }> {
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       const { data, error } = await supabase
         .from('rutinas_clientes')
         .select(`
@@ -408,7 +417,7 @@ export class RutinaService {
    */
   async obtenerRutinasDeCliente(clienteId: number): Promise<{ data: RutinaCliente[] | null; error: any }> {
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       const { data, error } = await supabase
         .from('rutinas_clientes')
         .select(`
@@ -430,7 +439,7 @@ export class RutinaService {
    */
   async actualizarAsignacionRutina(id: number, datos: Partial<RutinaCliente>): Promise<{ data: RutinaCliente | null; error: any }> {
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       const { data, error } = await supabase
         .from('rutinas_clientes')
         .update(datos)
@@ -450,7 +459,7 @@ export class RutinaService {
    */
   async desasignarRutinaDeCliente(id: number): Promise<{ success: boolean; error: any }> {
     try {
-      const supabase = this.supabaseService.getClient();
+      const supabase = this.supabaseService['supabase'];
       const { error } = await supabase
         .from('rutinas_clientes')
         .delete()

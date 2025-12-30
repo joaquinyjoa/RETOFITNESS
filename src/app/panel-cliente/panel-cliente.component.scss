@@ -1,0 +1,454 @@
+:host {
+  --primary-green: #00ff88;
+  --secondary-green: #00cc6a;
+  --dark-green: #009955;
+  --black-bg: #000000;
+  --dark-gray: #1a1a1a;
+  --medium-gray: #333333;
+  --light-gray: #666666;
+}
+
+// Header
+.custom-header {
+  ion-toolbar {
+    --background: var(--dark-gray);
+    --color: var(--primary-green);
+    
+    ion-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      color: var(--primary-green);
+    }
+
+    .title-icon {
+      font-size: 1.5rem;
+      color: var(--primary-green);
+    }
+  }
+}
+
+// Content
+.panel-content {
+  --background: var(--black-bg);
+  --color: white;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+
+  ion-spinner {
+    --color: var(--primary-green);
+    transform: scale(1.5);
+  }
+
+  p {
+    color: var(--primary-green);
+    font-size: 1.1rem;
+  }
+}
+
+.main-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+// Sección de bienvenida
+.welcome-section {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--dark-gray), var(--medium-gray));
+  border-radius: 16px;
+  border: 2px solid rgba(0, 255, 136, 0.3);
+
+  h1 {
+    color: var(--primary-green);
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    color: var(--light-gray);
+    font-size: 1rem;
+    margin: 0;
+  }
+}
+
+// Tarjeta de rutina
+.rutina-card {
+  --background: var(--dark-gray);
+  --color: white;
+  margin-bottom: 24px;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.1);
+
+  ion-card-header {
+    padding-bottom: 8px;
+
+    ion-card-title {
+      color: var(--primary-green);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    ion-card-subtitle {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+  }
+
+  ion-card-content {
+    p {
+      color: var(--light-gray);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+  }
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(0, 255, 136, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 255, 136, 0.2);
+
+    ion-icon {
+      font-size: 1.5rem;
+      color: var(--primary-green);
+    }
+
+    small {
+      display: block;
+      color: var(--light-gray);
+      font-size: 0.85rem;
+    }
+
+    strong {
+      display: block;
+      color: var(--primary-green);
+      font-size: 1.1rem;
+    }
+  }
+}
+
+.notas-trainer {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(0, 255, 136, 0.05);
+  border-left: 3px solid var(--primary-green);
+  border-radius: 4px;
+  margin-top: 16px;
+
+  ion-icon {
+    font-size: 1.3rem;
+    color: var(--primary-green);
+    flex-shrink: 0;
+  }
+
+  strong {
+    color: var(--primary-green);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  p {
+    color: white;
+    margin: 0;
+  }
+}
+
+// Lista de ejercicios
+.ejercicios-list {
+  margin-top: 24px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--primary-green);
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+
+  ion-icon {
+    font-size: 1.5rem;
+  }
+}
+
+.ejercicio-card {
+  --background: var(--dark-gray);
+  --color: white;
+  margin-bottom: 16px;
+  border: 1px solid var(--medium-gray);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: var(--primary-green);
+    box-shadow: 0 4px 16px rgba(0, 255, 136, 0.2);
+  }
+
+  .ejercicio-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .ejercicio-numero {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary-green);
+      color: var(--black-bg);
+      font-weight: 700;
+      font-size: 1.2rem;
+      border-radius: 50%;
+    }
+
+    .ejercicio-info {
+      flex: 1;
+
+      ion-card-title {
+        color: var(--primary-green);
+        font-size: 1.2rem;
+        margin-bottom: 4px;
+      }
+
+      ion-card-subtitle {
+        color: var(--light-gray);
+      }
+    }
+  }
+}
+
+.ejercicio-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+
+  .stat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(0, 255, 136, 0.08);
+    border-radius: 8px;
+    text-align: center;
+
+    ion-icon {
+      font-size: 1.5rem;
+      color: var(--primary-green);
+    }
+
+    small {
+      color: var(--light-gray);
+      font-size: 0.8rem;
+    }
+
+    strong {
+      color: var(--primary-green);
+      font-size: 1.1rem;
+    }
+  }
+}
+
+.peso-section {
+  margin: 16px 0;
+
+  ion-button {
+    --background: transparent;
+    --border-color: var(--primary-green);
+    --color: var(--primary-green);
+    font-weight: 600;
+
+    &:hover {
+      --background: rgba(0, 255, 136, 0.1);
+    }
+  }
+}
+
+.video-container {
+  width: 100%;
+  margin: 16px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid var(--medium-gray);
+
+  .exercise-video {
+    width: 100%;
+    height: 250px;
+    display: block;
+    background: var(--black-bg);
+
+    @media (max-width: 768px) {
+      height: 200px;
+    }
+  }
+}
+
+.ejercicio-notas {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(0, 255, 136, 0.05);
+  border-left: 3px solid var(--secondary-green);
+  border-radius: 4px;
+  margin-top: 12px;
+
+  ion-icon {
+    color: var(--primary-green);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  span {
+    color: white;
+    font-size: 0.9rem;
+  }
+}
+
+// Sin rutina
+.sin-rutina {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  max-width: 400px;
+
+  .empty-icon {
+    font-size: 6rem;
+    color: var(--light-gray);
+    margin-bottom: 20px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  h2 {
+    color: var(--primary-green);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  p {
+    color: var(--light-gray);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  .decoration-icon {
+    font-size: 3rem;
+    color: rgba(0, 255, 136, 0.2);
+    margin-top: 20px;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+// Modal
+.modal-content {
+  --background: var(--black-bg);
+}
+
+.modal-container {
+  padding: 20px;
+}
+
+.modal-ejercicio-info {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--dark-gray), var(--medium-gray));
+  border-radius: 12px;
+
+  h3 {
+    color: var(--primary-green);
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  p {
+    color: var(--light-gray);
+    margin: 0;
+  }
+}
+
+.peso-input {
+  --background: var(--dark-gray);
+  --color: white;
+  margin-bottom: 24px;
+  border-radius: 8px;
+  padding: 12px;
+
+  ion-label {
+    color: var(--primary-green);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  ion-input {
+    --color: var(--primary-green);
+    --placeholder-color: var(--light-gray);
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-align: center;
+  }
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  ion-button {
+    --background: var(--primary-green);
+    --color: var(--black-bg);
+    font-weight: 600;
+
+    &[fill="clear"] {
+      --background: transparent;
+      --color: var(--light-gray);
+    }
+  }
+}

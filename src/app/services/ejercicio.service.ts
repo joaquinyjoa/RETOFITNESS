@@ -13,7 +13,11 @@ export class EjercicioService {
    * Listar todos los ejercicios activos
    */
   async listarEjercicios(): Promise<Ejercicio[]> {
+    console.log('🔵 [EjercicioService] Iniciando listarEjercicios...');
+    const tiempoInicio = performance.now();
+    
     try {
+      console.log('🔵 [EjercicioService] Realizando consulta a Supabase...');
       const { data, error } = await this.supabaseService['supabase']
         .from('ejercicios')
         .select('*')
@@ -21,13 +25,20 @@ export class EjercicioService {
         .order('nombre', { ascending: true });
 
       if (error) {
-        console.error('EjercicioService.listarEjercicios error:', error);
+        console.error('🔴 [EjercicioService] Error en consulta:', error);
         return [];
       }
 
+      const tiempoFin = performance.now();
+      const duracion = (tiempoFin - tiempoInicio).toFixed(2);
+      console.log(`🟢 [EjercicioService] Ejercicios cargados exitosamente: ${data?.length || 0} ejercicios en ${duracion}ms`);
+      console.log('🟢 [EjercicioService] Datos recibidos:', data);
+      
       return Array.isArray(data) ? data : [];
     } catch (error: any) {
-      console.error('Error en listarEjercicios:', error);
+      const tiempoFin = performance.now();
+      const duracion = (tiempoFin - tiempoInicio).toFixed(2);
+      console.error(`🔴 [EjercicioService] Error en listarEjercicios después de ${duracion}ms:`, error);
       return [];
     }
   }

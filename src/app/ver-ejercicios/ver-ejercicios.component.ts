@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { EjercicioService } from '../services/ejercicio.service';
 import { ToastService } from '../services/toast.service';
@@ -15,7 +15,7 @@ import { Ejercicio, EjercicioFormData } from '../models/ejercicio/ejercicio.inte
   templateUrl: './ver-ejercicios.component.html',
   styleUrls: ['./ver-ejercicios.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule]
+  imports: [CommonModule, IonicModule, FormsModule, RouterLink]
 })
 export class VerEjerciciosComponent implements OnInit {
 
@@ -65,6 +65,10 @@ export class VerEjerciciosComponent implements OnInit {
   showModalDetalle = false;
   rutinaDetalle: RutinaConDetalles | null = null;
 
+  // Modal para ver video
+  showModalVideo = false;
+  ejercicioVideo: Ejercicio | null = null;
+
   // Filtros de rutinas
   filtroTextoRutina = '';
   filtroNivelRutina = '';
@@ -93,40 +97,107 @@ export class VerEjerciciosComponent implements OnInit {
     'Core', 'Abdomen', 'Cardio', 'Cuerpo completo'
   ];
 
-  constructor(
-    private ejercicioService: EjercicioService,
-    private toastService: ToastService,
-    private rutinaService: RutinaService,
-    private clienteService: ClienteService,
-    private router: Router,
-    private sanitizer: DomSanitizer
-  ) {}
+  // Inyección moderna con inject()
+  private ejercicioService = inject(EjercicioService);
+  private toastService = inject(ToastService);
+  private rutinaService = inject(RutinaService);
+  private clienteService = inject(ClienteService);
+  private router = inject(Router);
+  private sanitizer = inject(DomSanitizer);
+  private cdr = inject(ChangeDetectorRef);
+
+  // Caché simple para evitar recargas innecesarias
+  private cacheEjercicios: Ejercicio[] | null = null;
+  private cacheRutinas: RutinaConDetalles[] | null = null;
+  private ultimaCargaEjercicios = 0;
+  private ultimaCargaRutinas = 0;
+  private CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
   ngOnInit() {
+    console.log('🚀 [VerEjerciciosComponent] ngOnInit - Componente inicializado');
+    // Solo cargar ejercicios inicialmente (lazy load de rutinas)
     this.cargarEjercicios();
-    this.cargarRutinas();
   }
 
-  async cargarEjercicios() {
+  async cargarEjercicios(forzarRecarga = false) {
+    console.log('🟡 [VerEjerciciosComponent] === INICIO cargarEjercicios ===');
+    console.log('🟡 [VerEjerciciosComponent] forzarRecarga:', forzarRecarga);
+    
+    // Usar caché si está disponible y no ha expirado
+    const ahora = Date.now();
+    if (!forzarRecarga && this.cacheEjercicios && (ahora - this.ultimaCargaEjercicios) < this.CACHE_TTL) {
+      console.log('🟢 [VerEjerciciosComponent] Usando caché, ejercicios en caché:', this.cacheEjercicios.length);
+      this.ejercicios = this.cacheEjercicios;
+      this.aplicarFiltros();
+      return;
+    }
+
+    console.log('🟡 [VerEjerciciosComponent] Activando spinner (loading = true)...');
     this.loading = true;
+    console.log('🟡 [VerEjerciciosComponent] Estado del spinner:', this.loading);
+    
     try {
+      console.log('🟡 [VerEjerciciosComponent] Llamando a ejercicioService.listarEjercicios()...');
+      const tiempoInicio = performance.now();
+      
       const ejerciciosCargados = await this.ejercicioService.listarEjercicios();
+      
+      const tiempoFin = performance.now();
+      const duracion = (tiempoFin - tiempoInicio).toFixed(2);
+      
+      console.log(`🟢 [VerEjerciciosComponent] Ejercicios recibidos del servicio en ${duracion}ms:`, ejerciciosCargados.length);
+      console.log('🟢 [VerEjerciciosComponent] Datos recibidos:', ejerciciosCargados);
+      
       // Convertir duración de minutos a segundos para mostrar en la interfaz
+      console.log('🟡 [VerEjerciciosComponent] Procesando ejercicios (conversión de duración)...');
       this.ejercicios = ejerciciosCargados.map(ejercicio => ({
         ...ejercicio,
-        duracion_minutos: ejercicio.duracion_minutos ? ejercicio.duracion_minutos * 60 : undefined // Convertir minutos a segundos
+        duracion_minutos: ejercicio.duracion_minutos ? ejercicio.duracion_minutos * 60 : undefined
       }));
+      
+      console.log('🟢 [VerEjerciciosComponent] Ejercicios procesados:', this.ejercicios.length);
+      
+      // Actualizar caché
+      this.cacheEjercicios = this.ejercicios;
+      this.ultimaCargaEjercicios = ahora;
+      console.log('🟢 [VerEjerciciosComponent] Caché actualizado');
+      
+      console.log('🟡 [VerEjerciciosComponent] Aplicando filtros...');
       this.aplicarFiltros();
-      console.log('Ejercicios cargados:', this.ejercicios);
+      console.log('🟢 [VerEjerciciosComponent] Ejercicios filtrados:', this.ejerciciosFiltrados.length);
+      
     } catch (error) {
-      console.error('Error al cargar ejercicios:', error);
+      console.error('🔴 [VerEjerciciosComponent] Error al cargar ejercicios:', error);
       await this.toastService.mostrarError('Error al cargar ejercicios');
     } finally {
+      console.log('🟡 [VerEjerciciosComponent] Desactivando spinner (loading = false)...');
       this.loading = false;
+      console.log('🟡 [VerEjerciciosComponent] Estado final del spinner:', this.loading);
+      console.log('🟡 [VerEjerciciosComponent] Forzando detección de cambios...');
+      
+      // Forzar detección de cambios de forma síncrona
+      this.cdr.detectChanges();
+      
+      // Timeout adicional para asegurar que la UI se actualice
+      setTimeout(() => {
+        this.loading = false;
+        this.cdr.detectChanges();
+        console.log('🟡 [VerEjerciciosComponent] Segunda detección de cambios ejecutada');
+      }, 0);
+      
+      console.log('🟡 [VerEjerciciosComponent] === FIN cargarEjercicios ===\n');
     }
   }
 
   aplicarFiltros() {
+    console.log('🟣 [VerEjerciciosComponent] Aplicando filtros...');
+    console.log('🟣 [VerEjerciciosComponent] Total ejercicios antes de filtrar:', this.ejercicios.length);
+    console.log('🟣 [VerEjerciciosComponent] Filtros activos:', {
+      texto: this.filtroTexto,
+      categoria: this.filtroCategoria,
+      musculo: this.filtroMusculo
+    });
+    
     this.ejerciciosFiltrados = this.ejercicios.filter(ejercicio => {
       const coincideTexto = !this.filtroTexto || 
         ejercicio.nombre.toLowerCase().includes(this.filtroTexto.toLowerCase()) ||
@@ -137,6 +208,8 @@ export class VerEjerciciosComponent implements OnInit {
 
       return coincideTexto && coincideCategoria && coincideMusculo;
     });
+    
+    console.log('🟣 [VerEjerciciosComponent] Total ejercicios después de filtrar:', this.ejerciciosFiltrados.length);
   }
 
   limpiarFiltros() {
@@ -219,7 +292,7 @@ export class VerEjerciciosComponent implements OnInit {
           this.editMode ? 'Ejercicio actualizado correctamente' : 'Ejercicio creado correctamente'
         );
         this.cerrarModal();
-        await this.cargarEjercicios();
+        await this.cargarEjercicios(true); // true = forzar recarga, invalidar caché
       } else {
         await this.toastService.mostrarError(result.error || 'Error al guardar ejercicio');
       }
@@ -297,7 +370,6 @@ export class VerEjerciciosComponent implements OnInit {
   }
 
   async eliminarEjercicio(ejercicio: Ejercicio) {
-    // TODO: Implementar confirmación
     try {
       if (!ejercicio.id) return;
 
@@ -305,8 +377,11 @@ export class VerEjerciciosComponent implements OnInit {
       const result = await this.ejercicioService.desactivarEjercicio(ejercicio.id);
 
       if (result.success) {
+        // Actualizar la lista localmente sin recargar desde el servidor
+        this.ejercicios = this.ejercicios.filter(e => e.id !== ejercicio.id);
+        this.cacheEjercicios = this.ejercicios;
+        this.aplicarFiltros();
         await this.toastService.mostrarExito('Ejercicio eliminado');
-        await this.cargarEjercicios();
       } else {
         await this.toastService.mostrarError(result.error || 'Error al eliminar ejercicio');
       }
@@ -435,6 +510,16 @@ export class VerEjerciciosComponent implements OnInit {
     return `${equipamiento.slice(0, -1).join(', ')} y ${equipamiento[equipamiento.length - 1]}`;
   }
 
+  abrirVideoModal(ejercicio: Ejercicio) {
+    this.ejercicioVideo = ejercicio;
+    this.showModalVideo = true;
+  }
+
+  cerrarVideoModal() {
+    this.showModalVideo = false;
+    this.ejercicioVideo = null;
+  }
+
   private getEmptyForm(): EjercicioFormData {
     return {
       nombre: '',
@@ -467,25 +552,82 @@ export class VerEjerciciosComponent implements OnInit {
   // ============================================
 
   onSegmentChange(event: any) {
+    console.log('🔄 [VerEjerciciosComponent] Cambio de segmento:', event.detail.value);
     this.segmentValue = event.detail.value;
+    
     if (this.segmentValue === 'rutinas' && this.rutinas.length === 0) {
+      console.log('🔄 [VerEjerciciosComponent] Cargando rutinas por primera vez...');
       this.cargarRutinas();
+    } else if (this.segmentValue === 'rutinas') {
+      console.log('🔄 [VerEjerciciosComponent] Rutinas ya cargadas:', this.rutinas.length);
     }
   }
 
-  async cargarRutinas() {
-    this.loadingRutinas = true;
-    try {
-      const { data, error } = await this.rutinaService.obtenerRutinasConDetalles();
-      if (error) throw error;
-      this.rutinas = data || [];
+  async cargarRutinas(forzarRecarga = false) {
+    console.log('🟪 [VerEjerciciosComponent] === INICIO cargarRutinas ===');
+    console.log('🟪 [VerEjerciciosComponent] forzarRecarga:', forzarRecarga);
+    
+    // Usar caché si está disponible y no ha expirado
+    const ahora = Date.now();
+    if (!forzarRecarga && this.cacheRutinas && (ahora - this.ultimaCargaRutinas) < this.CACHE_TTL) {
+      console.log('🟢 [VerEjerciciosComponent] Usando caché, rutinas en caché:', this.cacheRutinas.length);
+      this.rutinas = this.cacheRutinas;
       this.aplicarFiltrosRutinas();
-      console.log('Rutinas cargadas:', this.rutinas);
+      return;
+    }
+
+    console.log('🟪 [VerEjerciciosComponent] Activando spinner rutinas (loadingRutinas = true)...');
+    this.loadingRutinas = true;
+    console.log('🟪 [VerEjerciciosComponent] Estado del spinner:', this.loadingRutinas);
+    
+    try {
+      console.log('🟪 [VerEjerciciosComponent] Llamando a rutinaService.obtenerRutinasConDetalles()...');
+      const tiempoInicio = performance.now();
+      
+      const { data, error } = await this.rutinaService.obtenerRutinasConDetalles();
+      
+      const tiempoFin = performance.now();
+      const duracion = (tiempoFin - tiempoInicio).toFixed(2);
+      
+      if (error) {
+        console.error(`🔴 [VerEjerciciosComponent] Error al cargar rutinas después de ${duracion}ms:`, error);
+        throw error;
+      }
+      
+      console.log(`🟢 [VerEjerciciosComponent] Rutinas recibidas en ${duracion}ms:`, data?.length || 0);
+      console.log('🟢 [VerEjerciciosComponent] Datos recibidos:', data);
+      
+      this.rutinas = data || [];
+      
+      // Actualizar caché
+      this.cacheRutinas = this.rutinas;
+      this.ultimaCargaRutinas = ahora;
+      console.log('🟢 [VerEjerciciosComponent] Caché de rutinas actualizado');
+      
+      console.log('🟪 [VerEjerciciosComponent] Aplicando filtros de rutinas...');
+      this.aplicarFiltrosRutinas();
+      console.log('🟢 [VerEjerciciosComponent] Rutinas filtradas:', this.rutinasFiltradas.length);
+      
     } catch (error) {
-      console.error('Error al cargar rutinas:', error);
+      console.error('🔴 [VerEjerciciosComponent] Error al cargar rutinas:', error);
       await this.toastService.mostrarError('Error al cargar rutinas');
     } finally {
+      console.log('🟪 [VerEjerciciosComponent] Desactivando spinner rutinas (loadingRutinas = false)...');
       this.loadingRutinas = false;
+      console.log('🟪 [VerEjerciciosComponent] Estado final del spinner:', this.loadingRutinas);
+      console.log('🟪 [VerEjerciciosComponent] Forzando detección de cambios...');
+      
+      // Forzar detección de cambios de forma síncrona
+      this.cdr.detectChanges();
+      
+      // Timeout adicional para asegurar que la UI se actualice
+      setTimeout(() => {
+        this.loadingRutinas = false;
+        this.cdr.detectChanges();
+        console.log('🟪 [VerEjerciciosComponent] Segunda detección de cambios ejecutada');
+      }, 0);
+      
+      console.log('🟪 [VerEjerciciosComponent] === FIN cargarRutinas ===\n');
     }
   }
 
@@ -508,22 +650,27 @@ export class VerEjerciciosComponent implements OnInit {
   }
 
   async abrirModalRutina(rutina?: Rutina | RutinaConDetalles) {
-    console.log('🔧 Abriendo modal rutina con:', rutina);
-    console.log('🔧 Tiene ID?', rutina?.id);
-    console.log('🔧 Modo edición?', !!rutina);
+    console.log('🔧 [abrirModalRutina] === INICIO ===');
+    console.log('🔧 [abrirModalRutina] Abriendo modal rutina con:', rutina);
+    console.log('🔧 [abrirModalRutina] Tiene ID?', rutina?.id);
+    console.log('🔧 [abrirModalRutina] Modo edición?', !!rutina);
     
     this.editModeRutina = !!rutina;
     
     // Siempre recargar ejercicios para tener los datos más actualizados
+    console.log('🔧 [abrirModalRutina] Cargando ejercicios disponibles...');
+    const tiempoInicio = performance.now();
     await this.cargarEjercicios();
+    const tiempoFin = performance.now();
+    console.log(`🔧 [abrirModalRutina] Ejercicios cargados en ${(tiempoFin - tiempoInicio).toFixed(2)}ms`);
     
     // Asignar ejercicios disponibles
     this.ejerciciosDisponibles = [...this.ejercicios];
     this.ejerciciosDisponiblesFiltrados = [...this.ejercicios];
     this.filtroEjercicioModal = '';
     
-    console.log('✅ Modal abierto - Ejercicios disponibles:', this.ejerciciosDisponibles.length);
-    console.log('📋 Primeros 3 ejercicios:', this.ejerciciosDisponibles.slice(0, 3).map(e => e.nombre));
+    console.log('✅ [abrirModalRutina] Modal abierto - Ejercicios disponibles:', this.ejerciciosDisponibles.length);
+    console.log('📋 [abrirModalRutina] Primeros 3 ejercicios:', this.ejerciciosDisponibles.slice(0, 3).map(e => e.nombre));
 
     if (rutina && rutina.id) {
       console.log('✏️ MODO EDICIÓN - Cargando datos de rutina ID:', rutina.id);
@@ -634,7 +781,7 @@ export class VerEjerciciosComponent implements OnInit {
 
       await this.toastService.mostrarExito(this.editModeRutina ? 'Rutina actualizada' : 'Rutina creada correctamente');
       this.cerrarModalRutina();
-      await this.cargarRutinas();
+      await this.cargarRutinas(true); // true = forzar recarga, invalidar caché
     } catch (error) {
       console.error('Error al guardar rutina:', error);
       await this.toastService.mostrarError('Error al guardar rutina');

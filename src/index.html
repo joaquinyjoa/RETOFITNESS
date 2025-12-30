@@ -111,6 +111,49 @@
       }
     }
   </style>
+
+  <!-- Polyfill para hacer event listeners pasivos por defecto -->
+  <script>
+    (function() {
+      if (typeof EventTarget === 'undefined') return;
+      
+      // Detectar soporte para passive
+      var supportsPassive = false;
+      try {
+        var opts = Object.defineProperty({}, 'passive', {
+          get: function() {
+            supportsPassive = true;
+            return true;
+          }
+        });
+        window.addEventListener('testPassive', null, opts);
+        window.removeEventListener('testPassive', null, opts);
+      } catch (e) {}
+
+      if (!supportsPassive) return;
+
+      // Interceptar addEventListener
+      var originalAddEventListener = EventTarget.prototype.addEventListener;
+      
+      EventTarget.prototype.addEventListener = function(type, listener, options) {
+        var passiveEvents = ['touchstart', 'touchmove', 'touchend', 'wheel', 'mousewheel'];
+        
+        if (passiveEvents.indexOf(type) !== -1) {
+          var usesListenerOptions = typeof options === 'object' && options !== null;
+          
+          if (!usesListenerOptions || options.passive === undefined) {
+            var useCapture = usesListenerOptions ? options.capture : options;
+            options = {
+              passive: true,
+              capture: !!useCapture
+            };
+          }
+        }
+
+        return originalAddEventListener.call(this, type, listener, options);
+      };
+    })();
+  </script>
 </head>
 
 <body>
