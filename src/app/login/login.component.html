@@ -51,8 +51,8 @@
                   class="native-input password-input"
                   [(ngModel)]="credenciales.password"
                   name="password"
-                  [type]="showPassword ? 'text' : 'password'" 
-                  placeholder="Tu contraseña"
+                  [type]="mostrarPassword ? 'text' : 'password'" 
+                  placeholder="Contraseña"
                   autocomplete="current-password"
                   (input)="onInputChange('password', $event)"
                   (blur)="onInputBlur('password')"
@@ -63,7 +63,7 @@
                   class="password-toggle-btn"
                   (click)="togglePasswordVisibility()"
                   aria-label="Mostrar/ocultar contraseña">
-                  <span class="emoji-icon">{{ showPassword ? 'Ocultar' : 'Mostrar' }}</span>
+                  <span class="emoji-icon">{{ mostrarPassword ? 'Ocultar' : 'Mostrar' }}</span>
                 </button>
               </div>
             </div>
@@ -91,9 +91,9 @@
             class="login-button" 
             expand="full"
             (click)="onLogin()" 
-            [disabled]="isSubmitting">
-            <span *ngIf="!isSubmitting">Iniciar Sesión</span>
-            <span *ngIf="isSubmitting">Verificando...</span>
+            [disabled]="enviando">
+            <span *ngIf="!enviando">Iniciar Sesión</span>
+            <span *ngIf="enviando">Verificando...</span>
           </ion-button>
 
           <!-- Separador -->

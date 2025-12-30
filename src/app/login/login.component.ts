@@ -38,11 +38,11 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
   };
 
   // Estado del formulario
-  isSubmitting: boolean = false;
-  attemptedLogin: boolean = false;
+  enviando: boolean = false;
+  intentoLogin: boolean = false;
 
   // Control de visibilidad de contraseña
-  showPassword: boolean = false;
+  mostrarPassword: boolean = false;
 
   private router = inject(Router);
   private authService = inject(AuthService);
@@ -80,7 +80,7 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
     (this.credenciales as any)[field] = value;
     
     // Solo validar si el campo ya fue tocado o se intentó hacer login
-    if (this.fieldsTouched[field as keyof typeof this.fieldsTouched] || this.attemptedLogin) {
+    if (this.fieldsTouched[field as keyof typeof this.fieldsTouched] || this.intentoLogin) {
       switch(field) {
         case 'correo':
           this.validateCorreo();
@@ -90,8 +90,6 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
           break;
       }
     }
-    
-    console.log(`Campo ${field} cambió a:`, value);
   }
 
   // Método para cuando el usuario sale del campo (blur)
@@ -109,7 +107,6 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
         break;
     }
     
-    console.log(`Blur en ${field} - Campo marcado como tocado`);
   }
 
   // Métodos para eventos de focus
@@ -124,11 +121,11 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
     const hasPrefix = emailPrefix.length >= 3;
     const isValid = includesDomain && hasPrefix;
     
-    if (showError || this.fieldsTouched.correo || this.attemptedLogin) {
+    if (showError || this.fieldsTouched.correo || this.intentoLogin) {
       if (!includesDomain) {
         this.validationErrors.correo = 'El correo debe terminar en @retofitness.com';
       } else if (emailPrefix.length === 0) {
-        this.validationErrors.correo = 'Debe ingresar caracteres antes de @retofitness.com';
+        this.validationErrors.correo = 'Debe ingresar un correo con terminacion @retofitness.com';
       } else if (!hasPrefix) {
         this.validationErrors.correo = 'El correo debe tener al menos 3 caracteres antes de @retofitness.com';
       } else {
@@ -144,7 +141,7 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
     const hasMinLength = this.credenciales.password.length >= 6;
     const isValid = hasMinLength;
     
-    if (showError || this.fieldsTouched.password || this.attemptedLogin) {
+    if (showError || this.fieldsTouched.password || this.intentoLogin) {
       if (!hasMinLength) {
         this.validationErrors.password = 'La contraseña debe tener mínimo 6 caracteres';
       } else {
@@ -171,8 +168,8 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
   async onLogin() {
     console.log('=== INICIANDO LOGIN ===');
     
-    this.attemptedLogin = true;
-    this.isSubmitting = true;
+    this.intentoLogin = true;
+    this.enviando = true;
     this.mostrarSpinner = true;
     
     try {
@@ -184,26 +181,19 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
         this.validateCorreo(true);
         this.validatePassword(true);
         
-        this.isSubmitting = false;
+        this.enviando = false;
         this.mostrarSpinner = false;
         return;
       }
 
-      console.log('✅ Validación pasó');
-
       // Intentar login
-      console.log('📤 Enviando credenciales a AuthService...');
       const result = await this.authService.login(
         this.credenciales.correo.trim(),
         this.credenciales.password.trim()
       );
       
-      console.log('📥 Respuesta recibida:', result);
-      
       if (!result.success) {
-        console.error('❌ ERROR EN LOGIN:', result.error);
-        
-        this.isSubmitting = false;
+        this.enviando = false;
         this.mostrarSpinner = false;
         
         // Forzar detección de cambios para ocultar spinner inmediatamente
@@ -220,13 +210,9 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
         
         return;
       }
-
-      // Login exitoso
-      console.log('🎉 Login exitoso:', result.usuario);
       
       // Guardar sesión
       if (result.usuario) {
-        console.log('💾 Guardando sesión en localStorage:', result.usuario);
         this.authService.guardarSesion(result.usuario);
         
         // Verificar que se guardó correctamente
@@ -236,24 +222,20 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
 
       // Mostrar éxito en la parte superior
       const tipoUsuario = result.usuario?.tipo === 'cliente' ? 'cliente' : 'entrenador';
-      console.log('🏷️ Tipo de usuario determinado:', tipoUsuario);
       await this.presentToast(`¡Bienvenido ${tipoUsuario}!`, 'top');
       
       // Navegar según el tipo de usuario inmediatamente
       try {
-        console.log('🚀 Iniciando navegación para tipo:', result.usuario?.tipo);
         
         if (result.usuario?.tipo === 'cliente') {
-          console.log('📱 Navegando a panel de cliente');
           await this.router.navigate(['/panel-cliente']);
-          console.log('✅ Navegación a panel de cliente exitosa');
         } else if (result.usuario?.tipo === 'entrenador') {
-          console.log('👨‍💼 Navegando a panel de entrenador');
           await this.router.navigate(['/panel-entrenador']);
-          console.log('✅ Navegación a panel de entrenador exitosa');
         } else {
-          console.log('❓ Tipo de usuario no reconocido:', result.usuario?.tipo);
+          await this.presentToast('Correo no creado', 'top');
+          return;
         }
+
       } catch (navError) {
         console.error('❌ Error en navegación:', navError);
         await this.presentToast('Error al cargar el panel. Intenta de nuevo.', 'top');
@@ -265,7 +247,7 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
     } catch (error) {
       console.error('💥 ERROR INESPERADO:', error);
       
-      this.isSubmitting = false;
+      this.enviando = false;
       this.mostrarSpinner = false;
       
       // Forzar detección de cambios para ocultar spinner inmediatamente
@@ -281,8 +263,8 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
       await this.presentToast('Error inesperado durante el login', 'top');
     } finally {
       // Este finally se ejecuta siempre
-      console.log('🔚 Finally ejecutado - isSubmitting se establece a false');
-      this.isSubmitting = false;
+      console.log('🔚 Finally ejecutado - enviando se establece a false');
+      this.enviando = false;
       this.mostrarSpinner = false;
       this.cdr.detectChanges();
     }
@@ -290,8 +272,8 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
 
   // Método para alternar visibilidad de contraseña
   togglePasswordVisibility() {
-    this.showPassword = !this.showPassword;
-    console.log('🔍 Visibilidad de contraseña:', this.showPassword ? 'visible' : 'oculta');
+    this.mostrarPassword = !this.mostrarPassword;
+    console.log('🔍 Visibilidad de contraseña:', this.mostrarPassword ? 'visible' : 'oculta');
   }
 
   // Método para acceso rápido como entrenador
