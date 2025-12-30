@@ -33,6 +33,9 @@ export class PanelClienteComponent implements OnInit {
   ejercicioSeleccionado: any = null;
   pesoRegistrado: number | null = null;
 
+  // Caché de pesos en localStorage
+  private readonly PESOS_CACHE_KEY = 'pesos_ejercicios_cache';
+
   async ngOnInit() {
     console.log('🚀 [PanelCliente] Inicializando...');
     
@@ -92,6 +95,9 @@ export class PanelClienteComponent implements OnInit {
           ...rutinaActiva,
           detalles: rutinaDetalle
         };
+
+        // Cargar pesos desde caché
+        this.cargarPesosDesdeCache();
       } else {
         console.log('⚠️ [PanelCliente] No hay rutinas asignadas');
         this.rutinaAsignada = null;
@@ -162,8 +168,60 @@ export class PanelClienteComponent implements OnInit {
     // Actualizar localmente
     this.ejercicioSeleccionado.peso_registrado = this.pesoRegistrado;
     
-    await this.toastService.mostrarExito('Peso registrado correctamente');
+    // Guardar en caché (localStorage)
+    this.guardarPesoEnCache(this.ejercicioSeleccionado.ejercicio_id, this.pesoRegistrado);
+    
+    // Cerrar modal primero
     this.cerrarModalRegistrarPeso();
+    
+    // Mostrar toast después de cerrar el modal
+    await this.toastService.mostrarExito('Peso registrado correctamente');
+  }
+
+  // Guardar peso en localStorage
+  private guardarPesoEnCache(ejercicioId: number, peso: number) {
+    try {
+      const cacheKey = `${this.PESOS_CACHE_KEY}_${this.clienteId}`;
+      const pesosGuardados = this.obtenerPesosCache();
+      
+      pesosGuardados[ejercicioId] = {
+        peso: peso,
+        fecha: new Date().toISOString()
+      };
+      
+      localStorage.setItem(cacheKey, JSON.stringify(pesosGuardados));
+      console.log('✅ Peso guardado en caché:', ejercicioId, '=', peso, 'kg');
+    } catch (error) {
+      console.error('❌ Error al guardar peso en caché:', error);
+    }
+  }
+
+  // Obtener pesos del caché
+  private obtenerPesosCache(): { [key: number]: { peso: number, fecha: string } } {
+    try {
+      const cacheKey = `${this.PESOS_CACHE_KEY}_${this.clienteId}`;
+      const cache = localStorage.getItem(cacheKey);
+      return cache ? JSON.parse(cache) : {};
+    } catch (error) {
+      console.error('❌ Error al leer caché de pesos:', error);
+      return {};
+    }
+  }
+
+  // Cargar pesos desde caché a la rutina
+  private cargarPesosDesdeCache() {
+    if (!this.rutinaAsignada?.detalles?.ejercicios) return;
+
+    const pesosCache = this.obtenerPesosCache();
+    console.log('📦 Pesos en caché:', pesosCache);
+
+    this.rutinaAsignada.detalles.ejercicios.forEach((ejercicio: any) => {
+      const ejercicioId = ejercicio.ejercicio_id;
+      if (pesosCache[ejercicioId]) {
+        ejercicio.peso_registrado = pesosCache[ejercicioId].peso;
+        console.log('✅ Peso recuperado para ejercicio', ejercicioId, ':', ejercicio.peso_registrado, 'kg');
+      }
+    });
   }
 
   logout() {

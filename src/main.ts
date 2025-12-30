@@ -101,6 +101,7 @@ import { AppComponent } from './app/app.component';
 
 // Registrar iconos (todos los necesarios para el proyecto)
 addIcons({
+  "information-circle-outline" : informationCircleOutline,
   "trending-up-outline" : trendingUpOutline,
   'rocket': rocket,
   'arrow-back-outline': arrowBackOutline,
@@ -130,7 +131,6 @@ addIcons({
   'close-circle': closeCircle,
   'close-circle-outline': closeCircleOutline,
   'information-circle': informationCircle,
-  'information-circle-outline': informationCircleOutline,
   'warning-outline': warningOutline,
   'warning': warning,
   'home': home,

@@ -33,6 +33,10 @@
 .panel-content {
   --background: var(--black-bg);
   --color: white;
+
+  p {
+    color: white;
+  }
 }
 
 .loading-container {
