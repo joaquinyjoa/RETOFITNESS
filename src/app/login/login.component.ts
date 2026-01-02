@@ -167,10 +167,15 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
   // Proceso de login
   async onLogin() {
     console.log('=== INICIANDO LOGIN ===');
+    console.log('Credenciales antes de trim:', {
+      correo: this.credenciales.correo,
+      passwordLength: this.credenciales.password.length
+    });
     
     this.intentoLogin = true;
     this.enviando = true;
     this.mostrarSpinner = true;
+    this.cdr.detectChanges();
     
     try {
       // Validar datos antes del login
@@ -183,14 +188,31 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
         
         this.enviando = false;
         this.mostrarSpinner = false;
+        this.cdr.detectChanges();
+        return;
+      }
+
+      // Preparar credenciales
+      const correoLimpio = this.credenciales.correo.trim();
+      const passwordLimpio = this.credenciales.password.trim();
+      
+      console.log('Credenciales después de trim:', {
+        correo: correoLimpio,
+        passwordLength: passwordLimpio.length
+      });
+
+      // Validar que no estén vacías después del trim
+      if (!correoLimpio || !passwordLimpio) {
+        console.error('❌ Credenciales vacías después del trim');
+        this.enviando = false;
+        this.mostrarSpinner = false;
+        this.cdr.detectChanges();
+        await this.presentToast('Por favor ingresa correo y contraseña', 'top');
         return;
       }
 
       // Intentar login
-      const result = await this.authService.login(
-        this.credenciales.correo.trim(),
-        this.credenciales.password.trim()
-      );
+      const result = await this.authService.login(correoLimpio, passwordLimpio);
       
       if (!result.success) {
         this.enviando = false;
@@ -221,7 +243,11 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
       }
 
       // Mostrar éxito en la parte superior
-      const tipoUsuario = result.usuario?.tipo === 'cliente' ? 'cliente' : 'entrenador';
+      let tipoUsuario = 'usuario';
+      if (result.usuario?.tipo === 'cliente') tipoUsuario = 'cliente';
+      else if (result.usuario?.tipo === 'entrenador') tipoUsuario = 'entrenador';
+      else if (result.usuario?.tipo === 'recepcion') tipoUsuario = 'recepción';
+      
       await this.presentToast(`¡Bienvenido ${tipoUsuario}!`, 'top');
       
       // Navegar según el tipo de usuario inmediatamente
@@ -231,13 +257,14 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
           await this.router.navigate(['/panel-cliente']);
         } else if (result.usuario?.tipo === 'entrenador') {
           await this.router.navigate(['/panel-entrenador']);
+        } else if (result.usuario?.tipo === 'recepcion') {
+          await this.router.navigate(['/panel-recepcion']);
         } else {
           await this.presentToast('Correo no creado', 'top');
           return;
         }
 
       } catch (navError) {
-        console.error('❌ Error en navegación:', navError);
         await this.presentToast('Error al cargar el panel. Intenta de nuevo.', 'top');
         return;
       }
@@ -261,6 +288,7 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
       
       // Mostrar error
       await this.presentToast('Error inesperado durante el login', 'top');
+      
     } finally {
       // Este finally se ejecuta siempre
       console.log('🔚 Finally ejecutado - enviando se establece a false');
@@ -273,7 +301,6 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
   // Método para alternar visibilidad de contraseña
   togglePasswordVisibility() {
     this.mostrarPassword = !this.mostrarPassword;
-    console.log('🔍 Visibilidad de contraseña:', this.mostrarPassword ? 'visible' : 'oculta');
   }
 
   // Método para acceso rápido como entrenador
@@ -281,10 +308,7 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
     // Establecer credenciales predefinidas
     this.credenciales.correo = 'gus@retofitness.com';
     this.credenciales.password = 'gus1209';
-    
-    // Mostrar mensaje de acceso rápido
-    await this.presentToast('Credenciales de entrenador cargadas', 'top');
-    
+
     // Proceder con el login automáticamente
     await this.onLogin();
   }

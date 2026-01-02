@@ -57,6 +57,7 @@ export class VerEjerciciosComponent implements OnInit {
   rutinaParaAsignar: Rutina | null = null;
   clientesDisponibles: any[] = [];
   clientesSeleccionados: number[] = [];
+  diaSemanaAsignacion: number = 1;
   fechaInicioAsignacion: string = '';
   fechaFinAsignacion: string = '';
   notasAsignacion: string = '';
@@ -223,6 +224,7 @@ export class VerEjerciciosComponent implements OnInit {
     this.editMode = !!ejercicio;
     if (ejercicio) {
       this.ejercicioActual = {
+        id: ejercicio.id, // ✅ Incluir el ID para modo edición
         nombre: ejercicio.nombre,
         descripcion: ejercicio.descripcion || '',
         categoria: ejercicio.categoria,
@@ -230,7 +232,6 @@ export class VerEjerciciosComponent implements OnInit {
         musculos_secundarios: ejercicio.musculos_secundarios || [],
         nivel_dificultad: ejercicio.nivel_dificultad,
         enlace_video: ejercicio.enlace_video,
-        duracion_minutos: ejercicio.duracion_minutos || null,
         equipamiento: ejercicio.equipamiento || [],
         instrucciones: ejercicio.instrucciones || '',
         consejos: ejercicio.consejos || ''
@@ -247,30 +248,34 @@ export class VerEjerciciosComponent implements OnInit {
   }
 
   async guardarEjercicio() {
+    console.log('🟢 [guardarEjercicio] INICIO');
     try {
       // Validaciones básicas
       if (!this.ejercicioActual.nombre.trim()) {
+        console.log('❌ Validación fallida: nombre vacío');
         await this.toastService.mostrarError('El nombre del ejercicio es obligatorio');
         return;
       }
 
       if (!this.ejercicioActual.enlace_video.trim()) {
+        console.log('❌ Validación fallida: URL vacía');
         await this.toastService.mostrarError('La URL del video es obligatoria');
         return;
       }
 
       if (!this.urlValida) {
+        console.log('❌ Validación fallida: URL no válida');
         await this.toastService.mostrarError('La URL de Google Drive no es válida');
         return;
       }
 
+      console.log('✅ Validaciones pasadas, activando spinner');
       this.loading = true;
 
       const ejercicioData: Ejercicio = {
         ...this.ejercicioActual,
         categoria: this.ejercicioActual.categoria as 'cardio' | 'fuerza' | 'flexibilidad' | 'funcional' | 'general',
         nivel_dificultad: this.ejercicioActual.nivel_dificultad as 'principiante' | 'intermedio' | 'avanzado',
-        duracion_minutos: this.ejercicioActual.duracion_minutos ? this.ejercicioActual.duracion_minutos / 60 : undefined, // Convertir segundos a minutos
         musculos_secundarios: this.ejercicioActual.musculos_secundarios.filter(m => m.trim()),
         equipamiento: this.ejercicioActual.equipamiento.filter(e => e.trim())
       };
@@ -279,29 +284,49 @@ export class VerEjerciciosComponent implements OnInit {
       
       if (this.editMode && this.ejercicioActual.id) {
         // Actualizar ejercicio existente
-        console.log('Actualizando ejercicio ID:', this.ejercicioActual.id);
+        console.log('🔄 Actualizando ejercicio ID:', this.ejercicioActual.id);
         result = await this.ejercicioService.actualizarEjercicio(this.ejercicioActual.id, ejercicioData);
+        console.log('📦 Resultado actualización:', result);
       } else {
         // Crear nuevo ejercicio
-        console.log('Creando nuevo ejercicio');
+        console.log('➕ Creando nuevo ejercicio');
         result = await this.ejercicioService.crearEjercicio(ejercicioData);
+        console.log('📦 Resultado creación:', result);
       }
 
       if (result.success) {
+        console.log('✅ Operación exitosa, desactivando spinner');
+        // Desactivar loading inmediatamente
+        this.loading = false;
+        
+        console.log('🚪 Cerrando modal');
+        // Cerrar modal primero
+        this.cerrarModal();
+        
+        console.log('📢 Mostrando toast de éxito');
+        // Mostrar toast
         await this.toastService.mostrarExito(
           this.editMode ? 'Ejercicio actualizado correctamente' : 'Ejercicio creado correctamente'
         );
-        this.cerrarModal();
+        
+        console.log('🔄 Recargando ejercicios');
+        // Recargar ejercicios en segundo plano
         await this.cargarEjercicios(true); // true = forzar recarga, invalidar caché
+        console.log('🏁 Proceso completado');
       } else {
+        console.log('❌ Error en la operación:', result.error);
+        // En caso de error, detener spinner inmediatamente
+        this.loading = false;
         await this.toastService.mostrarError(result.error || 'Error al guardar ejercicio');
       }
     } catch (error: any) {
+      console.log('💥 Excepción capturada:', error);
+      // En caso de error, detener spinner inmediatamente
+      this.loading = false;
       console.error('Error al guardar ejercicio:', error);
       await this.toastService.mostrarError('Error inesperado al guardar');
-    } finally {
-      this.loading = false;
     }
+    console.log('🔴 [guardarEjercicio] FIN');
   }
 
   // Validar URL de Google Drive
@@ -355,19 +380,7 @@ export class VerEjerciciosComponent implements OnInit {
     return url; // Si no se puede convertir, devolver original
   }
 
-  // Convertir segundos a minutos (para la validación)
-  convertirSegundosAMinutos() {
-    if (this.ejercicioActual.duracion_minutos) {
-      // Si el usuario ingresa más de 20 segundos, limitar a 20
-      if (this.ejercicioActual.duracion_minutos > 20) {
-        this.ejercicioActual.duracion_minutos = 20;
-        this.toastService.mostrarError('Duración máxima: 20 segundos');
-      }
-      
-      // Convertir segundos a minutos para almacenar en la base de datos
-      // (Mantenemos el valor en segundos en la interfaz, pero se convierte internamente)
-    }
-  }
+
 
   async eliminarEjercicio(ejercicio: Ejercicio) {
     try {
@@ -426,6 +439,32 @@ export class VerEjerciciosComponent implements OnInit {
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 
+  // Obtener URL directa de imagen/GIF desde Google Drive
+    getDirectImageUrl(url: string): string {
+    if (!url) return '';
+    
+    // Extraer el ID del archivo de Google Drive
+    let fileId = '';
+    
+    // Patrón para URLs como: https://drive.google.com/file/d/FILE_ID/view
+    const patronId = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+    if (patronId) {
+      fileId = patronId[1];
+      // Usar la URL directa de thumbnail que funciona para GIFs y se reproduce automáticamente
+      return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
+
+    // Patrón para URLs como: https://drive.google.com/open?id=FILE_ID
+    const patronOpen = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+    if (patronOpen) {
+      fileId = patronOpen[1];
+      return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
+
+    // Si no se puede extraer el ID, devolver la URL original
+    return url;
+  }
+
   // Alias para usar en el HTML de rutinas
   getSafeUrl(url: string): SafeResourceUrl {
     return this.getVideoEmbedUrl(url);
@@ -474,13 +513,13 @@ export class VerEjerciciosComponent implements OnInit {
 
   getCategoriaColor(categoria: string): string {
     const colores: { [key: string]: string } = {
-      'cardio': 'primary',
-      'fuerza': 'secondary',
-      'flexibilidad': 'tertiary',
-      'funcional': 'warning',
-      'general': 'medium'
+      'cardio': 'success',
+      'fuerza': 'success',
+      'flexibilidad': 'success',
+      'funcional': 'success',
+      'general': 'success'
     };
-    return colores[categoria] || 'medium';
+    return colores[categoria] || 'success';
   }
 
   getCategoriaLabel(categoria: string): string {
@@ -529,7 +568,6 @@ export class VerEjerciciosComponent implements OnInit {
       musculos_secundarios: [],
       nivel_dificultad: 'principiante',
       enlace_video: '',
-      duracion_minutos: null,
       equipamiento: [],
       instrucciones: '',
       consejos: ''
@@ -699,6 +737,7 @@ export class VerEjerciciosComponent implements OnInit {
         series: re.series || 3,
         repeticiones: re.repeticiones || '10-12',
         descanso_segundos: re.descanso_segundos || 60,
+        porcentaje_fuerza: re.porcentaje_fuerza || 100,
         notas: re.notas || '',
         enlace_video: re.ejercicio?.enlace_video
       }));
@@ -747,7 +786,10 @@ export class VerEjerciciosComponent implements OnInit {
           nivel_dificultad: this.rutinaActual.nivel_dificultad
         });
 
-        if (error) throw error;
+        if (error) {
+          this.loadingRutinas = false;
+          throw error;
+        }
         rutinaId = this.rutinaActual.id;
       } else {
         // Crear nueva rutina
@@ -760,7 +802,10 @@ export class VerEjerciciosComponent implements OnInit {
           activo: true
         });
 
-        if (error || !data) throw error;
+        if (error || !data) {
+          this.loadingRutinas = false;
+          throw error;
+        }
         rutinaId = data.id!;
       }
 
@@ -772,21 +817,35 @@ export class VerEjerciciosComponent implements OnInit {
         series: ej.series,
         repeticiones: ej.repeticiones,
         descanso_segundos: ej.descanso_segundos,
+        porcentaje_fuerza: ej.porcentaje_fuerza || 100,
         notas: ej.notas
       }));
 
       const { success, error: errorEjercicios } = await this.rutinaService.guardarEjerciciosEnRutina(rutinaId, ejerciciosParaGuardar);
 
-      if (!success) throw errorEjercicios;
+      if (!success) {
+        this.loadingRutinas = false;
+        throw errorEjercicios;
+      }
 
-      await this.toastService.mostrarExito(this.editModeRutina ? 'Rutina actualizada' : 'Rutina creada correctamente');
+      // Detener spinner inmediatamente al éxito
+      this.loadingRutinas = false;
+      
+      // Cerrar modal primero (inmediato)
       this.cerrarModalRutina();
-      await this.cargarRutinas(true); // true = forzar recarga, invalidar caché
+      
+      // Mostrar toast (sin await para que no bloquee)
+      this.toastService.mostrarExito(this.editModeRutina ? 'Rutina actualizada correctamente' : 'Rutina creada correctamente');
+      
+      // Recargar rutinas en segundo plano (sin await para que no bloquee)
+      this.cargarRutinas(true).then(() => {
+        console.log('Rutinas recargadas');
+      });
     } catch (error) {
+      // En caso de error, detener spinner inmediatamente
+      this.loadingRutinas = false;
       console.error('Error al guardar rutina:', error);
       await this.toastService.mostrarError('Error al guardar rutina');
-    } finally {
-      this.loadingRutinas = false;
     }
   }
 
@@ -858,6 +917,7 @@ export class VerEjerciciosComponent implements OnInit {
       series: 3,
       repeticiones: '10-12',
       descanso_segundos: 60,
+      porcentaje_fuerza: 100,
       notas: '',
       enlace_video: ejercicio.enlace_video
     };
@@ -869,6 +929,68 @@ export class VerEjerciciosComponent implements OnInit {
     
     // Mostrar confirmación
     this.toastService.mostrarExito(`${ejercicio.nombre} agregado a la rutina`);
+  }
+
+  // Validar porcentaje de fuerza (0-100)
+  validarPorcentajeFuerza(ejercicio: any) {
+    const valor = ejercicio.porcentaje_fuerza;
+    
+    // Si el campo está vacío, no validar
+    if (valor === null || valor === undefined || valor === '') {
+      return;
+    }
+
+    // Convertir a número y validar
+    const numero = Number(valor);
+    
+    // Verificar si es un número válido
+    if (isNaN(numero)) {
+      this.toastService.mostrarError('El porcentaje de fuerza debe ser un número');
+      ejercicio.porcentaje_fuerza = 100;
+      return;
+    }
+
+    // Validar rango 0-100
+    if (numero < 0) {
+      this.toastService.mostrarError('El porcentaje no puede ser negativo');
+      ejercicio.porcentaje_fuerza = 0;
+    } else if (numero > 100) {
+      this.toastService.mostrarError('El porcentaje no puede ser mayor a 100');
+      ejercicio.porcentaje_fuerza = 100;
+    }
+  }
+
+  // Validar números positivos (series, descanso, etc.)
+  validarNumeroPositivo(ejercicio: any, campo: string) {
+    const valor = ejercicio[campo];
+    
+    // Si el campo está vacío, no validar
+    if (valor === null || valor === undefined || valor === '') {
+      return;
+    }
+
+    // Convertir a número y validar
+    const numero = Number(valor);
+    
+    // Verificar si es un número válido
+    if (isNaN(numero)) {
+      this.toastService.mostrarError(`El valor debe ser un número`);
+      ejercicio[campo] = campo === 'series' ? 3 : 60;
+      return;
+    }
+
+    // Validar que sea positivo
+    if (numero < 0) {
+      this.toastService.mostrarError('El valor no puede ser negativo');
+      ejercicio[campo] = 0;
+      return;
+    }
+
+    // Validación específica para series (máximo 5)
+    if (campo === 'series' && numero > 5) {
+      this.toastService.mostrarError('El número de series no puede ser mayor a 5');
+      ejercicio[campo] = 5;
+    }
   }
 
   // Verificar si un ejercicio ya fue agregado
@@ -914,6 +1036,7 @@ export class VerEjerciciosComponent implements OnInit {
     this.fechaInicioAsignacion = new Date().toISOString().split('T')[0];
     this.fechaFinAsignacion = '';
     this.notasAsignacion = '';
+    this.diaSemanaAsignacion = 1;
 
     // Cargar clientes disponibles
     try {
@@ -959,6 +1082,7 @@ export class VerEjerciciosComponent implements OnInit {
       const { success, error } = await this.rutinaService.asignarRutinaAClientes(
         this.rutinaParaAsignar.id,
         this.clientesSeleccionados,
+        this.diaSemanaAsignacion,
         this.fechaInicioAsignacion,
         this.fechaFinAsignacion,
         this.notasAsignacion

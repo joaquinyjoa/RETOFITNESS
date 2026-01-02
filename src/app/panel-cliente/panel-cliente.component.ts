@@ -25,6 +25,9 @@ export class PanelClienteComponent implements OnInit {
 
   clienteId: number | null = null;
   nombreCliente: string = '';
+  rutinasAsignadas: any[] = [];
+  rutinasPorDia: Map<number, any> = new Map();
+  diaSeleccionado: number = 1;
   rutinaAsignada: any = null;
   loading = true;
 
@@ -83,21 +86,24 @@ export class PanelClienteComponent implements OnInit {
       if (data && data.length > 0) {
         console.log('🟢 [PanelCliente] Rutinas encontradas:', data.length);
         
-        // Obtener la rutina activa o la más reciente
-        const rutinaActiva = data.find((r: any) => r.estado === 'en_progreso') || data[0];
-        console.log('🟢 [PanelCliente] Rutina activa:', rutinaActiva);
+        this.rutinasAsignadas = data;
+        
+        // Organizar rutinas por día
+        this.rutinasPorDia.clear();
+        for (const rutina of data) {
+          const dia = rutina.dia_semana || 1; // Default día 1 si no tiene
+          if (!this.rutinasPorDia.has(dia)) {
+            // Obtener detalles completos de la rutina
+            const { data: rutinaDetalle } = await this.rutinaService.obtenerRutinaPorId(rutina.rutina_id);
+            this.rutinasPorDia.set(dia, {
+              ...rutina,
+              detalles: rutinaDetalle
+            });
+          }
+        }
 
-        // Obtener los detalles completos de la rutina
-        const { data: rutinaDetalle } = await this.rutinaService.obtenerRutinaPorId(rutinaActiva.rutina_id);
-        console.log('🟢 [PanelCliente] Detalles de rutina:', rutinaDetalle);
-
-        this.rutinaAsignada = {
-          ...rutinaActiva,
-          detalles: rutinaDetalle
-        };
-
-        // Cargar pesos desde caché
-        this.cargarPesosDesdeCache();
+        // Seleccionar rutina del día 1 por defecto
+        this.seleccionarDia(1);
       } else {
         console.log('⚠️ [PanelCliente] No hay rutinas asignadas');
         this.rutinaAsignada = null;
@@ -117,6 +123,27 @@ export class PanelClienteComponent implements OnInit {
       
       console.log('🟡 [PanelCliente] === FIN cargarRutinaAsignada ===\n');
     }
+  }
+
+  seleccionarDia(dia: number) {
+    this.diaSeleccionado = dia;
+    this.rutinaAsignada = this.rutinasPorDia.get(dia) || null;
+    
+    if (this.rutinaAsignada) {
+      // Cargar pesos desde caché
+      this.cargarPesosDesdeCache();
+    }
+    
+    console.log(`📅 Día ${dia} seleccionado`, this.rutinaAsignada);
+  }
+
+  get diasDisponibles(): number[] {
+    return Array.from(this.rutinasPorDia.keys()).sort((a, b) => a - b);
+  }
+
+  getNombreDia(dia: number): string {
+    const nombres = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    return nombres[dia] || `Día ${dia}`;
   }
 
   getSafeUrl(url: string): SafeResourceUrl {

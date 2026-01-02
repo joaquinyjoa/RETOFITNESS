@@ -22,6 +22,10 @@ export const routes: Routes = [
     loadComponent: () => import('./panel-entrenador/panel-entrenador.component').then((m) => m.PanelEntrenadorComponent),
   },
   {
+    path: 'panel-recepcion',
+    loadComponent: () => import('./panel-recepcion/panel-recepcion.component').then((m) => m.PanelRecepcionComponent),
+  },
+  {
     path: 'ver-clientes',
     loadComponent: () => import('./ver-clientes/ver-clientes.component').then((m) => m.VerClientesComponent),
   },

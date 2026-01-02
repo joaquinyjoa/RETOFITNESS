@@ -21,11 +21,13 @@ export function getSupabaseClient(): SupabaseClient {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: false,
-        flowType: 'implicit'
+        storage: window.localStorage
       },
       global: {
         headers: {
-          'x-application-name': 'retofitness-app'
+          'x-application-name': 'retofitness-app',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
         }
       },
       db: {

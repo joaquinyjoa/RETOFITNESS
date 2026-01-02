@@ -21,6 +21,14 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
   private authService = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
 
+  // Getter para obtener datos del entrenador con type safety
+  get datosEntrenador() {
+    if (this.entrenador && this.entrenador.tipo === 'entrenador') {
+      return this.entrenador.data as import('../services/entrenador.service').Entrenador;
+    }
+    return null;
+  }
+
   ngOnInit() {
     console.log('🔷 PANEL: ngOnInit ejecutado');
     // Resetear spinner por si volvemos al componente
@@ -63,7 +71,7 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
         return;
       }
       
-      console.log('✅ PANEL: Entrenador verificado:', this.entrenador.data.nombre);
+      console.log('✅ PANEL: Entrenador verificado:', this.datosEntrenador?.nombre);
       this.cdr.detectChanges();
     }, 100);
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -25,6 +25,8 @@ import {
   IonChip,
   IonDatetime,
   IonTextarea,
+  IonSelect,
+  IonSelectOption,
   AlertController,
   ToastController
 } from '@ionic/angular/standalone';
@@ -60,8 +62,11 @@ import { ClienteService } from '../services/cliente.service';
     IonBadge,
     IonChip,
     IonDatetime,
-    IonTextarea
-  ]
+    IonTextarea,
+    IonSelect,
+    IonSelectOption
+  ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class AsignarRutinaComponent implements OnInit {
   private router = inject(Router);
@@ -82,6 +87,7 @@ export class AsignarRutinaComponent implements OnInit {
   guardando = false;
   
   filtroTexto = '';
+  diaSemana = 1; // Día por defecto (Lunes)
   fechaInicio = '';
   fechaFin = '';
   notas = '';
@@ -244,6 +250,7 @@ export class AsignarRutinaComponent implements OnInit {
       const { success, error } = await this.rutinaService.asignarRutinaAClientes(
         this.rutinaId!,
         clienteIds,
+        this.diaSemana,
         this.fechaInicio || undefined,
         this.fechaFin || undefined,
         this.notas || undefined

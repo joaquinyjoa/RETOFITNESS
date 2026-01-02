@@ -22,6 +22,7 @@ export interface RutinaEjercicio {
   series?: number;
   repeticiones?: string;
   descanso_segundos?: number;
+  porcentaje_fuerza?: number; // Porcentaje de fuerza requerido (0-100)
   notas?: string;
   created_at?: string;
   // Campos extra para JOIN con ejercicios
@@ -32,6 +33,7 @@ export interface RutinaCliente {
   id?: number;
   rutina_id: number;
   cliente_id: number;
+  dia_semana?: number; // 1-6 (Lunes-Sábado)
   fecha_asignacion?: string;
   fecha_inicio?: string;
   fecha_fin?: string;
@@ -362,6 +364,7 @@ export class RutinaService {
   async asignarRutinaAClientes(
     rutinaId: number, 
     clienteIds: number[], 
+    diaSemana: number,
     fechaInicio?: string, 
     fechaFin?: string,
     notas?: string
@@ -372,6 +375,7 @@ export class RutinaService {
       const asignaciones = clienteIds.map(clienteId => ({
         rutina_id: rutinaId,
         cliente_id: clienteId,
+        dia_semana: diaSemana,
         fecha_inicio: fechaInicio || null,
         fecha_fin: fechaFin || null,
         estado: 'pendiente',

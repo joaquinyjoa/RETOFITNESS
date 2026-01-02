@@ -87,6 +87,53 @@
   }
 }
 
+// Selector de días
+.dias-selector {
+  margin-bottom: 24px;
+  
+  ion-segment {
+    --background: var(--dark-gray);
+    border-radius: 12px;
+    padding: 4px;
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    
+    ion-segment-button {
+      --color: var(--light-gray);
+      --color-checked: var(--black-bg);
+      --background-checked: var(--primary-green);
+      --indicator-color: transparent;
+      --border-radius: 8px;
+      --padding-top: 12px;
+      --padding-bottom: 12px;
+      min-width: 100px;
+      margin: 0 4px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      
+      ion-label {
+        strong {
+          display: block;
+          font-size: 0.9rem;
+        }
+        
+        p {
+          margin: 4px 0 0 0;
+          font-size: 0.75rem;
+          opacity: 0.8;
+        }
+      }
+
+      &::part(indicator) {
+        display: none;
+      }
+      
+      &.segment-button-checked {
+        box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
+      }
+    }
+  }
+}
+
 // Tarjeta de rutina
 .rutina-card {
   --background: var(--dark-gray);

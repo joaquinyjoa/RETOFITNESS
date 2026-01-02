@@ -113,7 +113,7 @@
                 <ion-badge [color]="getCategoriaColor(ejercicio.categoria)" class="category-badge">
                   {{ getCategoriaLabel(ejercicio.categoria) }}
                 </ion-badge>
-                <ion-badge color="medium" class="difficulty-badge">
+                <ion-badge color="success" class="difficulty-badge">
                   {{ getNivelLabel(ejercicio.nivel_dificultad) }}
                 </ion-badge>
               </div>
@@ -141,18 +141,13 @@
         </p>
         
         <div class="exercise-details">
-          <div *ngIf="ejercicio.duracion_minutos" class="detail-item">
-            <ion-icon name="time-outline"></ion-icon>
-            <span>{{ ejercicio.duracion_minutos }} min</span>
-          </div>
-
           <div *ngIf="ejercicio.equipamiento && ejercicio.equipamiento.length > 0" class="detail-item">
             <ion-icon name="barbell-outline"></ion-icon>
             <span>{{ getEquipamientoText(ejercicio.equipamiento) }}</span>
           </div>
         </div>
 
-        <!-- Video embebido directamente -->
+        <!-- Video/GIF embebido desde Google Drive -->
         <div *ngIf="ejercicio.enlace_video" class="video-container">
           <iframe 
             [src]="getVideoEmbedUrl(ejercicio.enlace_video)" 
@@ -409,24 +404,6 @@
         <div class="form-section">
           <h4>Detalles adicionales</h4>
           
-          <ion-item>
-            <ion-label position="stacked">Duración (segundos) - Máximo 20</ion-label>
-            <ion-input 
-              [(ngModel)]="ejercicioActual.duracion_minutos" 
-              name="duracion_minutos"
-              type="number"
-              min="1"
-              max="20"
-              placeholder="20"
-              (ionInput)="convertirSegundosAMinutos()">
-            </ion-input>
-          </ion-item>
-          
-          <ion-note *ngIf="ejercicioActual.duracion_minutos">
-            Duración: {{ ejercicioActual.duracion_minutos }} segundos 
-            ({{ (ejercicioActual.duracion_minutos / 60).toFixed(2) }} minutos)
-          </ion-note>
-
           <!-- Músculos secundarios -->
           <div class="array-section">
             <div class="array-header">
@@ -673,7 +650,7 @@
                   <ion-label>
                     <h3 [style.color]="isEjercicioYaAgregado(ej.id) ? 'var(--ion-color-medium)' : 'var(--primary-green)'">
                       {{ ej.nombre }}
-                      <ion-badge *ngIf="isEjercicioYaAgregado(ej.id)" color="medium" style="margin-left: 8px; font-size: 0.7rem;">
+                      <ion-badge *ngIf="isEjercicioYaAgregado(ej.id)" color="success" style="margin-left: 8px; font-size: 0.7rem;">
                         Ya agregado
                       </ion-badge>
                     </h3>
@@ -735,7 +712,9 @@
                     [name]="'series_' + i"
                     type="number"
                     min="1"
-                    placeholder="3">
+                    max="5"
+                    placeholder="3"
+                    (ionInput)="validarNumeroPositivo(ejSel, 'series')">
                   </ion-input>
                 </ion-item>
 
@@ -754,8 +733,24 @@
                     [(ngModel)]="ejSel.descanso_segundos" 
                     [name]="'descanso_' + i"
                     type="number"
-                    placeholder="60">
+                    min="0"
+                    placeholder="60"
+                    (ionInput)="validarNumeroPositivo(ejSel, 'descanso_segundos')">
                   </ion-input>
+                </ion-item>
+
+                <ion-item lines="none">
+                  <ion-label position="stacked">% Fuerza/Intensidad</ion-label>
+                  <ion-input 
+                    [(ngModel)]="ejSel.porcentaje_fuerza" 
+                    [name]="'porcentaje_' + i"
+                    type="number"
+                    min="0"
+                    max="100"
+                    placeholder="100"
+                    (ionInput)="validarPorcentajeFuerza(ejSel)">
+                  </ion-input>
+                  <ion-note slot="helper">Porcentaje de fuerza requerido (0-100%)</ion-note>
                 </ion-item>
               </div>
             </div>
@@ -811,12 +806,12 @@
               <ion-label>{{ getNivelLabel(rutinaDetalle.nivel_dificultad) }}</ion-label>
             </ion-chip>
             
-            <ion-chip color="primary" *ngIf="rutinaDetalle.duracion_semanas" style="font-weight: 600;">
+            <ion-chip color="success" *ngIf="rutinaDetalle.duracion_semanas" style="font-weight: 600;">
               <ion-icon name="calendar-outline"></ion-icon>
               <ion-label>{{ rutinaDetalle.duracion_semanas }} semanas</ion-label>
             </ion-chip>
             
-            <ion-chip color="tertiary" *ngIf="rutinaDetalle.ejercicios?.length" style="font-weight: 600;">
+            <ion-chip color="success" *ngIf="rutinaDetalle.ejercicios?.length" style="font-weight: 600;">
               <ion-icon name="barbell-outline"></ion-icon>
               <ion-label>{{ rutinaDetalle.ejercicios?.length }} ejercicios</ion-label>
             </ion-chip>
@@ -896,6 +891,14 @@
                     <div>
                       <div style="font-size: 0.75rem; color: #cccccc; margin-bottom: 3px;">Descanso</div>
                       <div style="font-weight: bold; color: #00ff88; font-size: 1.1rem;">{{ ej.descanso_segundos || 60 }}s</div>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; align-items: center; gap: 10px; padding: 14px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 10px;">
+                    <ion-icon name="speedometer-outline" style="color: #00ff88; font-size: 32px;"></ion-icon>
+                    <div>
+                      <div style="font-size: 0.75rem; color: #cccccc; margin-bottom: 3px;">Intensidad</div>
+                      <div style="font-weight: bold; color: #00ff88; font-size: 1.1rem;">{{ ej.porcentaje_fuerza || 100 }}%</div>
                     </div>
                   </div>
                 </div>

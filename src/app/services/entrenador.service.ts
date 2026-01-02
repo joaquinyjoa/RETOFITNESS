@@ -7,10 +7,11 @@ import { getSupabaseClient } from './supabase-client';
 // Interfaz para el entrenador
 export interface Entrenador {
   id?: number;
+  user_id?: string; // ID de Supabase Auth
   nombre: string;
   apellido: string;
   correo: string;
-  contraseña: string;
+  // contraseña ya no se almacena aquí, la maneja Supabase Auth
 }
 
 @Injectable({
@@ -29,30 +30,50 @@ export class EntrenadorService {
   // Verificar login de entrenador
   async loginEntrenador(correo: string, contraseña: string): Promise<{ success: boolean; data?: Entrenador; error?: string }> {
     try {
-      console.log('EntrenadorService: Intentando login con correo:', correo);
+      console.log('EntrenadorService: Intentando login con Supabase Auth:', correo);
       
-      const query = this.supabase
-        .from('entrenadores')
-        .select('*')
-        .eq('correo', correo)
-        .eq('contraseña', contraseña)
-        .single();
+      // Usar el sistema de autenticación de Supabase
+      const { data: authData, error: authError } = await this.supabase.auth.signInWithPassword({
+        email: correo,
+        password: contraseña
+      });
 
-      // Ejecutar la consulta directamente
-      const { data, error } = await query;
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return { success: false, error: 'Credenciales incorrectas' };
-        }
-        console.error('EntrenadorService: Error en login:', error);
-        return { success: false, error: error.message };
+      if (authError) {
+        console.log('EntrenadorService: Error de autenticación:', authError.message);
+        return { 
+          success: false, 
+          error: authError.message === 'Invalid login credentials' 
+            ? 'Correo o contraseña incorrectos' 
+            : authError.message 
+        };
       }
 
-      console.log('EntrenadorService: Login exitoso:', data);
-      return { success: true, data };
+      if (!authData.user) {
+        console.log('EntrenadorService: No se obtuvo usuario después de autenticación');
+        return { success: false, error: 'Error al obtener datos del usuario' };
+      }
+
+      console.log('EntrenadorService: Autenticación exitosa, obteniendo datos del entrenador...');
+
+      // Obtener los datos del entrenador usando el user_id
+      const { data: entrenador, error: entrenadorError } = await this.supabase
+        .from('entrenadores')
+        .select('*')
+        .eq('user_id', authData.user.id)
+        .single();
+
+      if (entrenadorError || !entrenador) {
+        console.log('EntrenadorService: No se encontró entrenador para este usuario');
+        // Cerrar la sesión si no es entrenador
+        await this.supabase.auth.signOut();
+        return { success: false, error: 'No se encontraron datos del entrenador' };
+      }
+
+      console.log('EntrenadorService: Login de entrenador exitoso');
+      return { success: true, data: entrenador };
+
     } catch (error: any) {
-      console.error('EntrenadorService: Error en loginEntrenador:', error);
+      console.error('EntrenadorService: Error inesperado en loginEntrenador:', error);
       return { success: false, error: error.message };
     }
   }

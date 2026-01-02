@@ -1,0 +1,123 @@
+<ion-header class="custom-header">
+  <ion-toolbar class="custom-toolbar">
+    <ion-title class="custom-title">
+      <ion-icon name="people-circle-outline" class="title-icon"></ion-icon>
+      Panel de Recepción
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button class="logout-button" (click)="cerrarSesion()">
+        <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding recepcion-content">
+  <app-spinner *ngIf="mostrarSpinner"></app-spinner>
+
+  <div class="recepcion-container" *ngIf="!mostrarSpinner">
+    <!-- Header con info de recepción -->
+    <div class="welcome-card">
+      <div class="welcome-header">
+        <ion-icon name="shield-checkmark" class="welcome-icon"></ion-icon>
+        <div class="welcome-text">
+          <h2>Panel de Recepción</h2>
+          <p *ngIf="recepcion">{{ recepcion.data.correo }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-section">
+      <ion-segment class="custom-segment" [value]="filtro" (ionChange)="cambiarFiltro($any($event.detail.value))">
+        <ion-segment-button value="todos">
+          <ion-label>Todos</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="pendientes">
+          <ion-label>
+            <ion-icon name="time-outline"></ion-icon>
+            Pendientes
+          </ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="aprobados">
+          <ion-label>
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            Aprobados
+          </ion-label>
+        </ion-segment-button>
+      </ion-segment>
+    </div>
+
+    <!-- Búsqueda -->
+    <ion-searchbar
+      class="custom-searchbar"
+      placeholder="Buscar por nombre, apellido o correo"
+      [(ngModel)]="busquedaCorreo"
+      (ionInput)="aplicarFiltroCorreo()"
+      show-clear-button="focus">
+    </ion-searchbar>
+
+    <!-- Lista de clientes -->\n    <div class="clientes-header">
+      <h3>Clientes Registrados</h3>
+      <span class="count-badge">{{ clientesFiltrados.length }}</span>
+    </div>
+
+    <div class="clientes-grid" *ngIf="clientesFiltrados.length > 0">
+      <div class="cliente-card" *ngFor="let cliente of clientesFiltrados">
+        <div class="card-header">
+          <div class="avatar-section">
+            <ion-icon name="person-circle" class="avatar-icon"></ion-icon>
+          </div>
+          <div class="cliente-info">
+            <h4>{{ cliente.nombre }} {{ cliente.apellido }}</h4>
+            <p class="correo">
+              <ion-icon name="mail-outline"></ion-icon>
+              {{ cliente.correo }}
+            </p>
+            <p class="telefono" *ngIf="cliente.telefono">
+              <ion-icon name="call-outline"></ion-icon>
+              {{ cliente.telefono }}
+            </p>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="stats-row">
+            <div class="stat">
+              <ion-icon name="calendar-outline"></ion-icon>
+              <span>{{ cliente.edad }} años</span>
+            </div>
+            <div class="stat">
+              <ion-icon name="body-outline"></ion-icon>
+              <span>{{ cliente.altura }} cm</span>
+            </div>
+            <div class="stat">
+              <ion-icon name="fitness-outline"></ion-icon>
+              <span>{{ cliente.peso }} kg</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <div class="estado-section">
+            <ion-badge [color]="getEstadoColor(cliente.Estado)" class="estado-badge">
+              {{ getEstadoTexto(cliente.Estado) }}
+            </ion-badge>
+          </div>
+          <ion-toggle 
+            class="custom-toggle"
+            [checked]="cliente.Estado || false"
+            (ionChange)="cambiarEstado(cliente)"
+            [color]="cliente.Estado ? 'success' : 'medium'">
+          </ion-toggle>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="clientesFiltrados.length === 0" class="empty-state">
+      <ion-icon name="search-outline" class="empty-icon"></ion-icon>
+      <h3>No se encontraron clientes</h3>
+      <p>Intenta con otro término de búsqueda o cambia el filtro</p>
+    </div>
+  </div>
+</ion-content>

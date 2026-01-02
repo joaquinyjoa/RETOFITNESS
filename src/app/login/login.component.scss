@@ -188,6 +188,15 @@ ion-list {
       flex: 1;
       min-width: 0;
       padding-right: 45px;
+      
+      /* Prevenir selección y copia cuando está visible */
+      &[type="text"] {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        pointer-events: none;
+      }
     }
     
     .password-toggle-btn {

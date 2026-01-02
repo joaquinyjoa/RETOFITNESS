@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { QrService } from './qr.service';
-import { SupabaseService, Cliente as ClienteSupabase } from './supabase.service';
+import { SupabaseService, Cliente } from './supabase.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,59 +14,80 @@ export class ClienteService {
   /**
    * Crear un nuevo cliente con QR generado automáticamente
    * @param clienteData - Datos del cliente
+   * @param password - Contraseña del cliente (se enviará a Supabase Auth)
    * @returns Promise con el resultado del registro
    */
-  async crearCliente(clienteData: ClienteSupabase): Promise<{ success: boolean; data?: any; error?: string }> {
+  async crearCliente(clienteData: Cliente, password: string): Promise<{ success: boolean; data?: any; error?: string; requiresConfirmation?: boolean }> {
     try {
       console.log('ClienteService: Iniciando registro de cliente:', clienteData);
 
-      // Normalizar campos de texto opcionales cuando estén vacíos, undefined o null.
-      // descripcionMedicacion tiene UNIQUE constraint y registros existentes con '',
-      // por lo que generamos un valor único para evitar conflictos.
-      const optionalTextFields = ['descripcionEnfermedad', 'descripcionMedicacion', 'descripcionCirugias', 'descripcionLesiones'];
-      optionalTextFields.forEach(field => {
-        const value = (clienteData as any)[field];
-        if (value === '' || value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) {
-          if (field === 'descripcionMedicacion') {
-            // Generar valor único para evitar conflicto con registros existentes
-            const timestamp = Date.now();
-            const randomSuffix = Math.random().toString(36).substring(2, 8);
-            (clienteData as any)[field] = `sin_medicacion_${timestamp}_${randomSuffix}`;
-          } else {
-            // Otros campos pueden ser null
-            (clienteData as any)[field] = null;
-          }
-        }
-      });
-      
-      // Depuración: verificar campos después de normalización
-      console.log('ClienteService: Datos después de normalización:', {
-        descripcionEnfermedad: clienteData.descripcionEnfermedad,
-        descripcionMedicacion: clienteData.descripcionMedicacion,
-        descripcionCirugias: clienteData.descripcionCirugias,
-        descripcionLesiones: clienteData.descripcionLesiones
-      });
-      
       // 1. Verificar si el email ya existe
       const emailExists = await this.supabaseService.verificarEmailExistente(clienteData.correo);
       if (emailExists) {
         return { success: false, error: 'Este correo electrónico ya está registrado' };
       }
 
-      // 2. Registrar cliente en la base de datos
-      const result = await this.supabaseService.registrarCliente(clienteData);
+      // 2. Crear usuario en Supabase Auth
+      const authResult = await this.supabaseService.crearUsuarioAuth(clienteData.correo, password);
+      
+      if (!authResult.success || !authResult.userId) {
+        return { success: false, error: authResult.error || 'Error al crear usuario' };
+      }
+
+      console.log('Usuario Auth creado con ID:', authResult.userId);
+      const requiresConfirmation = authResult.requiresConfirmation || false;
+
+      // 3. Agregar user_id y Estado a los datos del cliente
+      const clienteConUserId = {
+        ...clienteData,
+        user_id: authResult.userId,
+        Estado: false // Cliente pendiente de aprobación por recepción
+      };
+
+      // Normalizar campos de texto opcionales cuando estén vacíos, undefined o null.
+      // descripcionMedicacion tiene UNIQUE constraint y registros existentes con '',
+      // por lo que generamos un valor único para evitar conflictos.
+      const optionalTextFields = ['descripcionEnfermedad', 'descripcionMedicacion', 'descripcionCirugias', 'descripcionLesiones'];
+      optionalTextFields.forEach(field => {
+        const value = (clienteConUserId as any)[field];
+        if (value === '' || value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) {
+          if (field === 'descripcionMedicacion') {
+            // Generar valor único para evitar conflicto con registros existentes
+            const timestamp = Date.now();
+            const randomSuffix = Math.random().toString(36).substring(2, 8);
+            (clienteConUserId as any)[field] = `sin_medicacion_${timestamp}_${randomSuffix}`;
+          } else {
+            // Otros campos pueden ser null
+            (clienteConUserId as any)[field] = null;
+          }
+        }
+      });
+      
+      // Depuración: verificar campos después de normalización
+      console.log('ClienteService: Datos después de normalización:', {
+        descripcionEnfermedad: clienteConUserId.descripcionEnfermedad,
+        descripcionMedicacion: clienteConUserId.descripcionMedicacion,
+        descripcionCirugias: clienteConUserId.descripcionCirugias,
+        descripcionLesiones: clienteConUserId.descripcionLesiones
+      });
+
+      // 4. Registrar cliente en la base de datos
+      const result = await this.supabaseService.registrarCliente(clienteConUserId);
       
       if (!result.success || !result.data) {
+        // Si falla el registro, eliminar el usuario de auth
+        console.error('Error al registrar cliente, eliminando usuario auth...');
+        // Nota: Supabase no permite eliminar usuarios desde el cliente, solo desde el admin API
         return { success: false, error: result.error || 'Error al registrar el cliente' };
       }
 
       const clienteRegistrado = result.data;
       console.log('Cliente registrado exitosamente:', clienteRegistrado);
 
-      // 3. Generar código QR con el ID del cliente
+      // 5. Generar código QR con el ID del cliente
       const qrDataUrl = await this.qrService.generarQRCliente(clienteRegistrado.id);
       
-      // 4. Convertir DataURL a Blob y subir imagen QR al storage
+      // 6. Convertir DataURL a Blob y subir imagen QR al storage
       const qrBlob = this.dataURLtoBlob(qrDataUrl);
       const fileName = `qr_cliente_${clienteRegistrado.id}.png`;
       const uploadResult = await this.supabaseService.subirImagenQR(qrBlob, fileName);
@@ -75,14 +96,18 @@ export class ClienteService {
         console.warn('Cliente registrado, pero no se pudo generar el QR');
         return { success: true, data: clienteRegistrado, error: 'Cliente registrado, pero no se pudo generar el QR' };
       } else {
-        // 5. Actualizar el cliente con la URL del QR
+        // 7. Actualizar el cliente con la URL del QR
         const updateResult = await this.supabaseService.actualizarQRCliente(clienteRegistrado.id, uploadResult.url);
         if (!updateResult.success) {
           console.warn('No se pudo actualizar la URL del QR en el cliente');
         }
       }
 
-      return { success: true, data: clienteRegistrado };
+      return { 
+        success: true, 
+        data: clienteRegistrado,
+        requiresConfirmation: requiresConfirmation
+      };
     } catch (error: any) {
       console.error('Error en crearCliente:', error);
       return { success: false, error: error.message };
@@ -98,7 +123,8 @@ export class ClienteService {
       // Reutilizamos supabaseService para consultar la tabla 'clientes'
       const { data, error } = await this.supabaseService['supabase']
         .from('clientes')
-        .select('*');
+        .select('*')
+        .eq('Estado', true); // Solo clientes aprobados
 
       if (error) {
         console.error('ClienteService.listarClientes error:', error);
@@ -120,6 +146,7 @@ export class ClienteService {
       const { data, error } = await this.supabaseService['supabase']
         .from('clientes')
         .select('*')
+        .eq('Estado', true) // Solo clientes aprobados
         .order('nombre', { ascending: true });
 
       if (error) {
@@ -131,6 +158,53 @@ export class ClienteService {
     } catch (error: any) {
       console.error('❌ Error en listarClientesResumido:', error.message);
       return [];
+    }
+  }
+
+  /**
+   * Listar TODOS los clientes (incluyendo pendientes) - Para recepción
+   */
+  async listarClientesPendientes(): Promise<Cliente[]> {
+    try {
+      const { data, error } = await this.supabaseService
+        .getClient()
+        .from('clientes')
+        .select('*')
+        .eq('Estado', false)
+        .order('nombre', { ascending: true });
+
+      if (error) {
+        console.error('Error al listar clientes pendientes:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error al listar clientes pendientes:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Aprobar cliente (cambiar Estado a true)
+   */
+  async aprobarCliente(id: number, estado: boolean = true): Promise<boolean> {
+    try {
+      const { error } = await this.supabaseService
+        .getClient()
+        .from('clientes')
+        .update({ Estado: estado })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error al actualizar estado del cliente:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error al actualizar estado del cliente:', error);
+      return false;
     }
   }
 
@@ -187,7 +261,7 @@ export class ClienteService {
    * @param clienteData - Datos actualizados del cliente
    * @returns Promise con el resultado de la actualización
    */
-  async actualizarCliente(id: number, clienteData: Partial<ClienteSupabase>): Promise<{ success: boolean; data?: any; error?: string }> {
+  async actualizarCliente(id: number, clienteData: Partial<Cliente>): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
       console.log('ClienteService: Actualizando cliente ID:', id, clienteData);
 

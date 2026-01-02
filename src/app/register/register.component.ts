@@ -23,7 +23,7 @@ export class RegisterComponent implements OnInit {
     // id se generará automáticamente en la base de datos
     nombre: '',
     apellido: '',
-    edad: 25,
+    edad: 18,
     correo: '@retofitness.com',
     password: '',
     enfermedadCronica: false,
@@ -327,10 +327,16 @@ export class RegisterComponent implements OnInit {
         }
 
         // Validar que el correo no esté registrado en la base de datos
+        console.log('🔍 Verificando si el correo existe...');
         this.showSpinner = true;
+        this.cdr.detectChanges(); // Forzar actualización UI
+        
         try {
           const emailExists = await this.clienteService.verificarEmailExistente(this.cliente.correo.trim());
+          console.log('✅ Verificación completada. Email existe:', emailExists);
+          
           this.showSpinner = false;
+          this.cdr.detectChanges(); // Forzar actualización UI
           
           if (emailExists) {
             this.validationErrors.correo = 'Este correo ya está registrado. Por favor usa otro.';
@@ -338,8 +344,9 @@ export class RegisterComponent implements OnInit {
             return;
           }
         } catch (error) {
+          console.error('🔴 Error verificando correo:', error);
           this.showSpinner = false;
-          console.error('Error verificando correo:', error);
+          this.cdr.detectChanges(); // Forzar actualización UI
           await this.toastService.mostrarError('Error al verificar el correo. Intenta nuevamente.');
           return;
         }
@@ -372,39 +379,45 @@ export class RegisterComponent implements OnInit {
     console.log(`animateStepTransition: ${direction}, currentStep: ${this.currentStep}`);
     this.isAnimating = true;
     
-    // Aplicar animación de salida
-    this.animationClass = direction === 'next' ? 'step-slide-leave' : 'step-slide-leave-back';
-    
+    // Envolver en setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
     setTimeout(() => {
-      // Cambiar el paso después de la animación de salida
-      if (direction === 'next') {
-        this.currentStep++;
-      } else {
-        this.currentStep--;
-      }
-
-      console.log(`Paso cambiado a: ${this.currentStep}`);
-
-      // Si llegamos al paso 4, refrescar condiciones para asegurar que se muestren
-      if (this.currentStep === 4) {
-        console.log('Llegando al paso 4, refrescando condiciones...');
-        this.refreshSelectedConditions();
-      }
-
-      // Resetear el estado de intento de avanzar cuando se cambia de paso
-      if (direction === 'back' && this.currentStep === 1) {
-        this.attemptedNextStep = false;
-      }
-      
-      // Aplicar animación de entrada
-      this.animationClass = direction === 'next' ? 'step-slide-enter' : 'step-slide-enter-back';
+      // Aplicar animación de salida
+      this.animationClass = direction === 'next' ? 'step-slide-leave' : 'step-slide-leave-back';
+      this.cdr.detectChanges();
       
       setTimeout(() => {
-        // Limpiar animaciones
-        this.animationClass = '';
-        this.isAnimating = false;
-      }, 400);
-    }, 200);
+        // Cambiar el paso después de la animación de salida
+        if (direction === 'next') {
+          this.currentStep++;
+        } else {
+          this.currentStep--;
+        }
+
+        console.log(`Paso cambiado a: ${this.currentStep}`);
+
+        // Si llegamos al paso 4, refrescar condiciones para asegurar que se muestren
+        if (this.currentStep === 4) {
+          console.log('Llegando al paso 4, refrescando condiciones...');
+          this.refreshSelectedConditions();
+        }
+
+        // Resetear el estado de intento de avanzar cuando se cambia de paso
+        if (direction === 'back' && this.currentStep === 1) {
+          this.attemptedNextStep = false;
+        }
+        
+        // Aplicar animación de entrada
+        this.animationClass = direction === 'next' ? 'step-slide-enter' : 'step-slide-enter-back';
+        this.cdr.detectChanges();
+        
+        setTimeout(() => {
+          // Limpiar animaciones
+          this.animationClass = '';
+          this.isAnimating = false;
+          this.cdr.detectChanges();
+        }, 400);
+      }, 200);
+    }, 0);
   }
 
   toggleObjetivo(objetivo: string) {
@@ -462,6 +475,7 @@ export class RegisterComponent implements OnInit {
     console.log('Iniciando onSubmit');
     this.isSubmitting = true;
     this.showSpinner = true;
+    this.cdr.detectChanges(); // Forzar actualización UI
     console.log('Spinner activado:', this.showSpinner);
 
     // Timeout de seguridad para evitar que el spinner se quede colgado
@@ -477,6 +491,7 @@ export class RegisterComponent implements OnInit {
       if (!this.validateAllData()) {
         this.isSubmitting = false;
         this.showSpinner = false;
+        this.cdr.detectChanges();
         clearTimeout(timeoutId);
         return;
       }
@@ -487,7 +502,7 @@ export class RegisterComponent implements OnInit {
         apellido: this.cliente.apellido.trim(),
         edad: this.cliente.edad,
         correo: this.cliente.correo.trim(),
-        contraseña: this.cliente.password.trim(),
+        // contraseña ya no se incluye, se maneja con Supabase Auth
         enfermedadCronicoa: this.cliente.enfermedadCronica,
         descripcionEnfermedad: this.cliente.descripcionEnfermedad?.trim() || '',
         diabetes: this.cliente.diabetes,
@@ -513,7 +528,7 @@ export class RegisterComponent implements OnInit {
 
       // Usar ClienteService para crear el cliente con QR automáticamente
       console.log('Intentando registrar cliente:', clienteSupabase);
-      const result = await this.clienteService.crearCliente(clienteSupabase);
+      const result = await this.clienteService.crearCliente(clienteSupabase, this.cliente.password.trim());
       console.log('Resultado del registro:', result);
       
       if (!result.success) {
@@ -521,6 +536,7 @@ export class RegisterComponent implements OnInit {
         await this.toastService.mostrarError(result.error || 'Error al registrar el cliente');
         this.isSubmitting = false;
         this.showSpinner = false;
+        this.cdr.detectChanges();
         clearTimeout(timeoutId);
         return;
       }
@@ -528,16 +544,24 @@ export class RegisterComponent implements OnInit {
       // Limpiar timeout de seguridad
       clearTimeout(timeoutId);
       
-      // Ocultar spinner y navegar al login inmediatamente
+      // Ocultar spinner
       this.showSpinner = false;
+      this.cdr.detectChanges();
       
-      // Mostrar toast de éxito y navegar
-      await this.toastService.mostrarExito('¡Registro completado! Redirigiendo al login...');
+      // Mostrar mensaje apropiado según si requiere confirmación o no
+      if (result.requiresConfirmation) {
+        await this.toastService.mostrarAdvertencia(
+          '¡Registro completado! Tu cuenta está pendiente de aprobación. El administrador debe confirmar tu email antes de que puedas iniciar sesión.',
+          6000
+        );
+      } else {
+        await this.toastService.mostrarExito('¡Registro completado! Redirigiendo al login...');
+      }
       
       // Navegar al login después de breve pausa
       setTimeout(() => {
         this.router.navigate(['/login']);
-      }, 1500);
+      }, result.requiresConfirmation ? 3000 : 1500);
       
       console.log('Proceso completado exitosamente');
       
@@ -547,6 +571,7 @@ export class RegisterComponent implements OnInit {
       // Limpiar timeout de seguridad
       clearTimeout(timeoutId);
       this.showSpinner = false;
+      this.cdr.detectChanges();
     } finally {
       this.isSubmitting = false;
     }

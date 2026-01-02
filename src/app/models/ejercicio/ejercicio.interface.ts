@@ -26,7 +26,6 @@ export interface EjercicioFormData {
   musculos_secundarios: string[];
   nivel_dificultad: string;
   enlace_video: string;
-  duracion_minutos: number | null;
   equipamiento: string[];
   instrucciones: string;
   consejos: string;

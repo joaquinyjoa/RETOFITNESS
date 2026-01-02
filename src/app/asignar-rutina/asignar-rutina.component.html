@@ -54,6 +54,19 @@
         </ion-card-title>
       </ion-card-header>
       <ion-card-content>
+        <!-- Selector de día -->
+        <ion-item>
+          <ion-label position="stacked">Día de la Semana *</ion-label>
+          <ion-select [(ngModel)]="diaSemana" interface="popover" placeholder="Seleccionar día">
+            <ion-select-option [value]="1">Día 1 (Lunes)</ion-select-option>
+            <ion-select-option [value]="2">Día 2 (Martes)</ion-select-option>
+            <ion-select-option [value]="3">Día 3 (Miércoles)</ion-select-option>
+            <ion-select-option [value]="4">Día 4 (Jueves)</ion-select-option>
+            <ion-select-option [value]="5">Día 5 (Viernes)</ion-select-option>
+            <ion-select-option [value]="6">Día 6 (Sábado)</ion-select-option>
+          </ion-select>
+        </ion-item>
+
         <ion-item>
           <ion-label position="stacked">Fecha de Inicio (Opcional)</ion-label>
           <ion-datetime

@@ -10,12 +10,12 @@
       <div class="avatar">
         <ion-icon name="person-circle" class="avatar-icon"></ion-icon>
       </div>
-      <div class="trainer-details" *ngIf="entrenador">
+      <div class="trainer-details" *ngIf="datosEntrenador">
         <h1 class="trainer-name">
-          {{entrenador.data.nombre}} {{entrenador.data.apellido}}
+          {{datosEntrenador.nombre}} {{datosEntrenador.apellido}}
         </h1>
         <p class="trainer-role">Entrenador Personal</p>
-        <p class="trainer-email">{{entrenador.data.correo}}</p>
+        <p class="trainer-email">{{datosEntrenador.correo}}</p>
       </div>
     </div>
     

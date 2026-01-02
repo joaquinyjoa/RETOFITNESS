@@ -21,7 +21,6 @@ export class EditarClienteComponent implements OnInit {
     apellido: '',
     edad: 0,
     correo: '',
-    contraseña: '',
     enfermedadCronicoa: false,
     descripcionEnfermedad: '',
     diabetes: false,

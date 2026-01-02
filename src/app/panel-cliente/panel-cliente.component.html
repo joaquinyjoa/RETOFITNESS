@@ -29,6 +29,18 @@
       <p>Es hora de entrenar</p>
     </div>
 
+    <!-- Barra de días -->
+    <div *ngIf="diasDisponibles.length > 0" class="dias-selector">
+      <ion-segment [(ngModel)]="diaSeleccionado" (ionChange)="seleccionarDia(diaSeleccionado)" scrollable="true">
+        <ion-segment-button *ngFor="let dia of diasDisponibles" [value]="dia">
+          <ion-label>
+            <strong>{{ getNombreDia(dia) }}</strong>
+            <p>Día {{ dia }}</p>
+          </ion-label>
+        </ion-segment-button>
+      </ion-segment>
+    </div>
+
     <!-- Con rutina asignada -->
     <div *ngIf="rutinaAsignada" class="rutina-section">
       
