@@ -104,12 +104,17 @@
               {{ getEstadoTexto(cliente.Estado) }}
             </ion-badge>
           </div>
-          <ion-toggle 
-            class="custom-toggle"
-            [checked]="cliente.Estado || false"
-            (ionChange)="cambiarEstado(cliente)"
-            [color]="cliente.Estado ? 'success' : 'medium'">
-          </ion-toggle>
+          <div class="actions-section">
+            <ion-button fill="clear" size="small" (click)="abrirModalCambiarPassword(cliente)" title="Cambiar contraseña">
+              <ion-icon slot="icon-only" name="key-outline" color="primary"></ion-icon>
+            </ion-button>
+            <ion-toggle 
+              class="custom-toggle"
+              [checked]="cliente.Estado || false"
+              (ionChange)="cambiarEstado(cliente)"
+              [color]="cliente.Estado ? 'success' : 'medium'">
+            </ion-toggle>
+          </div>
         </div>
       </div>
     </div>
@@ -120,4 +125,70 @@
       <p>Intenta con otro término de búsqueda o cambia el filtro</p>
     </div>
   </div>
+
+  <!-- Modal para cambiar contraseña -->
+  <ion-modal [isOpen]="mostrarModalPassword" (didDismiss)="cerrarModalPassword()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Cambiar Contraseña</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="cerrarModalPassword()">
+              <ion-icon name="close"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      
+      <ion-content class="ion-padding">
+        <div class="password-modal-content">
+          <div class="cliente-info-modal">
+            <ion-icon name="person-circle" class="cliente-icon"></ion-icon>
+            <div>
+              <h3>{{ clienteSeleccionado?.nombre }} {{ clienteSeleccionado?.apellido }}</h3>
+              <p>{{ clienteSeleccionado?.correo }}</p>
+            </div>
+          </div>
+
+          <ion-item>
+            <ion-label position="stacked">Nueva Contraseña *</ion-label>
+            <ion-input 
+              type="password" 
+              [(ngModel)]="nuevaPassword" 
+              placeholder="Mínimo 6 caracteres"
+              minlength="6">
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Confirmar Contraseña *</ion-label>
+            <ion-input 
+              type="password" 
+              [(ngModel)]="confirmarPassword" 
+              placeholder="Repetir contraseña">
+            </ion-input>
+          </ion-item>
+
+          <ion-note color="warning" class="password-note">
+            <ion-icon name="information-circle-outline"></ion-icon>
+            La contraseña debe tener al menos 6 caracteres. El cliente deberá usar esta nueva contraseña para iniciar sesión.
+          </ion-note>
+
+          <div class="modal-buttons">
+            <ion-button expand="block" color="medium" fill="outline" (click)="cerrarModalPassword()">
+              Cancelar
+            </ion-button>
+            <ion-button 
+              expand="block" 
+              color="primary" 
+              (click)="cambiarPassword()"
+              [disabled]="!nuevaPassword || nuevaPassword.length < 6 || nuevaPassword !== confirmarPassword">
+              <ion-icon slot="start" name="key-outline"></ion-icon>
+              Cambiar Contraseña
+            </ion-button>
+          </div>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 </ion-content>

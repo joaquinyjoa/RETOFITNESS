@@ -23,6 +23,12 @@ export class PanelRecepcionComponent implements OnInit {
   mostrarSpinner = false;
   filtro: 'todos' | 'pendientes' | 'aprobados' = 'todos';
   busquedaCorreo: string = '';
+  
+  // Modal para cambiar contraseña
+  mostrarModalPassword = false;
+  clienteSeleccionado: Cliente | null = null;
+  nuevaPassword = '';
+  confirmarPassword = '';
 
   private router = inject(Router);
   private authService = inject(AuthService);
@@ -132,5 +138,52 @@ export class PanelRecepcionComponent implements OnInit {
 
   getEstadoColor(estado: boolean | undefined): string {
     return estado ? 'success' : 'warning';
+  }
+
+  abrirModalCambiarPassword(cliente: Cliente) {
+    this.clienteSeleccionado = cliente;
+    this.nuevaPassword = '';
+    this.confirmarPassword = '';
+    this.mostrarModalPassword = true;
+  }
+
+  cerrarModalPassword() {
+    this.mostrarModalPassword = false;
+    this.clienteSeleccionado = null;
+    this.nuevaPassword = '';
+    this.confirmarPassword = '';
+  }
+
+  async cambiarPassword() {
+    if (!this.clienteSeleccionado || !this.clienteSeleccionado.id) {
+      alert('Error: Cliente no seleccionado');
+      return;
+    }
+
+    if (!this.nuevaPassword || this.nuevaPassword.length < 6) {
+      alert('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    if (this.nuevaPassword !== this.confirmarPassword) {
+      alert('Las contraseñas no coinciden');
+      return;
+    }
+
+    this.mostrarSpinner = true;
+    
+    const resultado = await this.authService.cambiarPasswordCliente(
+      this.clienteSeleccionado.id,
+      this.nuevaPassword
+    );
+
+    this.mostrarSpinner = false;
+
+    if (resultado.success) {
+      alert(`Contraseña actualizada exitosamente para ${this.clienteSeleccionado.nombre}`);
+      this.cerrarModalPassword();
+    } else {
+      alert(`Error al cambiar contraseña: ${resultado.error}`);
+    }
   }
 }

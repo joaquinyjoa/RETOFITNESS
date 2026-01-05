@@ -103,7 +103,16 @@ export class AuthService {
         .single();
 
       if (cliente) {
-        console.log('AuthService: Login exitoso como cliente');
+        // Validar que el cliente esté habilitado (campo Estado con mayúscula)
+        if (cliente.Estado === false) {
+          console.log('AuthService: Cliente encontrado pero Estado = false (no habilitado)');
+          return {
+            success: false,
+            error: 'Tu cuenta no ha sido habilitada por recepción. Por favor contacta con el gimnasio.'
+          };
+        }
+        
+        console.log('AuthService: Login exitoso como cliente con Estado =', cliente.Estado);
         return {
           success: true,
           usuario: {
@@ -202,5 +211,44 @@ export class AuthService {
   // Cerrar sesión
   cerrarSesion() {
     localStorage.removeItem('usuario_logueado');
+  }
+
+  /**
+   * Cambiar contraseña de un cliente (solo para recepción)
+   * Usa función RPC de Supabase que requiere configuración
+   */
+  async cambiarPasswordCliente(clienteId: number, nuevaPassword: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const supabase = this.supabaseService['supabase'];
+      
+      if (!nuevaPassword || nuevaPassword.length < 6) {
+        return { success: false, error: 'La contraseña debe tener al menos 6 caracteres' };
+      }
+
+      const { data: cliente, error: clienteError } = await supabase
+        .from('clientes')
+        .select('user_id, correo')
+        .eq('id', clienteId)
+        .single();
+
+      if (clienteError || !cliente || !cliente.user_id) {
+        return { success: false, error: 'No se encontró el cliente' };
+      }
+
+      const { error } = await supabase.rpc('cambiar_password_usuario', {
+        p_user_id: cliente.user_id,
+        p_nueva_password: nuevaPassword
+      });
+
+      if (error) {
+        console.error('Error al cambiar contraseña:', error);
+        return { success: false, error: 'Error al cambiar la contraseña' };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error en cambiarPasswordCliente:', error);
+      return { success: false, error: error.message || 'Error inesperado' };
+    }
   }
 }
