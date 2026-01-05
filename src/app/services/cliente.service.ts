@@ -213,6 +213,8 @@ export class ClienteService {
    */
   async obtenerClientePorId(id: number): Promise<any> {
     try {
+      console.log('🔹 ClienteService: Buscando cliente con ID:', id);
+      
       const { data, error } = await this.supabaseService['supabase']
         .from('clientes')
         .select('*')
@@ -220,13 +222,14 @@ export class ClienteService {
         .single();
 
       if (error) {
-        console.error('ClienteService.obtenerClientePorId error:', error);
+        console.error('❌ ClienteService.obtenerClientePorId error:', error);
         return null;
       }
 
+      console.log('✅ ClienteService: Cliente encontrado:', data);
       return data;
     } catch (error: any) {
-      console.error('Error en obtenerClientePorId:', error);
+      console.error('❌ Error en obtenerClientePorId:', error);
       return null;
     }
   }

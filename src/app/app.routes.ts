@@ -46,6 +46,10 @@ export const routes: Routes = [
     loadComponent: () => import('./ver-rutina-cliente/ver-rutina-cliente.component').then((m) => m.VerRutinaClienteComponent),
   },
   {
+    path: 'cambiar-password/:id',
+    loadComponent: () => import('./cambiar-password/cambiar-password.component').then((m) => m.CambiarPasswordComponent),
+  },
+  {
     path: '',
     redirectTo: 'welcome',
     pathMatch: 'full',

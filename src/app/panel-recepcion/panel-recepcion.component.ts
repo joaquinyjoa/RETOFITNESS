@@ -17,18 +17,11 @@ import { SpinnerComponent } from '../spinner/spinner.component';
 })
 export class PanelRecepcionComponent implements OnInit {
 
-  recepcion: UsuarioLogueado | null = null;
   clientes: Cliente[] = [];
   clientesFiltrados: Cliente[] = [];
   mostrarSpinner = false;
   filtro: 'todos' | 'pendientes' | 'aprobados' = 'todos';
   busquedaCorreo: string = '';
-  
-  // Modal para cambiar contraseña
-  mostrarModalPassword = false;
-  clienteSeleccionado: Cliente | null = null;
-  nuevaPassword = '';
-  confirmarPassword = '';
 
   private router = inject(Router);
   private authService = inject(AuthService);
@@ -36,20 +29,7 @@ export class PanelRecepcionComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
 
   ngOnInit() {
-    console.log('🔷 PANEL RECEPCIÓN: ngOnInit ejecutado');
-    this.cargarDatosRecepcion();
     this.cargarClientes();
-  }
-
-  async cargarDatosRecepcion() {
-    const usuario = this.authService.obtenerSesion();
-    if (usuario && usuario.tipo === 'recepcion') {
-      this.recepcion = usuario;
-      this.cdr.detectChanges();
-    } else {
-      console.warn('No hay recepción logueada, redirigiendo...');
-      await this.router.navigate(['/login']);
-    }
   }
 
   async cargarClientes() {
@@ -141,49 +121,7 @@ export class PanelRecepcionComponent implements OnInit {
   }
 
   abrirModalCambiarPassword(cliente: Cliente) {
-    this.clienteSeleccionado = cliente;
-    this.nuevaPassword = '';
-    this.confirmarPassword = '';
-    this.mostrarModalPassword = true;
-  }
-
-  cerrarModalPassword() {
-    this.mostrarModalPassword = false;
-    this.clienteSeleccionado = null;
-    this.nuevaPassword = '';
-    this.confirmarPassword = '';
-  }
-
-  async cambiarPassword() {
-    if (!this.clienteSeleccionado || !this.clienteSeleccionado.id) {
-      alert('Error: Cliente no seleccionado');
-      return;
-    }
-
-    if (!this.nuevaPassword || this.nuevaPassword.length < 6) {
-      alert('La contraseña debe tener al menos 6 caracteres');
-      return;
-    }
-
-    if (this.nuevaPassword !== this.confirmarPassword) {
-      alert('Las contraseñas no coinciden');
-      return;
-    }
-
-    this.mostrarSpinner = true;
-    
-    const resultado = await this.authService.cambiarPasswordCliente(
-      this.clienteSeleccionado.id,
-      this.nuevaPassword
-    );
-
-    this.mostrarSpinner = false;
-
-    if (resultado.success) {
-      alert(`Contraseña actualizada exitosamente para ${this.clienteSeleccionado.nombre}`);
-      this.cerrarModalPassword();
-    } else {
-      alert(`Error al cambiar contraseña: ${resultado.error}`);
-    }
+    if (!cliente.id) return;
+    this.router.navigate(['/cambiar-password', cliente.id]);
   }
 }

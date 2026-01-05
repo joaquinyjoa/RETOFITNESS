@@ -215,7 +215,7 @@ export class AuthService {
 
   /**
    * Cambiar contraseña de un cliente (solo para recepción)
-   * Usa función RPC de Supabase que requiere configuración
+   * Usa función RPC de Supabase que actualiza auth.users
    */
   async cambiarPasswordCliente(clienteId: number, nuevaPassword: string): Promise<{ success: boolean; error?: string }> {
     try {
@@ -225,30 +225,55 @@ export class AuthService {
         return { success: false, error: 'La contraseña debe tener al menos 6 caracteres' };
       }
 
+      // Validar que tenga al menos una mayúscula
+      if (!/[A-Z]/.test(nuevaPassword)) {
+        return { success: false, error: 'La contraseña debe contener al menos una letra mayúscula' };
+      }
+
+      // Obtener el user_id del cliente desde la tabla clientes
       const { data: cliente, error: clienteError } = await supabase
         .from('clientes')
-        .select('user_id, correo')
+        .select('user_id, correo, nombre')
         .eq('id', clienteId)
         .single();
 
       if (clienteError || !cliente || !cliente.user_id) {
+        console.error('Error al obtener cliente:', clienteError);
         return { success: false, error: 'No se encontró el cliente' };
       }
 
-      const { error } = await supabase.rpc('cambiar_password_usuario', {
+      console.log(`Cambiando contraseña para cliente: ${cliente.nombre} (user_id: ${cliente.user_id})`);
+
+      // Llamar a la función RPC que actualiza auth.users
+      const { data, error } = await supabase.rpc('cambiar_password_usuario', {
         p_user_id: cliente.user_id,
         p_nueva_password: nuevaPassword
       });
 
       if (error) {
-        console.error('Error al cambiar contraseña:', error);
-        return { success: false, error: 'Error al cambiar la contraseña' };
+        console.error('Error al llamar función RPC:', error);
+        return { 
+          success: false, 
+          error: 'Error al cambiar la contraseña. Asegúrate de que la función RPC esté creada en Supabase.' 
+        };
+      }
+
+      // La función RPC retorna un JSON con success y message/error
+      if (data && typeof data === 'object') {
+        if (data.success) {
+          console.log('✅ Contraseña cambiada exitosamente en auth.users');
+          return { success: true };
+        } else {
+          console.error('Error en función RPC:', data.error);
+          return { success: false, error: data.error || 'Error al cambiar contraseña' };
+        }
       }
 
       return { success: true };
+      
     } catch (error: any) {
       console.error('Error en cambiarPasswordCliente:', error);
-      return { success: false, error: error.message || 'Error inesperado' };
+      return { success: false, error: error.message || 'Error inesperado al cambiar contraseña' };
     }
   }
 }

@@ -93,7 +93,8 @@ import {
   chevronUp,
   chevronDown,
   rocket,
-  trendingUpOutline
+  trendingUpOutline,
+  keyOutline
 } from 'ionicons/icons';
 
 import { routes } from './app/app.routes';
@@ -101,6 +102,7 @@ import { AppComponent } from './app/app.component';
 
 // Registrar iconos (todos los necesarios para el proyecto)
 addIcons({
+  "key-outliney": keyOutline,
   "information-circle-outline" : informationCircleOutline,
   "trending-up-outline" : trendingUpOutline,
   'rocket': rocket,
