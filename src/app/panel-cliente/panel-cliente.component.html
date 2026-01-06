@@ -30,15 +30,17 @@
     </div>
 
     <!-- Barra de días -->
-    <div *ngIf="diasDisponibles.length > 0" class="dias-selector">
-      <ion-segment [(ngModel)]="diaSeleccionado" (ionChange)="seleccionarDia(diaSeleccionado)" scrollable="true">
-        <ion-segment-button *ngFor="let dia of diasDisponibles" [value]="dia">
-          <ion-label>
-            <strong>{{ getNombreDia(dia) }}</strong>
-            <p>Día {{ dia }}</p>
-          </ion-label>
-        </ion-segment-button>
-      </ion-segment>
+    <div *ngIf="diasDisponibles.length > 0" class="dias-selector-compact">
+      <div class="dias-grid">
+        <div 
+          *ngFor="let dia of diasDisponibles" 
+          class="dia-item"
+          [class.active]="diaSeleccionado === dia"
+          (click)="seleccionarDia(dia)">
+          <div class="dia-numero">{{ dia }}</div>
+          <div class="dia-nombre">{{ getNombreDia(dia) }}</div>
+        </div>
+      </div>
     </div>
 
     <!-- Con rutina asignada -->
@@ -59,7 +61,9 @@
         </ion-card-header>
 
         <ion-card-content>
-          <p *ngIf="rutinaAsignada.detalles?.descripcion">{{ rutinaAsignada.detalles.descripcion }}</p>
+          <div class="rutina-descripcion">
+            {{ rutinaAsignada.detalles?.descripcion || 'Sin descripción' }}
+          </div>
           
           <div class="info-grid">
             <div class="info-item">
@@ -95,7 +99,8 @@
           Tus Ejercicios
         </h2>
 
-        <ion-card *ngFor="let ej of rutinaAsignada.detalles?.ejercicios; let i = index" class="ejercicio-card">
+        <div class="ejercicios-carrusel">
+          <ion-card *ngFor="let ej of rutinaAsignada.detalles?.ejercicios; let i = index" class="ejercicio-card">
           <ion-card-header>
             <div class="ejercicio-header">
               <div class="ejercicio-numero">{{ i + 1 }}</div>
@@ -108,6 +113,18 @@
 
           <ion-card-content>
             
+            <!-- Detalles compactos del ejercicio -->
+            <div class="ejercicio-detalles-compact">
+              <div class="detalle-badge" *ngIf="ej.ejercicio?.categoria">
+                <ion-icon name="list-outline"></ion-icon>
+                {{ ej.ejercicio.categoria }}
+              </div>
+              <div class="detalle-badge" *ngIf="ej.ejercicio?.nivel_dificultad">
+                <ion-icon name="bar-chart-outline"></ion-icon>
+                {{ ej.ejercicio.nivel_dificultad }}
+              </div>
+            </div>
+
             <!-- Stats del ejercicio -->
             <div class="ejercicio-stats">
               <div class="stat-box">
@@ -131,13 +148,25 @@
                   <strong>{{ ej.descanso_segundos || 60 }}s</strong>
                 </div>
               </div>
+              <div class="stat-box">
+                <ion-icon name="flash-outline"></ion-icon>
+                <div>
+                  <small>Fuerza</small>
+                  <strong>{{ ej.porcentaje_fuerza || 100 }}%</strong>
+                </div>
+              </div>
             </div>
 
-            <!-- Registrar peso -->
-            <div class="peso-section">
+            <!-- Botones de acción -->
+            <div class="ejercicio-actions">
               <ion-button expand="block" fill="outline" (click)="abrirModalRegistrarPeso(ej)">
                 <ion-icon name="fitness-outline" slot="start"></ion-icon>
                 {{ ej.peso_registrado ? 'Peso: ' + ej.peso_registrado + ' kg' : 'Registrar Peso' }}
+              </ion-button>
+              
+              <ion-button expand="block" color="tertiary" (click)="abrirModalDetalleEjercicio(ej)">
+                <ion-icon name="information-circle-outline" slot="start"></ion-icon>
+                Ver Más
               </ion-button>
             </div>
 
@@ -158,7 +187,8 @@
               <span>{{ ej.notas }}</span>
             </div>
           </ion-card-content>
-        </ion-card>
+          </ion-card>
+        </div>
       </div>
     </div>
 
@@ -217,6 +247,77 @@
           <ion-button expand="block" fill="clear" (click)="cerrarModalRegistrarPeso()">
             Cancelar
           </ion-button>
+        </div>
+
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- Modal para ver detalles del ejercicio -->
+<ion-modal [isOpen]="showModalDetalleEjercicio" (didDismiss)="cerrarModalDetalleEjercicio()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Detalles del Ejercicio</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarModalDetalleEjercicio()">
+            <ion-icon name="close"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="modal-content">
+      <div *ngIf="cargandoDetalle" class="loading-container">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Cargando detalles...</p>
+      </div>
+
+      <div class="detalle-ejercicio-container" *ngIf="!cargandoDetalle && ejercicioDetalle">
+        
+        <!-- Encabezado -->
+        <div class="detalle-header">
+          <h2>{{ ejercicioDetalle.nombre }}</h2>
+          <div class="badges-row">
+            <ion-badge color="primary">{{ ejercicioDetalle.categoria }}</ion-badge>
+            <ion-badge color="success">{{ ejercicioDetalle.nivel_dificultad }}</ion-badge>
+          </div>
+        </div>
+
+        <!-- Descripción -->
+        <div class="detalle-section" *ngIf="ejercicioDetalle.descripcion">
+          <h3><ion-icon name="document-text-outline"></ion-icon> Descripción</h3>
+          <p>{{ ejercicioDetalle.descripcion }}</p>
+        </div>
+
+        <!-- Músculos -->
+        <div class="detalle-section">
+          <h3><ion-icon name="body-outline"></ion-icon> Músculos</h3>
+          <p><strong>Principal:</strong> {{ ejercicioDetalle.musculo_principal }}</p>
+          <p *ngIf="ejercicioDetalle.musculos_secundarios && ejercicioDetalle.musculos_secundarios.length > 0">
+            <strong>Secundarios:</strong> {{ ejercicioDetalle.musculos_secundarios.join(', ') }}
+          </p>
+        </div>
+
+        <!-- Equipamiento -->
+        <div class="detalle-section" *ngIf="ejercicioDetalle.equipamiento && ejercicioDetalle.equipamiento.length > 0">
+          <h3><ion-icon name="barbell-outline"></ion-icon> Equipamiento</h3>
+          <div class="badges-row">
+            <ion-badge color="medium" *ngFor="let eq of ejercicioDetalle.equipamiento">{{ eq }}</ion-badge>
+          </div>
+        </div>
+
+        <!-- Instrucciones -->
+        <div class="detalle-section" *ngIf="ejercicioDetalle.instrucciones">
+          <h3><ion-icon name="list-outline"></ion-icon> Instrucciones</h3>
+          <p class="instrucciones-text">{{ ejercicioDetalle.instrucciones }}</p>
+        </div>
+
+        <!-- Consejos -->
+        <div class="detalle-section" *ngIf="ejercicioDetalle.consejos">
+          <h3><ion-icon name="bulb-outline"></ion-icon> Consejos</h3>
+          <p class="consejos-text">{{ ejercicioDetalle.consejos }}</p>
         </div>
 
       </div>

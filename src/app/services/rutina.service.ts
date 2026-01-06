@@ -475,4 +475,32 @@ export class RutinaService {
       return { success: false, error };
     }
   }
+
+  /**
+   * Obtener detalles completos de un ejercicio por su ID
+   */
+  async obtenerEjercicioPorId(ejercicioId: number): Promise<{ data: any | null; error: any }> {
+    try {
+      console.log(`🔹 [RutinaService] Obteniendo ejercicio ID: ${ejercicioId}`);
+      const supabase = this.supabaseService['supabase'];
+      
+      const { data, error } = await supabase
+        .from('ejercicios')
+        .select('*')
+        .eq('id', ejercicioId)
+        .eq('activo', true)
+        .single();
+
+      if (error) {
+        console.error('❌ Error al obtener ejercicio:', error);
+        return { data: null, error };
+      }
+
+      console.log('✅ Ejercicio obtenido:', data);
+      return { data, error: null };
+    } catch (error) {
+      console.error('❌ Error inesperado al obtener ejercicio:', error);
+      return { data: null, error };
+    }
+  }
 }

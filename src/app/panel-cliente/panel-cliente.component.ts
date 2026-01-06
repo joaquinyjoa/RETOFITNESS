@@ -36,6 +36,11 @@ export class PanelClienteComponent implements OnInit {
   ejercicioSeleccionado: any = null;
   pesoRegistrado: number | null = null;
 
+  // Para ver detalles del ejercicio
+  showModalDetalleEjercicio = false;
+  ejercicioDetalle: any = null;
+  cargandoDetalle = false;
+
   // Caché de pesos en localStorage
   private readonly PESOS_CACHE_KEY = 'pesos_ejercicios_cache';
 
@@ -176,6 +181,31 @@ export class PanelClienteComponent implements OnInit {
     this.ejercicioSeleccionado = ejercicio;
     this.pesoRegistrado = ejercicio.peso_registrado || null;
     this.showModalRegistrarPeso = true;
+  }
+
+  async abrirModalDetalleEjercicio(ejercicio: any) {
+    console.log('🔍 Abriendo detalles del ejercicio:', ejercicio);
+    this.showModalDetalleEjercicio = true;
+    this.cargandoDetalle = true;
+    this.ejercicioDetalle = null;
+
+    if (ejercicio.ejercicio_id || ejercicio.ejercicio?.id) {
+      const ejercicioId = ejercicio.ejercicio_id || ejercicio.ejercicio.id;
+      const { data, error } = await this.rutinaService.obtenerEjercicioPorId(ejercicioId);
+      
+      if (data && !error) {
+        this.ejercicioDetalle = data;
+      } else {
+        this.toastService.mostrarError('Error al cargar detalles del ejercicio');
+      }
+    }
+
+    this.cargandoDetalle = false;
+  }
+
+  cerrarModalDetalleEjercicio() {
+    this.showModalDetalleEjercicio = false;
+    this.ejercicioDetalle = null;
   }
 
   cerrarModalRegistrarPeso() {

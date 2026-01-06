@@ -87,49 +87,66 @@
   }
 }
 
-// Selector de días
-.dias-selector {
+// Selector de días compacto
+.dias-selector-compact {
   margin-bottom: 24px;
   
-  ion-segment {
-    --background: var(--dark-gray);
-    border-radius: 12px;
+  .dias-grid {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
     padding: 4px;
-    border: 1px solid rgba(0, 255, 136, 0.3);
     
-    ion-segment-button {
-      --color: var(--light-gray);
-      --color-checked: var(--black-bg);
-      --background-checked: var(--primary-green);
-      --indicator-color: transparent;
-      --border-radius: 8px;
-      --padding-top: 12px;
-      --padding-bottom: 12px;
-      min-width: 100px;
-      margin: 0 4px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      
-      ion-label {
-        strong {
-          display: block;
-          font-size: 0.9rem;
-        }
-        
-        p {
-          margin: 4px 0 0 0;
-          font-size: 0.75rem;
-          opacity: 0.8;
-        }
-      }
+    &::-webkit-scrollbar {
+      height: 6px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 255, 136, 0.3);
+      border-radius: 3px;
+    }
+  }
 
-      &::part(indicator) {
-        display: none;
+  .dia-item {
+    min-width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--dark-gray);
+    border: 2px solid rgba(0, 255, 136, 0.2);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    .dia-numero {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 4px;
+    }
+
+    .dia-nombre {
+      font-size: 0.75rem;
+      color: var(--light-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    &.active {
+      background: var(--primary-green);
+      border-color: var(--primary-green);
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+
+      .dia-numero,
+      .dia-nombre {
+        color: var(--black-bg);
       }
-      
-      &.segment-button-checked {
-        box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
-      }
+    }
+
+    &:hover:not(.active) {
+      border-color: var(--primary-green);
+      background: var(--medium-gray);
     }
   }
 }
@@ -230,9 +247,79 @@
   }
 }
 
+// Descripción de la rutina - GRANDE Y BLANCA
+.rutina-descripcion {
+  color: white !important;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: rgba(0, 255, 136, 0.05);
+  border-radius: 10px;
+  border-left: 4px solid var(--primary-green);
+  font-weight: 400;
+}
+
 // Lista de ejercicios
 .ejercicios-list {
   margin-top: 24px;
+}
+
+.ejercicios-carrusel {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 4px 16px 4px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding: 0 4px;
+  
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--primary-green);
+    border-radius: 10px;
+    
+    &:hover {
+      background: rgba(0, 255, 136, 0.8);
+    }
+  }
+}
+
+.ejercicios-carrusel {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 0 16px 0;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--primary-green);
+    border-radius: 10px;
+    
+    &:hover {
+      background: rgba(0, 255, 136, 0.8);
+    }
+  }
 }
 
 .section-title {
@@ -252,7 +339,10 @@
 .ejercicio-card {
   --background: var(--dark-gray);
   --color: white;
-  margin-bottom: 16px;
+  min-width: calc(100vw - 48px);
+  max-width: calc(100vw - 48px);
+  flex-shrink: 0;
+  scroll-snap-align: start;
   border: 1px solid var(--medium-gray);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -297,36 +387,101 @@
   }
 }
 
+// Detalles compactos del ejercicio en la card
+.ejercicio-detalles-compact {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+
+  .detalle-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--primary-green);
+    text-transform: capitalize;
+
+    ion-icon {
+      font-size: 1rem;
+    }
+  }
+}
+
 .ejercicio-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
   margin-bottom: 16px;
 
   .stat-box {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 12px;
+    gap: 6px;
+    padding: 10px;
     background: rgba(0, 255, 136, 0.08);
     border-radius: 8px;
     text-align: center;
 
     ion-icon {
-      font-size: 1.5rem;
+      font-size: 1.3rem;
       color: var(--primary-green);
     }
 
     small {
       color: var(--light-gray);
-      font-size: 0.8rem;
+      font-size: 0.75rem;
     }
 
     strong {
       color: var(--primary-green);
-      font-size: 1.1rem;
+      font-size: 1rem;
     }
+  }
+}
+
+// Acciones del ejercicio
+.ejercicio-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0;
+
+  ion-button {
+    --border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    height: 44px;
+
+    &[fill="outline"] {
+      --background: transparent;
+      --border-color: var(--primary-green);
+      --color: var(--primary-green);
+
+      &:hover {
+        --background: rgba(0, 255, 136, 0.1);
+      }
+    }
+
+    &[color="tertiary"] {
+      --background: linear-gradient(135deg, #5260ff, #7b68ee);
+      --color: white;
+      box-shadow: 0 4px 12px rgba(82, 96, 255, 0.3);
+
+      &:hover {
+        --background: linear-gradient(135deg, #6370ff, #8b78fe);
+        box-shadow: 0 6px 16px rgba(82, 96, 255, 0.4);
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -502,4 +657,112 @@
       --color: var(--light-gray);
     }
   }
+}
+
+// Modal de detalles del ejercicio
+.detalle-ejercicio-container {
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.detalle-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 24px;
+  background: linear-gradient(135deg, var(--dark-gray), var(--medium-gray));
+  border-radius: 16px;
+  border: 2px solid rgba(0, 255, 136, 0.3);
+
+  h2 {
+    color: var(--primary-green);
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .badges-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    ion-badge {
+      font-size: 0.9rem;
+      padding: 8px 16px;
+      text-transform: capitalize;
+      font-weight: 600;
+    }
+  }
+}
+
+.detalle-section {
+  background: var(--dark-gray);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid var(--medium-gray);
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: var(--primary-green);
+    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.1);
+  }
+
+  h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--primary-green);
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(0, 255, 136, 0.2);
+
+    ion-icon {
+      font-size: 1.4rem;
+    }
+  }
+
+  p {
+    color: white;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 8px 0;
+
+    strong {
+      color: var(--primary-green);
+      font-weight: 600;
+    }
+  }
+
+  .badges-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+
+    ion-badge {
+      font-size: 0.85rem;
+      padding: 6px 12px;
+    }
+  }
+}
+
+.instrucciones-text,
+.consejos-text {
+  color: rgba(255, 255, 255, 0.95) !important;
+  font-size: 1rem;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+
+.consejos-text {
+  background: rgba(0, 255, 136, 0.05);
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 3px solid var(--secondary-green);
 }
