@@ -33,38 +33,61 @@
       </ion-card-header>
     </ion-card>
 
-    <!-- Rutina asignada -->
-    <div *ngIf="rutinaAsignada && rutinaAsignada.detalles">
+    <!-- Sin rutinas asignadas -->
+    <div *ngIf="rutinasAsignadas.length === 0" style="text-align: center; padding: 40px;">
+      <ion-icon name="calendar-outline" style="font-size: 64px; color: var(--ion-color-medium);"></ion-icon>
+      <p style="color: var(--ion-color-medium);">No hay rutinas asignadas</p>
+      <ion-button (click)="asignarNuevaRutina()" color="success">
+        <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+        Asignar Rutina
+      </ion-button>
+    </div>
+
+    <!-- Rutinas asignadas por día -->
+    <div *ngFor="let rutinaAsignada of rutinasAsignadas">
       <ion-card class="rutina-card">
         <ion-card-header>
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
+            <div style="flex: 1;">
+              <!-- Día de la semana -->
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <ion-chip color="primary" style="font-weight: bold;">
+                  <ion-icon name="calendar-outline"></ion-icon>
+                  <ion-label>{{ diasSemana[rutinaAsignada.dia_semana] || 'Día ' + rutinaAsignada.dia_semana }}</ion-label>
+                </ion-chip>
+                <ion-chip [color]="rutinaAsignada.estado === 'en_progreso' ? 'success' : rutinaAsignada.estado === 'completada' ? 'primary' : 'medium'">
+                  <ion-label style="text-transform: capitalize;">{{ rutinaAsignada.estado?.replace('_', ' ') || 'Pendiente' }}</ion-label>
+                </ion-chip>
+              </div>
+              
               <ion-card-title style="color: var(--primary-green);">
                 <ion-icon name="barbell-outline"></ion-icon>
-                {{ rutinaAsignada.detalles.nombre }}
+                {{ rutinaAsignada.rutina?.nombre }}
               </ion-card-title>
               <ion-card-subtitle>
-                <ion-chip [color]="rutinaAsignada.detalles.nivel_dificultad === 'principiante' ? 'success' : rutinaAsignada.detalles.nivel_dificultad === 'intermedio' ? 'warning' : 'danger'">
-                  {{ getNivelLabel(rutinaAsignada.detalles.nivel_dificultad) }}
-                </ion-chip>
-                <ion-chip [color]="rutinaAsignada.estado === 'en_progreso' ? 'success' : rutinaAsignada.estado === 'completado' ? 'primary' : 'medium'">
-                  <ion-label style="text-transform: capitalize;">{{ rutinaAsignada.estado?.replace('_', ' ') || 'Pendiente' }}</ion-label>
+                <ion-chip [color]="rutinaAsignada.rutina?.nivel_dificultad === 'principiante' ? 'success' : rutinaAsignada.rutina?.nivel_dificultad === 'intermedio' ? 'warning' : 'danger'" size="small">
+                  {{ getNivelLabel(rutinaAsignada.rutina?.nivel_dificultad) }}
                 </ion-chip>
               </ion-card-subtitle>
             </div>
+            
+            <!-- Botón para eliminar rutina -->
+            <ion-button fill="clear" color="danger" (click)="eliminarRutinaAsignada(rutinaAsignada)">
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-button>
           </div>
         </ion-card-header>
 
         <ion-card-content>
           <!-- Descripción y objetivo -->
-          <div *ngIf="rutinaAsignada.detalles.descripcion" style="margin-bottom: 15px;">
+          <div *ngIf="rutinaAsignada.rutina?.descripcion" style="margin-bottom: 15px;">
             <strong style="color: var(--primary-green);">Descripción:</strong>
-            <p style="color: var(--ion-color-medium); margin: 5px 0;">{{ rutinaAsignada.detalles.descripcion }}</p>
+            <p style="color: var(--ion-color-medium); margin: 5px 0;">{{ rutinaAsignada.rutina.descripcion }}</p>
           </div>
 
-          <div *ngIf="rutinaAsignada.detalles.objetivo" style="margin-bottom: 15px;">
+          <div *ngIf="rutinaAsignada.rutina?.objetivo" style="margin-bottom: 15px;">
             <strong style="color: var(--primary-green);">Objetivo:</strong>
-            <p style="color: var(--ion-color-medium); margin: 5px 0;">{{ rutinaAsignada.detalles.objetivo }}</p>
+            <p style="color: var(--ion-color-medium); margin: 5px 0;">{{ rutinaAsignada.rutina.objetivo }}</p>
           </div>
 
           <!-- Fechas -->
@@ -84,115 +107,99 @@
             <div style="background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 8px;">
               <small style="color: var(--ion-color-medium);">Duración</small>
               <div style="color: var(--primary-green); font-weight: bold;">
-                {{ rutinaAsignada.detalles.duracion_semanas || 0 }} semanas
+                {{ rutinaAsignada.rutina?.duracion_semanas || 0 }} semanas
               </div>
             </div>
           </div>
 
           <!-- Notas -->
-          <div *ngIf="rutinaAsignada.notas" style="background: rgba(0, 255, 136, 0.05); padding: 12px; border-left: 3px solid var(--primary-green); border-radius: 4px;">
+          <div *ngIf="rutinaAsignada.notas" style="background: rgba(0, 255, 136, 0.05); padding: 12px; border-left: 3px solid var(--primary-green); border-radius: 4px; margin-bottom: 15px;">
             <strong style="color: var(--primary-green);">Notas del entrenador:</strong>
             <p style="color: var(--ion-color-medium); margin: 5px 0 0 0;">{{ rutinaAsignada.notas }}</p>
           </div>
-        </ion-card-content>
-      </ion-card>
 
-      <!-- Ejercicios de la rutina -->
-      <ion-card class="ejercicios-card" *ngIf="rutinaAsignada.detalles.ejercicios && rutinaAsignada.detalles.ejercicios.length > 0">
-        <ion-card-header>
-          <ion-card-title style="color: var(--primary-green);">
-            <ion-icon name="list-outline"></ion-icon>
-            Ejercicios ({{ rutinaAsignada.detalles.ejercicios.length }})
-          </ion-card-title>
-        </ion-card-header>
+          <!-- Ejercicios personalizados -->
+          <div *ngIf="rutinaAsignada.ejercicios && rutinaAsignada.ejercicios.length > 0">
+            <h3 style="color: var(--primary-green); margin: 15px 0 10px 0;">
+              <ion-icon name="list-outline"></ion-icon>
+              Ejercicios ({{ rutinaAsignada.ejercicios.length }})
+            </h3>
 
-        <ion-card-content>
-          <div *ngFor="let ej of rutinaAsignada.detalles.ejercicios; let i = index" 
-               style="background: rgba(0, 255, 136, 0.05); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: 10px; padding: 15px; margin-bottom: 15px;">
-            
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-              <div style="background: var(--primary-green); color: #000000; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">
-                {{ i + 1 }}
+            <div *ngFor="let ej of rutinaAsignada.ejercicios; let i = index" 
+                 style="background: rgba(0, 255, 136, 0.05); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+              
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <div style="background: var(--primary-green); color: #000000; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">
+                  {{ i + 1 }}
+                </div>
+                <div style="flex: 1;">
+                  <h3 style="color: var(--primary-green); margin: 0; font-size: 1.1rem;">
+                    {{ ej.ejercicio?.nombre || 'Ejercicio sin nombre' }}
+                  </h3>
+                  <p style="color: var(--ion-color-medium); margin: 3px 0 0 0; font-size: 0.9rem;">
+                    <ion-icon name="body-outline" style="vertical-align: middle;"></ion-icon>
+                    {{ ej.ejercicio?.musculo_principal || 'N/A' }}
+                  </p>
+                </div>
+                <!-- Botón para cambiar ejercicio -->
+                <ion-button fill="clear" size="small" color="warning" (click)="cambiarEjercicio(rutinaAsignada, ej)">
+                  <ion-icon name="swap-horizontal-outline" slot="icon-only"></ion-icon>
+                </ion-button>
               </div>
-              <div style="flex: 1;">
-                <h3 style="color: var(--primary-green); margin: 0; font-size: 1.1rem;">
-                  {{ ej.ejercicio?.nombre || 'Ejercicio sin nombre' }}
-                </h3>
-                <p style="color: var(--ion-color-medium); margin: 3px 0 0 0; font-size: 0.9rem;">
-                  <ion-icon name="body-outline" style="vertical-align: middle;"></ion-icon>
-                  {{ ej.ejercicio?.musculo_principal || 'N/A' }}
-                </p>
-              </div>
-            </div>
 
-            <!-- Parámetros -->
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px;">
-              <div style="background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 6px; text-align: center;">
-                <small style="color: var(--ion-color-medium);">Series</small>
-                <div style="color: var(--primary-green); font-weight: bold; font-size: 1.1rem;">{{ ej.series || 'N/A' }}</div>
+              <!-- Parámetros -->
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px;">
+                <div style="background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 6px; text-align: center;">
+                  <small style="color: var(--ion-color-medium);">Series</small>
+                  <div style="color: var(--primary-green); font-weight: bold; font-size: 1.1rem;">{{ ej.series || 'N/A' }}</div>
+                </div>
+                <div style="background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 6px; text-align: center;">
+                  <small style="color: var(--ion-color-medium);">Reps</small>
+                  <div style="color: var(--primary-green); font-weight: bold; font-size: 1.1rem;">{{ ej.repeticiones || 'N/A' }}</div>
+                </div>
+                <div style="background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 6px; text-align: center;">
+                  <small style="color: var(--ion-color-medium);">Descanso</small>
+                  <div style="color: var(--primary-green); font-weight: bold; font-size: 1.1rem;">{{ ej.descanso_segundos || 60 }}s</div>
+                </div>
               </div>
-              <div style="background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 6px; text-align: center;">
-                <small style="color: var(--ion-color-medium);">Reps</small>
-                <div style="color: var(--primary-green); font-weight: bold; font-size: 1.1rem;">{{ ej.repeticiones || 'N/A' }}</div>
-              </div>
-              <div style="background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 6px; text-align: center;">
-                <small style="color: var(--ion-color-medium);">Descanso</small>
-                <div style="color: var(--primary-green); font-weight: bold; font-size: 1.1rem;">{{ ej.descanso_segundos || 60 }}s</div>
-              </div>
-            </div>
 
-            <!-- Video o GIF -->
-            <div *ngIf="ej.ejercicio?.enlace_video" style="margin-top: 10px;">
-              <ng-container *ngIf="isImageUrl(ej.ejercicio.enlace_video); else iframeBlock">
-                <img [src]="getDirectImageUrl(ej.ejercicio.enlace_video)" alt="Ejercicio" style="width:100%; height:auto; border-radius:8px; border:2px solid rgba(0,255,136,0.3);" />
-              </ng-container>
-              <ng-template #iframeBlock>
-                <ng-container *ngIf="isVideoUrl(ej.ejercicio.enlace_video); else legacyIframe">
-                  <iframe [src]="getSafeUrl(getDirectVideoUrl(ej.ejercicio.enlace_video))" 
-                          frameborder="0" 
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowfullscreen
-                          style="width:100%; height:250px; border-radius:8px; border:2px solid rgba(0,255,136,0.3);">
-                  </iframe>
+              <!-- Video o GIF -->
+              <div *ngIf="ej.ejercicio?.enlace_video" style="margin-top: 10px;">
+                <ng-container *ngIf="isImageUrl(ej.ejercicio.enlace_video); else iframeBlock">
+                  <img [src]="getDirectImageUrl(ej.ejercicio.enlace_video)" alt="Ejercicio" style="width:100%; height:auto; border-radius:8px; border:2px solid rgba(0,255,136,0.3);" />
                 </ng-container>
-                <ng-template #legacyIframe>
-                  <iframe
-                    [src]="getSafeUrl(ej.ejercicio.enlace_video)"
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen
-                    style="width: 100%; height: 250px; border-radius: 8px; border: 2px solid rgba(0, 255, 136, 0.3);">
-                  </iframe>
+                <ng-template #iframeBlock>
+                  <ng-container *ngIf="isVideoUrl(ej.ejercicio.enlace_video); else legacyIframe">
+                    <iframe [src]="getSafeUrl(getDirectVideoUrl(ej.ejercicio.enlace_video))" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen
+                            style="width:100%; height:250px; border-radius:8px; border:2px solid rgba(0,255,136,0.3);">
+                    </iframe>
+                  </ng-container>
+                  <ng-template #legacyIframe>
+                    <iframe
+                      [src]="getSafeUrl(ej.ejercicio.enlace_video)"
+                      frameborder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowfullscreen
+                      style="width: 100%; height: 250px; border-radius: 8px; border: 2px solid rgba(0, 255, 136, 0.3);">
+                    </iframe>
+                  </ng-template>
                 </ng-template>
-              </ng-template>
-            </div>
+              </div>
 
-            <!-- Notas del ejercicio -->
-            <div *ngIf="ej.notas" style="margin-top: 10px; padding: 10px; background: rgba(0, 255, 136, 0.08); border-left: 3px solid var(--primary-green); border-radius: 4px;">
-              <small style="color: var(--ion-color-medium);">Nota:</small>
-              <p style="margin: 3px 0 0 0; color: #ffffff;">{{ ej.notas }}</p>
+              <!-- Notas del ejercicio -->
+              <div *ngIf="ej.notas" style="margin-top: 10px; padding: 10px; background: rgba(0, 255, 136, 0.08); border-left: 3px solid var(--primary-green); border-radius: 4px;">
+                <small style="color: var(--ion-color-medium);">Nota:</small>
+                <p style="margin: 3px 0 0 0; color: #ffffff;">{{ ej.notas }}</p>
+              </div>
             </div>
           </div>
-        </ion-card-content>
-      </ion-card>
-    </div>
-
-    <!-- Sin rutina asignada -->
-    <div *ngIf="!rutinaAsignada" class="sin-rutina-container">
-      <ion-card style="text-align: center; background: rgba(0, 255, 136, 0.05); border: 2px dashed rgba(0, 255, 136, 0.3);">
-        <ion-card-content style="padding: 40px 20px;">
-          <ion-icon name="barbell-outline" style="font-size: 80px; color: var(--ion-color-medium); margin-bottom: 20px;"></ion-icon>
-          <h2 style="color: var(--ion-color-medium); margin-bottom: 10px;">Sin Rutina Asignada</h2>
-          <p style="color: var(--ion-color-medium); margin-bottom: 25px;">
-            Este cliente no tiene ninguna rutina asignada actualmente.
-          </p>
-          <ion-button expand="block" fill="solid" color="success" (click)="asignarNuevaRutina()">
-            <ion-icon name="add-circle-outline" slot="start"></ion-icon>
-            Asignar Rutina
-          </ion-button>
         </ion-card-content>
       </ion-card>
     </div>
 
   </div>
+
 </ion-content>

@@ -251,12 +251,15 @@ export class AsignarRutinaComponent implements OnInit {
 
   async confirmarAsignacion() {
     console.log('🎬 Iniciando asignación de rutina');
-    this.guardando = true;
     
-    // Esperar 3 segundos para simular carga
-    await new Promise(resolve => setTimeout(resolve, 3000));
-
     try {
+      // Mostrar spinner
+      this.guardando = true;
+      this.cdr.detectChanges();
+
+      // Dar tiempo al spinner para mostrarse
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       const clienteIds = Array.from(this.clientesSeleccionados);
       
       // Validar si la rutina ya está asignada en el mismo día para algún cliente
@@ -269,6 +272,7 @@ export class AsignarRutinaComponent implements OnInit {
       if (existe) {
         console.log('⚠️ Validación fallida - rutina ya asignada');
         this.guardando = false;
+        this.cdr.detectChanges();
         await this.mostrarToast(
           `Esta rutina ya está asignada a "${cliente}" el mismo día. Elige otro día.`,
           'warning'
@@ -288,21 +292,46 @@ export class AsignarRutinaComponent implements OnInit {
       console.log('✅ Asignación completada');
 
       if (success) {
+        // Mantener spinner visible por un momento
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Ocultar spinner
+        this.guardando = false;
+        this.cdr.detectChanges();
+
+        // Pequeña pausa
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Mostrar toast
         await this.mostrarToast(
           `Rutina asignada exitosamente a ${clienteIds.length} cliente(s)`,
           'success'
         );
+
+        // Esperar un momento adicional antes de navegar
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        // Navegar de vuelta
         this.router.navigate(['/ver-ejercicios'], { replaceUrl: true });
       } else {
         console.error('Error al asignar rutina:', error);
+        this.guardando = false;
+        this.cdr.detectChanges();
         await this.mostrarToast('Error al asignar la rutina', 'danger');
       }
     } catch (error) {
       console.log('❌ Error en asignación');
       console.error('Error al asignar rutina:', error);
+      this.guardando = false;
+      this.cdr.detectChanges();
       await this.mostrarToast('Error inesperado al asignar la rutina', 'danger');
     } finally {
-      this.guardando = false;
+      // Asegurar que el spinner esté oculto al final
+      if (this.guardando) {
+        console.log('⚠️ Spinner todavía visible en finally, ocultando...');
+        this.guardando = false;
+        this.cdr.detectChanges();
+      }
     }
   }
 

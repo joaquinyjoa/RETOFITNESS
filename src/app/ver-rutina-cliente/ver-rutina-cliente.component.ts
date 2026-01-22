@@ -56,8 +56,18 @@ export class VerRutinaClienteComponent implements OnInit {
 
   clienteId: number | null = null;
   cliente: any = null;
-  rutinaAsignada: any = null;
+  rutinasAsignadas: any[] = []; // Cambiar de rutinaAsignada a array
   loading = true;
+
+  // Mapeo de días
+  diasSemana: { [key: number]: string } = {
+    1: 'Lunes',
+    2: 'Martes',
+    3: 'Miércoles',
+    4: 'Jueves',
+    5: 'Viernes',
+    6: 'Sábado'
+  };
 
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
@@ -84,26 +94,22 @@ export class VerRutinaClienteComponent implements OnInit {
         this.cliente = await this.clienteService.obtenerClientePorId(this.clienteId);
         console.log('🟢 [VerRutinaCliente] Cliente cargado:', this.cliente?.nombre);
         
-        // Cargar rutina asignada
-        console.log('🟪 [VerRutinaCliente] Cargando rutinas del cliente...');
-        const { data, error } = await this.rutinaService.obtenerRutinasDeCliente(this.clienteId);
+        // Cargar TODAS las rutinas del cliente con ejercicios personalizados
+        console.log('🟪 [VerRutinaCliente] Cargando rutinas del cliente con ejercicios personalizados...');
+        const { data, error } = await this.rutinaService.obtenerRutinasClienteConEjercicios(this.clienteId);
         
         if (!error && data && data.length > 0) {
           console.log('🟢 [VerRutinaCliente] Rutinas encontradas:', data.length);
-          // Obtener la rutina activa o la más reciente
-          const rutinaActiva = data.find((r: any) => r.estado === 'en_progreso') || data[0];
-          console.log('🟢 [VerRutinaCliente] Rutina activa:', rutinaActiva);
           
-          // Obtener los detalles completos de la rutina
-          const { data: rutinaDetalle } = await this.rutinaService.obtenerRutinaPorId(rutinaActiva.rutina_id);
-          console.log('🟢 [VerRutinaCliente] Detalles de rutina cargados');
+          // Ordenar por día de semana
+          this.rutinasAsignadas = data.sort((a: any, b: any) => {
+            return (a.dia_semana || 0) - (b.dia_semana || 0);
+          });
           
-          this.rutinaAsignada = {
-            ...rutinaActiva,
-            detalles: rutinaDetalle
-          };
+          console.log('🟢 [VerRutinaCliente] Rutinas ordenadas por día:', this.rutinasAsignadas);
         } else {
           console.log('⚠️ [VerRutinaCliente] No se encontraron rutinas para el cliente');
+          this.rutinasAsignadas = [];
         }
         
         const tiempoFin = performance.now();
@@ -258,6 +264,40 @@ export class VerRutinaClienteComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/ver-clientes'], { replaceUrl: true });
+  }
+
+  async eliminarRutinaAsignada(rutinaCliente: any) {
+    // Confirmación antes de eliminar
+    const confirmado = confirm(`¿Estás seguro de que deseas eliminar la rutina "${rutinaCliente.rutina?.nombre}" del ${this.diasSemana[rutinaCliente.dia_semana]}?`);
+    
+    if (!confirmado) return;
+
+    try {
+      const { success, error } = await this.rutinaService.desasignarRutinaDeCliente(rutinaCliente.id);
+      
+      if (success) {
+        // Eliminar de la lista local
+        this.rutinasAsignadas = this.rutinasAsignadas.filter(r => r.id !== rutinaCliente.id);
+        this.cdr.detectChanges();
+        alert('Rutina eliminada correctamente');
+      } else {
+        console.error('Error al eliminar rutina:', error);
+        alert('Error al eliminar la rutina');
+      }
+    } catch (error) {
+      console.error('Error inesperado al eliminar rutina:', error);
+      alert('Error inesperado al eliminar la rutina');
+    }
+  }
+
+  cambiarEjercicio(rutinaCliente: any, ejercicioPersonalizado: any) {
+    // Por ahora, navegar a una página de selección de ejercicio
+    // o abrir un modal para seleccionar nuevo ejercicio
+    alert('Funcionalidad de cambio de ejercicio en desarrollo');
+    console.log('Cambiar ejercicio:', {
+      rutinaCliente,
+      ejercicioPersonalizado
+    });
   }
 
   asignarNuevaRutina() {

@@ -457,11 +457,21 @@ export class RutinaService {
         notas: notas || null
       }));
 
-      const { error } = await supabase
+      const { data: rutinasCreadas, error } = await supabase
         .from('rutinas_clientes')
-        .insert(asignaciones);
+        .insert(asignaciones)
+        .select();
 
-      return { success: !error, error };
+      if (error || !rutinasCreadas) {
+        return { success: false, error };
+      }
+
+      // Copiar ejercicios originales a cada asignación
+      for (const rutinaCliente of rutinasCreadas) {
+        await this.copiarEjerciciosAAsignacion(rutinaCliente.id, rutinaId);
+      }
+
+      return { success: true, error: null };
     } catch (error) {
       console.error('Error al asignar rutina a clientes:', error);
       return { success: false, error };
@@ -574,6 +584,155 @@ export class RutinaService {
       return { data, error: null };
     } catch (error) {
       console.error('❌ Error inesperado al obtener ejercicio:', error);
+      return { data: null, error };
+    }
+  }
+
+  // ============================================
+  // GESTIÓN DE EJERCICIOS PERSONALIZADOS POR CLIENTE
+  // ============================================
+
+  /**
+   * Copiar ejercicios de la rutina original a la asignación del cliente
+   * Se ejecuta automáticamente cuando se asigna una rutina
+   */
+  async copiarEjerciciosAAsignacion(rutinaClienteId: number, rutinaId: number): Promise<{ success: boolean; error: any }> {
+    try {
+      const supabase = this.supabaseService['supabase'];
+      
+      // Obtener ejercicios originales de la rutina
+      const { data: ejerciciosOriginales, error: errorGet } = await supabase
+        .from('rutinas_ejercicios')
+        .select('*')
+        .eq('rutina_id', rutinaId)
+        .order('orden', { ascending: true });
+
+      if (errorGet || !ejerciciosOriginales) {
+        return { success: false, error: errorGet };
+      }
+
+      // Copiar ejercicios a la asignación del cliente
+      const ejerciciosPersonalizados = ejerciciosOriginales.map(ej => ({
+        rutina_cliente_id: rutinaClienteId,
+        ejercicio_id: ej.ejercicio_id,
+        orden: ej.orden,
+        series: ej.series,
+        repeticiones: ej.repeticiones,
+        descanso_segundos: ej.descanso_segundos,
+        porcentaje_fuerza: ej.porcentaje_fuerza,
+        notas: ej.notas
+      }));
+
+      const { error: errorInsert } = await supabase
+        .from('rutinas_clientes_ejercicios')
+        .insert(ejerciciosPersonalizados);
+
+      return { success: !errorInsert, error: errorInsert };
+    } catch (error) {
+      console.error('Error al copiar ejercicios a asignación:', error);
+      return { success: false, error };
+    }
+  }
+
+  /**
+   * Obtener ejercicios personalizados de una rutina asignada a un cliente
+   */
+  async obtenerEjerciciosPersonalizados(rutinaClienteId: number): Promise<{ data: any[] | null; error: any }> {
+    try {
+      const supabase = this.supabaseService['supabase'];
+      const { data, error } = await supabase
+        .from('rutinas_clientes_ejercicios')
+        .select(`
+          *,
+          ejercicio:ejercicios(*)
+        `)
+        .eq('rutina_cliente_id', rutinaClienteId)
+        .order('orden', { ascending: true });
+
+      return { data, error };
+    } catch (error) {
+      console.error('Error al obtener ejercicios personalizados:', error);
+      return { data: null, error };
+    }
+  }
+
+  /**
+   * Cambiar un ejercicio específico para la rutina asignada a un cliente
+   */
+  async cambiarEjercicioPersonalizado(
+    ejercicioPersonalizadoId: number, 
+    nuevoEjercicioId: number
+  ): Promise<{ success: boolean; error: any }> {
+    try {
+      const supabase = this.supabaseService['supabase'];
+      const { error } = await supabase
+        .from('rutinas_clientes_ejercicios')
+        .update({ ejercicio_id: nuevoEjercicioId })
+        .eq('id', ejercicioPersonalizadoId);
+
+      return { success: !error, error };
+    } catch (error) {
+      console.error('Error al cambiar ejercicio personalizado:', error);
+      return { success: false, error };
+    }
+  }
+
+  /**
+   * Actualizar parámetros de un ejercicio personalizado (series, repeticiones, etc.)
+   */
+  async actualizarEjercicioPersonalizado(
+    ejercicioPersonalizadoId: number,
+    datos: Partial<RutinaEjercicio>
+  ): Promise<{ success: boolean; error: any }> {
+    try {
+      const supabase = this.supabaseService['supabase'];
+      const { error } = await supabase
+        .from('rutinas_clientes_ejercicios')
+        .update(datos)
+        .eq('id', ejercicioPersonalizadoId);
+
+      return { success: !error, error };
+    } catch (error) {
+      console.error('Error al actualizar ejercicio personalizado:', error);
+      return { success: false, error };
+    }
+  }
+
+  /**
+   * Obtener rutinas asignadas a un cliente con sus ejercicios personalizados
+   */
+  async obtenerRutinasClienteConEjercicios(clienteId: number): Promise<{ data: any[] | null; error: any }> {
+    try {
+      const supabase = this.supabaseService['supabase'];
+      
+      // Obtener rutinas asignadas
+      const { data: rutinasCliente, error: errorRutinas } = await supabase
+        .from('rutinas_clientes')
+        .select(`
+          *,
+          rutina:rutinas(*)
+        `)
+        .eq('cliente_id', clienteId)
+        .order('fecha_asignacion', { ascending: false });
+
+      if (errorRutinas || !rutinasCliente) {
+        return { data: null, error: errorRutinas };
+      }
+
+      // Para cada rutina, obtener sus ejercicios personalizados
+      const rutinasConEjercicios = await Promise.all(
+        rutinasCliente.map(async (rc) => {
+          const { data: ejercicios } = await this.obtenerEjerciciosPersonalizados(rc.id);
+          return {
+            ...rc,
+            ejercicios: ejercicios || []
+          };
+        })
+      );
+
+      return { data: rutinasConEjercicios, error: null };
+    } catch (error) {
+      console.error('Error al obtener rutinas de cliente con ejercicios:', error);
       return { data: null, error };
     }
   }

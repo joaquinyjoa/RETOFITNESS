@@ -304,6 +304,13 @@ export class VerEjerciciosComponent implements OnInit {
       this.mostrarSpinnerGlobal = false;
       this.cdr.detectChanges();
       await this.toastService.mostrarError('Error inesperado al guardar');
+    } finally {
+      // Asegurar que el spinner esté oculto al final
+      if (this.mostrarSpinnerGlobal) {
+        console.log('⚠️ Spinner todavía visible en finally, ocultando...');
+        this.mostrarSpinnerGlobal = false;
+        this.cdr.detectChanges();
+      }
     }
   }
 
@@ -953,6 +960,10 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
       console.log('✅ Validaciones pasadas, mostrando spinner global');
       // Mostrar spinner global
       this.mostrarSpinnerGlobal = true;
+      this.cdr.detectChanges();
+
+      // Dar tiempo al spinner para mostrarse
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       let rutinaId: number;
 
@@ -969,8 +980,8 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
 
         if (error) {
           console.log('❌ Error actualizando rutina:', error);
-          // Ocultar spinner global
           this.mostrarSpinnerGlobal = false;
+          this.cdr.detectChanges();
           throw error;
         }
         rutinaId = this.rutinaActual.id;
@@ -988,8 +999,8 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
 
         if (error || !data) {
           console.log('❌ Error creando rutina:', error);
-          // Ocultar spinner global
           this.mostrarSpinnerGlobal = false;
+          this.cdr.detectChanges();
           throw error;
         }
         rutinaId = data.id!;
@@ -1012,17 +1023,24 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
 
       if (!success) {
         console.log('❌ Error guardando ejercicios:', errorEjercicios);
-        // Ocultar spinner global
         this.mostrarSpinnerGlobal = false;
+        this.cdr.detectChanges();
         throw errorEjercicios;
       }
 
       console.log('✅ Operación exitosa');
-      // Cerrar modal
+      // Mantener spinner visible por un momento
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Cerrar modal primero
       this.cerrarModalRutina();
 
-      // Ocultar spinner global
+      // Ocultar spinner después de cerrar modal
       this.mostrarSpinnerGlobal = false;
+      this.cdr.detectChanges();
+
+      // Pequeña pausa
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       console.log('📢 Mostrando toast de éxito');
       // Mostrar toast de éxito
@@ -1030,79 +1048,134 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
         this.editModeRutina ? 'Rutina actualizada correctamente' : 'Rutina creada correctamente'
       );
 
-      console.log('🔄 Recargando rutinas en segundo plano');
-      // Recargar rutinas en segundo plano
-      this.cargarRutinas(true).catch(error => {
-        console.error('Error recargando rutinas:', error);
-      });
+      console.log('🔄 Recargando rutinas');
+      // Recargar rutinas
+      await this.cargarRutinas(true);
       console.log('🏁 Proceso completado');
     } catch (error) {
       console.log('💥 Excepción capturada:', error);
       // Ocultar spinner global en caso de error
       this.mostrarSpinnerGlobal = false;
+      this.cdr.detectChanges();
 
       console.error('Error al guardar rutina:', error);
       await this.toastService.mostrarError('Error al guardar rutina');
+    } finally {
+      // Asegurar que el spinner esté oculto al final
+      if (this.mostrarSpinnerGlobal) {
+        console.log('⚠️ Spinner todavía visible en finally, ocultando...');
+        this.mostrarSpinnerGlobal = false;
+        this.cdr.detectChanges();
+      }
     }
     console.log('🔴 [guardarRutina] FIN');
   }
 
   async eliminarRutina(rutina: Rutina) {
-    if (!rutina.id) return;
+    let timeoutId: any;
 
     try {
-      // Alert de confirmación
-      const alert = await this.alertController.create({
-        header: 'Confirmar eliminación',
-        message: `¿Eliminar la rutina "${rutina.nombre}"?`,
-        buttons: [
-          {
-            text: 'Cancelar',
-            role: 'cancel'
-          },
-          {
-            text: 'Eliminar',
-            role: 'destructive'
-          }
-        ]
-      });
+      if (!rutina.id) {
+        console.log('🔴 rutina sin id');
+        return;
+      }
 
-      await alert.present();
-      const { role } = await alert.onDidDismiss();
+      console.log('🟡 pidiendo confirmación');
+      const confirmado = await this.confirmarEliminarRutina(rutina);
+      console.log('🟢 confirmado:', confirmado);
 
-      // Si canceló, salir
-      if (role === 'cancel') return;
-      // Eliminación optimista: quitar de la UI inmediatamente
-      const originalRutinas = [...this.rutinas];
-      const originalFiltradas = [...this.rutinasFiltradas];
+      if (!confirmado) {
+        console.log('🟠 cancelado por el usuario');
+        return;
+      }
 
-      this.rutinas = this.rutinas.filter(r => r.id !== rutina.id);
-      this.aplicarFiltrosRutinas();
-      // Actualizar caché local para reflejar el cambio inmediato
-      this.cacheRutinas = this.rutinas;
-      this.ultimaCargaRutinas = Date.now();
+      console.log('🟡 set eliminandoEjercicio = true (para rutina)');
+      this.eliminandoEjercicio = true;
       this.cdr.detectChanges();
 
-      // Llamada al servicio en background
+      console.log('🟡 esperando render');
+      await new Promise(resolve => setTimeout(resolve, 50));
+      console.log('🟢 render debería haber ocurrido');
+
+      console.log('🟡 iniciando timeout de seguridad');
+      timeoutId = setTimeout(() => {
+        console.log('⏱️ timeout de seguridad disparado');
+        this.eliminandoEjercicio = false;
+        this.cdr.detectChanges();
+      }, 10000);
+
+      console.log('🟡 llamando a eliminarRutina');
       const { success, error } = await this.rutinaService.eliminarRutina(rutina.id);
+      console.log('🟢 respuesta del servicio:', { success, error });
+
+      clearTimeout(timeoutId);
 
       if (success) {
-        // Eliminado correctamente en backend
-        this.toastService.mostrarExito('Rutina eliminada');
-      } else {
-        // Revertir UI si falla
-        this.rutinas = originalRutinas;
-        this.rutinasFiltradas = originalFiltradas;
+        console.log('🟢 eliminación exitosa');
+
+        // Mantener spinner visible por un momento
+        console.log('🟡 manteniendo spinner visible...');
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Ocultar spinner
+        console.log('🟢 spinner OFF');
+        this.eliminandoEjercicio = false;
+        this.cdr.detectChanges();
+
+        // Pequeña pausa antes de mostrar toast y actualizar lista
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Mostrar toast
+        await this.toastService.mostrarExito('Rutina eliminada');
+
+        // Actualizar lista (desaparece la rutina)
+        this.rutinas = this.rutinas.filter(r => r.id !== rutina.id);
         this.cacheRutinas = this.rutinas;
+        this.aplicarFiltrosRutinas();
+        this.cdr.detectChanges();
+      } else {
+        console.log('🔴 error del backend');
+        this.eliminandoEjercicio = false;
         this.cdr.detectChanges();
         await this.toastService.mostrarError(error || 'Error al eliminar rutina');
       }
+
     } catch (error) {
-      console.error('Error al eliminar rutina:', error);
+      console.log('💥 catch:', error);
+      this.eliminandoEjercicio = false;
+      this.cdr.detectChanges();
       await this.toastService.mostrarError('Error inesperado');
     } finally {
-      // No bloquear con spinner; la UI ya fue actualizada optimísticamente
+      clearTimeout(timeoutId);
+      console.log('🟡 finally ejecutado');
     }
+  }
+
+  async confirmarEliminarRutina(rutina: Rutina): Promise<boolean> {
+    console.log('🟡 confirmarEliminarRutina()');
+
+    const alert = await this.alertController.create({
+      header: 'Confirmar eliminación',
+      message: `¿Estás seguro de que deseas eliminar la rutina "${rutina.nombre}"?`,
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Eliminar',
+          role: 'confirm',
+          cssClass: 'alert-button-confirm'
+        }
+      ]
+    });
+
+    console.log('🟡 alert presentado');
+    await alert.present();
+    const { role } = await alert.onDidDismiss();
+    console.log('🟢 alert cerrado con role:', role);
+
+    return role === 'confirm';
   }
 
   // Filtrar ejercicios disponibles en el modal
@@ -1365,7 +1438,13 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
     }
 
     try {
-      this.loadingRutinas = true;
+      // Mostrar spinner
+      this.mostrarSpinnerGlobal = true;
+      this.cdr.detectChanges();
+
+      // Dar tiempo al spinner para mostrarse
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       const { success, error } = await this.rutinaService.asignarRutinaAClientes(
         this.rutinaParaAsignar.id,
         this.clientesSeleccionados,
@@ -1376,17 +1455,41 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
       );
 
       if (success) {
-        await this.toastService.mostrarExito(`Rutina asignada a ${this.clientesSeleccionados.length} cliente(s)`);
+        // Mantener spinner visible por un momento
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Cerrar modal
         this.cerrarModalAsignar();
-        await this.cargarRutinas();
+
+        // Ocultar spinner
+        this.mostrarSpinnerGlobal = false;
+        this.cdr.detectChanges();
+
+        // Pequeña pausa
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Mostrar toast
+        await this.toastService.mostrarExito(`Rutina asignada a ${this.clientesSeleccionados.length} cliente(s)`);
+
+        // Recargar rutinas
+        await this.cargarRutinas(true);
       } else {
+        this.mostrarSpinnerGlobal = false;
+        this.cdr.detectChanges();
         await this.toastService.mostrarError(error || 'Error al asignar rutina');
       }
     } catch (error) {
       console.error('Error al asignar rutina:', error);
+      this.mostrarSpinnerGlobal = false;
+      this.cdr.detectChanges();
       await this.toastService.mostrarError('Error inesperado');
     } finally {
-      this.loadingRutinas = false;
+      // Asegurar que el spinner esté oculto al final
+      if (this.mostrarSpinnerGlobal) {
+        console.log('⚠️ Spinner todavía visible en finally, ocultando...');
+        this.mostrarSpinnerGlobal = false;
+        this.cdr.detectChanges();
+      }
     }
   }
 

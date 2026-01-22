@@ -584,6 +584,12 @@
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
+
+    <!-- Spinner dentro del modal -->
+    <div *ngIf="mostrarSpinnerGlobal" class="spinner-overlay-transparent">
+      <app-spinner></app-spinner>
+    </div>
+
     <ion-content class="modal-content">
       <form (ngSubmit)="guardarRutina()">
         
