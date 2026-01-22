@@ -411,3 +411,55 @@ ion-button.secondary-button::part(native) {
 	--border-width: var(--border-width);
 	--box-shadow: var(--box-shadow);
 }
+
+/* Personalización de Alerts - Colores de la App */
+ion-alert {
+	--background: #1a1a1a;
+	--max-width: 340px;
+
+	.alert-wrapper {
+		border-radius: 16px;
+	}
+
+	.alert-head h2 {
+		color: #00ff88;
+	}
+
+	.alert-message {
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.alert-button-group button {
+		color: #00ff88;
+		font-weight: 600;
+
+		&.alert-button-role-cancel {
+			color: rgba(255, 255, 255, 0.6);
+		}
+	}
+}
+
+/* Personalización del Loading Spinner */
+.custom-loading {
+	--backdrop-opacity: 0.7;
+	--background: rgba(128, 128, 128, 0.95);
+	--spinner-color: #00ff88;
+
+	.loading-wrapper {
+		border-radius: 16px;
+		padding: 24px;
+		background: rgba(128, 128, 128, 0.95);
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+	}
+
+	.loading-spinner {
+		color: #00ff88;
+	}
+
+	.loading-content {
+		color: #ffffff;
+		font-size: 1rem;
+		font-weight: 500;
+		margin-top: 12px;
+	}
+}

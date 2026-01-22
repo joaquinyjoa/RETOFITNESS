@@ -132,13 +132,16 @@ export class EjercicioService {
    */
   async desactivarEjercicio(id: number): Promise<{ success: boolean; error?: string }> {
     try {
+      // Eliminar PERMANENTEMENTE el ejercicio de la base de datos
+      // La relación ON DELETE CASCADE en rutinas_ejercicios se encargará
+      // de eliminar automáticamente todas las referencias en las rutinas
       const { error } = await this.supabaseService['supabase']
         .from('ejercicios')
-        .update({ activo: false })
+        .delete()
         .eq('id', id);
 
       if (error) {
-        console.error('EjercicioService: Error al desactivar ejercicio:', error);
+        console.error('EjercicioService: Error al eliminar ejercicio:', error);
         return { success: false, error: error.message };
       }
 

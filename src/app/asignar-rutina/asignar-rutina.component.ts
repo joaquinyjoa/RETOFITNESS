@@ -28,10 +28,12 @@ import {
   IonSelect,
   IonSelectOption,
   AlertController,
-  ToastController
+  ToastController,
+  LoadingController
 } from '@ionic/angular/standalone';
 import { RutinaService, Rutina } from '../services/rutina.service';
 import { ClienteService } from '../services/cliente.service';
+import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
   selector: 'app-asignar-rutina',
@@ -64,7 +66,8 @@ import { ClienteService } from '../services/cliente.service';
     IonDatetime,
     IonTextarea,
     IonSelect,
-    IonSelectOption
+    IonSelectOption,
+    SpinnerComponent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
@@ -75,6 +78,7 @@ export class AsignarRutinaComponent implements OnInit {
   private clienteService = inject(ClienteService);
   private alertController = inject(AlertController);
   private toastController = inject(ToastController);
+  private loadingController = inject(LoadingController);
   private cdr = inject(ChangeDetectorRef);
 
   rutina: Rutina | null = null;
@@ -93,13 +97,10 @@ export class AsignarRutinaComponent implements OnInit {
   notas = '';
 
   ngOnInit() {
-    console.log('ngOnInit - Iniciando componente asignar-rutina');
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
-      console.log('Parámetro id recibido:', id);
       if (id) {
         this.rutinaId = parseInt(id);
-        console.log('rutinaId parseado:', this.rutinaId);
         this.cargarDatos();
       } else {
         console.error('No se recibió ID de rutina');
@@ -110,8 +111,6 @@ export class AsignarRutinaComponent implements OnInit {
 
   async cargarDatos() {
     this.loading = true;
-    console.log('🔄 Iniciando carga de datos...');
-    console.log('📋 Rutina ID:', this.rutinaId);
     
     // Timeout de seguridad de 10 segundos
     const timeoutId = setTimeout(() => {
@@ -125,9 +124,7 @@ export class AsignarRutinaComponent implements OnInit {
     try {
       // Cargar rutina
       if (this.rutinaId) {
-        console.log('📥 Solicitando rutina...');
         const resultado = await this.rutinaService.obtenerRutinaPorId(this.rutinaId);
-        console.log('✅ Respuesta rutina:', resultado);
         
         if (resultado.error) {
           console.error('❌ Error al cargar rutina:', resultado.error);
@@ -138,30 +135,22 @@ export class AsignarRutinaComponent implements OnInit {
         }
         
         this.rutina = resultado.data;
-        console.log('✅ Rutina asignada:', this.rutina);
       }
 
       // Cargar clientes
-      console.log('📥 Solicitando clientes...');
       const clientes = await this.clienteService.listarClientesResumido();
-      console.log('✅ Respuesta clientes:', clientes);
       
       this.clientes = clientes || [];
       this.clientesFiltrados = [...this.clientes];
-      
-      console.log('✅ Total clientes cargados:', this.clientes.length);
-      console.log('🎉 Carga completada exitosamente');
     } catch (error) {
       console.error('❌ Error inesperado al cargar datos:', error);
       await this.mostrarToast('Error al cargar datos', 'danger');
     } finally {
       clearTimeout(timeoutId);
       this.loading = false;
-      console.log('🏁 Estado loading:', this.loading);
       
       // Forzar detección de cambios
       this.cdr.detectChanges();
-      console.log('🔄 Detección de cambios forzada');
     }
   }
 
@@ -213,6 +202,8 @@ export class AsignarRutinaComponent implements OnInit {
   }
 
   async asignarRutina() {
+    console.log('🚀 Botón Asignar Rutina presionado');
+    
     if (this.clientesSeleccionados.size === 0) {
       await this.mostrarToast('Debes seleccionar al menos un cliente', 'warning');
       return;
@@ -223,30 +214,68 @@ export class AsignarRutinaComponent implements OnInit {
       return;
     }
 
+    console.log('💬 Mostrando alert de confirmación');
     const alert = await this.alertController.create({
       header: 'Confirmar asignación',
       message: `¿Deseas asignar esta rutina a ${this.clientesSeleccionados.size} cliente(s)?`,
       buttons: [
         {
           text: 'Cancelar',
-          role: 'cancel'
+          role: 'cancel',
+          handler: () => {
+            console.log('❌ Usuario canceló la asignación');
+          }
         },
         {
           text: 'Asignar',
+          role: 'confirm',
           handler: () => {
-            this.confirmarAsignacion();
+            console.log('✅ Usuario confirmó');
+            return true; // Cierra el alert
           }
         }
       ]
     });
 
     await alert.present();
+    
+    // Esperar a que se cierre el alert y verificar el resultado
+    const { role } = await alert.onDidDismiss();
+    console.log('🚪 Alert cerrado con role:', role);
+    
+    if (role === 'confirm') {
+      console.log('🎬 Llamando a confirmarAsignacion()');
+      this.confirmarAsignacion();
+    }
   }
 
   async confirmarAsignacion() {
+    console.log('🎬 Iniciando asignación de rutina');
     this.guardando = true;
+    
+    // Esperar 3 segundos para simular carga
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
     try {
       const clienteIds = Array.from(this.clientesSeleccionados);
+      
+      // Validar si la rutina ya está asignada en el mismo día para algún cliente
+      const { existe, cliente } = await this.rutinaService.verificarRutinaAsignadaMismoDia(
+        this.rutinaId!,
+        clienteIds,
+        this.diaSemana
+      );
+
+      if (existe) {
+        console.log('⚠️ Validación fallida - rutina ya asignada');
+        this.guardando = false;
+        await this.mostrarToast(
+          `Esta rutina ya está asignada a "${cliente}" el mismo día. Elige otro día.`,
+          'warning'
+        );
+        return;
+      }
+
       const { success, error } = await this.rutinaService.asignarRutinaAClientes(
         this.rutinaId!,
         clienteIds,
@@ -255,6 +284,8 @@ export class AsignarRutinaComponent implements OnInit {
         this.fechaFin || undefined,
         this.notas || undefined
       );
+
+      console.log('✅ Asignación completada');
 
       if (success) {
         await this.mostrarToast(
@@ -267,6 +298,7 @@ export class AsignarRutinaComponent implements OnInit {
         await this.mostrarToast('Error al asignar la rutina', 'danger');
       }
     } catch (error) {
+      console.log('❌ Error en asignación');
       console.error('Error al asignar rutina:', error);
       await this.mostrarToast('Error inesperado al asignar la rutina', 'danger');
     } finally {

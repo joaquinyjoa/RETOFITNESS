@@ -102,6 +102,11 @@ export class AuthService {
         .eq('user_id', userId)
         .single();
 
+      if (clienteError) {
+        console.error('AuthService: Error al buscar cliente:', clienteError);
+        console.error('AuthService: Status:', clienteError.code, clienteError.message);
+      }
+
       if (cliente) {
         // Validar que el cliente esté habilitado (campo Estado con mayúscula)
         if (cliente.Estado === false) {

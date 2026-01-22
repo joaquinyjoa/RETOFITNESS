@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, AlertController } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -9,13 +9,14 @@ import { ToastService } from '../services/toast.service';
 import { RutinaService, Rutina, RutinaEjercicio, RutinaConDetalles } from '../services/rutina.service';
 import { ClienteService } from '../services/cliente.service';
 import { Ejercicio, EjercicioFormData } from '../models/ejercicio/ejercicio.interface';
+import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
   selector: 'app-ver-ejercicios',
   templateUrl: './ver-ejercicios.component.html',
   styleUrls: ['./ver-ejercicios.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule, RouterLink]
+  imports: [CommonModule, IonicModule, FormsModule, RouterLink, SpinnerComponent]
 })
 export class VerEjerciciosComponent implements OnInit {
 
@@ -26,6 +27,7 @@ export class VerEjerciciosComponent implements OnInit {
   ejercicios: Ejercicio[] = [];
   ejerciciosFiltrados: Ejercicio[] = [];
   loading = false;
+  eliminandoEjercicio = false;
   
   // Validación de URL
   urlValida = false;
@@ -39,6 +41,9 @@ export class VerEjerciciosComponent implements OnInit {
   filtroTexto = '';
   filtroCategoria = '';
   filtroMusculo = '';
+
+  // Spinner global para operaciones de creación
+  mostrarSpinnerGlobal = false;
 
   // === RUTINAS ===
   rutinas: RutinaConDetalles[] = [];
@@ -106,6 +111,7 @@ export class VerEjerciciosComponent implements OnInit {
   private router = inject(Router);
   private sanitizer = inject(DomSanitizer);
   private cdr = inject(ChangeDetectorRef);
+  private alertController = inject(AlertController);
 
   // Caché simple para evitar recargas innecesarias
   private cacheEjercicios: Ejercicio[] | null = null;
@@ -121,24 +127,17 @@ export class VerEjerciciosComponent implements OnInit {
   }
 
   async cargarEjercicios(forzarRecarga = false) {
-    console.log('🟡 [VerEjerciciosComponent] === INICIO cargarEjercicios ===');
-    console.log('🟡 [VerEjerciciosComponent] forzarRecarga:', forzarRecarga);
-    
     // Usar caché si está disponible y no ha expirado
     const ahora = Date.now();
     if (!forzarRecarga && this.cacheEjercicios && (ahora - this.ultimaCargaEjercicios) < this.CACHE_TTL) {
-      console.log('🟢 [VerEjerciciosComponent] Usando caché, ejercicios en caché:', this.cacheEjercicios.length);
       this.ejercicios = this.cacheEjercicios;
       this.aplicarFiltros();
       return;
     }
 
-    console.log('🟡 [VerEjerciciosComponent] Activando spinner (loading = true)...');
     this.loading = true;
-    console.log('🟡 [VerEjerciciosComponent] Estado del spinner:', this.loading);
     
     try {
-      console.log('🟡 [VerEjerciciosComponent] Llamando a ejercicioService.listarEjercicios()...');
       const tiempoInicio = performance.now();
       
       const ejerciciosCargados = await this.ejercicioService.listarEjercicios();
@@ -146,35 +145,23 @@ export class VerEjerciciosComponent implements OnInit {
       const tiempoFin = performance.now();
       const duracion = (tiempoFin - tiempoInicio).toFixed(2);
       
-      console.log(`🟢 [VerEjerciciosComponent] Ejercicios recibidos del servicio en ${duracion}ms:`, ejerciciosCargados.length);
-      console.log('🟢 [VerEjerciciosComponent] Datos recibidos:', ejerciciosCargados);
-      
       // Convertir duración de minutos a segundos para mostrar en la interfaz
-      console.log('🟡 [VerEjerciciosComponent] Procesando ejercicios (conversión de duración)...');
       this.ejercicios = ejerciciosCargados.map(ejercicio => ({
         ...ejercicio,
         duracion_minutos: ejercicio.duracion_minutos ? ejercicio.duracion_minutos * 60 : undefined
       }));
       
-      console.log('🟢 [VerEjerciciosComponent] Ejercicios procesados:', this.ejercicios.length);
-      
       // Actualizar caché
       this.cacheEjercicios = this.ejercicios;
       this.ultimaCargaEjercicios = ahora;
-      console.log('🟢 [VerEjerciciosComponent] Caché actualizado');
       
-      console.log('🟡 [VerEjerciciosComponent] Aplicando filtros...');
       this.aplicarFiltros();
-      console.log('🟢 [VerEjerciciosComponent] Ejercicios filtrados:', this.ejerciciosFiltrados.length);
       
     } catch (error) {
       console.error('🔴 [VerEjerciciosComponent] Error al cargar ejercicios:', error);
       await this.toastService.mostrarError('Error al cargar ejercicios');
     } finally {
-      console.log('🟡 [VerEjerciciosComponent] Desactivando spinner (loading = false)...');
       this.loading = false;
-      console.log('🟡 [VerEjerciciosComponent] Estado final del spinner:', this.loading);
-      console.log('🟡 [VerEjerciciosComponent] Forzando detección de cambios...');
       
       // Forzar detección de cambios de forma síncrona
       this.cdr.detectChanges();
@@ -183,22 +170,11 @@ export class VerEjerciciosComponent implements OnInit {
       setTimeout(() => {
         this.loading = false;
         this.cdr.detectChanges();
-        console.log('🟡 [VerEjerciciosComponent] Segunda detección de cambios ejecutada');
       }, 0);
-      
-      console.log('🟡 [VerEjerciciosComponent] === FIN cargarEjercicios ===\n');
     }
   }
 
   aplicarFiltros() {
-    console.log('🟣 [VerEjerciciosComponent] Aplicando filtros...');
-    console.log('🟣 [VerEjerciciosComponent] Total ejercicios antes de filtrar:', this.ejercicios.length);
-    console.log('🟣 [VerEjerciciosComponent] Filtros activos:', {
-      texto: this.filtroTexto,
-      categoria: this.filtroCategoria,
-      musculo: this.filtroMusculo
-    });
-    
     this.ejerciciosFiltrados = this.ejercicios.filter(ejercicio => {
       const coincideTexto = !this.filtroTexto || 
         ejercicio.nombre.toLowerCase().includes(this.filtroTexto.toLowerCase()) ||
@@ -209,8 +185,6 @@ export class VerEjerciciosComponent implements OnInit {
 
       return coincideTexto && coincideCategoria && coincideMusculo;
     });
-    
-    console.log('🟣 [VerEjerciciosComponent] Total ejercicios después de filtrar:', this.ejerciciosFiltrados.length);
   }
 
   limpiarFiltros() {
@@ -269,8 +243,13 @@ export class VerEjerciciosComponent implements OnInit {
         return;
       }
 
-      console.log('✅ Validaciones pasadas, activando spinner');
-      this.loading = true;
+      console.log('✅ Validaciones pasadas, mostrando spinner global');
+      // Mostrar spinner global
+      this.mostrarSpinnerGlobal = true;
+      this.cdr.detectChanges();
+
+      // Dar tiempo al spinner para mostrarse
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       const ejercicioData: Ejercicio = {
         ...this.ejercicioActual,
@@ -281,52 +260,51 @@ export class VerEjerciciosComponent implements OnInit {
       };
 
       let result;
-      
+
       if (this.editMode && this.ejercicioActual.id) {
-        // Actualizar ejercicio existente
-        console.log('🔄 Actualizando ejercicio ID:', this.ejercicioActual.id);
+        // Actualizar ejercicio existent
         result = await this.ejercicioService.actualizarEjercicio(this.ejercicioActual.id, ejercicioData);
-        console.log('📦 Resultado actualización:', result);
       } else {
         // Crear nuevo ejercicio
-        console.log('➕ Creando nuevo ejercicio');
         result = await this.ejercicioService.crearEjercicio(ejercicioData);
-        console.log('📦 Resultado creación:', result);
       }
 
       if (result.success) {
-        console.log('✅ Operación exitosa, desactivando spinner');
-        // Desactivar loading inmediatamente
-        this.loading = false;
-        
-        console.log('🚪 Cerrando modal');
+        // Mantener spinner visible por un momento
+        await new Promise(resolve => setTimeout(resolve, 800));
+
         // Cerrar modal primero
         this.cerrarModal();
-        
-        console.log('📢 Mostrando toast de éxito');
-        // Mostrar toast
+
+        // Ocultar spinner después de cerrar modal
+        this.mostrarSpinnerGlobal = false;
+        this.cdr.detectChanges();
+
+        // Pequeña pausa
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Mostrar toast de éxito
         await this.toastService.mostrarExito(
           this.editMode ? 'Ejercicio actualizado correctamente' : 'Ejercicio creado correctamente'
         );
-        
-        console.log('🔄 Recargando ejercicios');
-        // Recargar ejercicios en segundo plano
-        await this.cargarEjercicios(true); // true = forzar recarga, invalidar caché
-        console.log('🏁 Proceso completado');
+
+        // Recargar ejercicios
+        await this.cargarEjercicios(true);
+
       } else {
-        console.log('❌ Error en la operación:', result.error);
-        // En caso de error, detener spinner inmediatamente
-        this.loading = false;
+        // Ocultar spinner global
+        this.mostrarSpinnerGlobal = false;
+        this.cdr.detectChanges();
+
+        // Mostrar toast de error (sin cerrar modal)
         await this.toastService.mostrarError(result.error || 'Error al guardar ejercicio');
       }
     } catch (error: any) {
-      console.log('💥 Excepción capturada:', error);
-      // En caso de error, detener spinner inmediatamente
-      this.loading = false;
-      console.error('Error al guardar ejercicio:', error);
+      // Ocultar spinner global en caso de error
+      this.mostrarSpinnerGlobal = false;
+      this.cdr.detectChanges();
       await this.toastService.mostrarError('Error inesperado al guardar');
     }
-    console.log('🔴 [guardarEjercicio] FIN');
   }
 
   // Validar URL de Google Drive
@@ -380,31 +358,107 @@ export class VerEjerciciosComponent implements OnInit {
     return url; // Si no se puede convertir, devolver original
   }
 
+async eliminarEjercicio(ejercicio: Ejercicio) {
+  let timeoutId: any;
 
+  console.log('🟡 eliminarEjercicio() llamado');
 
-  async eliminarEjercicio(ejercicio: Ejercicio) {
-    try {
-      if (!ejercicio.id) return;
-
-      this.loading = true;
-      const result = await this.ejercicioService.desactivarEjercicio(ejercicio.id);
-
-      if (result.success) {
-        // Actualizar la lista localmente sin recargar desde el servidor
-        this.ejercicios = this.ejercicios.filter(e => e.id !== ejercicio.id);
-        this.cacheEjercicios = this.ejercicios;
-        this.aplicarFiltros();
-        await this.toastService.mostrarExito('Ejercicio eliminado');
-      } else {
-        await this.toastService.mostrarError(result.error || 'Error al eliminar ejercicio');
-      }
-    } catch (error) {
-      console.error('Error al eliminar ejercicio:', error);
-      await this.toastService.mostrarError('Error inesperado');
-    } finally {
-      this.loading = false;
+  try {
+    if (!ejercicio.id) {
+      console.log('🔴 ejercicio sin id');
+      return;
     }
+
+    console.log('🟡 pidiendo confirmación');
+    const confirmado = await this.confirmarEliminar(ejercicio);
+    console.log('🟢 confirmado:', confirmado);
+
+    if (!confirmado) {
+      console.log('🟠 cancelado por el usuario');
+      return;
+    }
+
+    console.log('🟡 set eliminandoEjercicio = true');
+    this.eliminandoEjercicio = true;
+    this.cdr.detectChanges();
+
+    console.log('🟡 esperando render (setTimeout 0)');
+    await new Promise(resolve => setTimeout(resolve, 50));
+    console.log('🟢 render debería haber ocurrido');
+
+    console.log('🟡 iniciando timeout de seguridad');
+    timeoutId = setTimeout(() => {
+      console.log('⏱️ timeout de seguridad disparado');
+      this.eliminandoEjercicio = false;
+      this.cdr.detectChanges();
+    }, 10000);
+
+    console.log('🟡 llamando a desactivarEjercicio');
+    const result = await this.ejercicioService.desactivarEjercicio(ejercicio.id);
+    console.log('🟢 respuesta del servicio:', result);
+
+    clearTimeout(timeoutId);
+
+    if (result.success) {
+      console.log('🟢 eliminación exitosa');
+
+      // Mantener spinner visible por un momento
+      console.log('🟡 manteniendo spinner visible...');
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Ocultar spinner
+      console.log('🟢 spinner OFF');
+      this.eliminandoEjercicio = false;
+      this.cdr.detectChanges();
+
+      // Pequeña pausa antes de mostrar toast y actualizar lista
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Mostrar toast
+      await this.toastService.mostrarExito('Ejercicio eliminado');
+
+      // Actualizar lista (desaparece el ejercicio)
+      this.ejercicios = this.ejercicios.filter(e => e.id !== ejercicio.id);
+      this.cacheEjercicios = this.ejercicios;
+      this.aplicarFiltros();
+      this.cdr.detectChanges();
+    } else {
+      console.log('🔴 error del backend');
+      this.eliminandoEjercicio = false;
+      this.cdr.detectChanges();
+    }
+
+  } catch (error) {
+    console.log('💥 catch:', error);
+    this.eliminandoEjercicio = false;
+    this.cdr.detectChanges();
+  } finally {
+    clearTimeout(timeoutId);
+    console.log('🟡 finally ejecutado');
   }
+}
+
+ async confirmarEliminar(ejercicio: Ejercicio): Promise<boolean> {
+  console.log('🟡 confirmarEliminar()');
+
+  const alert = await this.alertController.create({
+    header: 'Confirmar eliminación',
+    message: `¿Eliminar "${ejercicio.nombre}"?`,
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      { text: 'Eliminar', role: 'confirm' }
+    ]
+  });
+
+  await alert.present();
+  console.log('🟡 alert presentado');
+
+  const { role } = await alert.onDidDismiss();
+  console.log('🟢 alert cerrado con role:', role);
+
+  return role === 'confirm';
+}
+
 
   // Convertir URL de Google Drive a formato embed para mostrar en iframe
   getVideoEmbedUrl(url: string): SafeResourceUrl {
@@ -442,15 +496,22 @@ export class VerEjerciciosComponent implements OnInit {
   // Obtener URL directa de imagen/GIF desde Google Drive
     getDirectImageUrl(url: string): string {
     if (!url) return '';
-    
+
     // Extraer el ID del archivo de Google Drive
     let fileId = '';
-    
+
     // Patrón para URLs como: https://drive.google.com/file/d/FILE_ID/view
     const patronId = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
     if (patronId) {
       fileId = patronId[1];
-      // Usar la URL directa de thumbnail que funciona para GIFs y se reproduce automáticamente
+
+      // Para GIFs, intentar diferentes URLs
+      if (url.toLowerCase().includes('.gif') || this.isLikelyGif(url)) {
+        // URL alternativa que podría funcionar mejor para GIFs
+        return `https://lh3.googleusercontent.com/d/${fileId}`;
+      }
+
+      // Para otras imágenes, usar la URL de vista
       return `https://drive.google.com/uc?export=view&id=${fileId}`;
     }
 
@@ -458,7 +519,47 @@ export class VerEjerciciosComponent implements OnInit {
     const patronOpen = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
     if (patronOpen) {
       fileId = patronOpen[1];
+
+      if (url.toLowerCase().includes('.gif') || this.isLikelyGif(url)) {
+        return `https://lh3.googleusercontent.com/d/${fileId}`;
+      }
       return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
+
+    // Si no se puede extraer el ID, devolver la URL original
+    return url;
+  }
+
+  // Función auxiliar para detectar si es probable que sea un GIF
+  private isLikelyGif(url: string): boolean {
+    const lower = url.toLowerCase();
+    // Si contiene 'gif' en cualquier parte de la URL
+    if (lower.includes('gif')) return true;
+    // Si es de Google Drive y no tiene extensión clara de imagen/video
+    if (lower.includes('drive.google.com') && !/\.(png|jpe?g|webp|mp4|mov|avi)/.test(lower)) return true;
+    return false;
+  }
+
+  // Obtener URL para video desde Google Drive (usando embed)
+  getDirectVideoUrl(url: string): string {
+    if (!url) return '';
+
+    // Extraer el ID del archivo de Google Drive
+    let fileId = '';
+
+    // Patrón para URLs como: https://drive.google.com/file/d/FILE_ID/view
+    const patronId = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+    if (patronId) {
+      fileId = patronId[1];
+      // Para videos, usar la URL de embed que permite reproducción
+      return `https://drive.google.com/file/d/${fileId}/preview`;
+    }
+
+    // Patrón para URLs como: https://drive.google.com/open?id=FILE_ID
+    const patronOpen = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+    if (patronOpen) {
+      fileId = patronOpen[1];
+      return `https://drive.google.com/file/d/${fileId}/preview`;
     }
 
     // Si no se puede extraer el ID, devolver la URL original
@@ -468,6 +569,61 @@ export class VerEjerciciosComponent implements OnInit {
   // Alias para usar en el HTML de rutinas
   getSafeUrl(url: string): SafeResourceUrl {
     return this.getVideoEmbedUrl(url);
+  }
+
+  isImageUrl(url: string): boolean {
+    if (!url) return false;
+    const lower = url.toLowerCase();
+
+    // Extensiones de imagen/GIF
+    if (/\.(gif|png|jpe?g|webp)$/.test(lower)) {
+      return true;
+    }
+
+    // URLs ya procesadas de Drive
+    if (lower.includes('uc?export=view') || lower.includes('export=download') || lower.includes('thumbnail')) {
+      return true;
+    }
+
+    // Para Google Drive: si NO es claramente un video, asumir que es imagen/GIF
+    if (lower.includes('drive.google.com') && !this.isVideoFile(url)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  isVideoUrl(url: string): boolean {
+    if (!url) return false;
+    const lower = url.toLowerCase();
+
+    // Extensiones de video reales
+    if (/\.(mp4|webm|mov|mkv|ogg|avi)$/.test(lower)) {
+      return true;
+    }
+
+    // URLs ya procesadas como videos
+    if (lower.includes('uc?export=download') || lower.includes('webcontent') || lower.includes('export=download')) {
+      return true;
+    }
+
+    // Solo para Google Drive: si es claramente un archivo de video
+    if (lower.includes('drive.google.com') && this.isVideoFile(url)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // Función auxiliar para detectar archivos de video por extensión o nombre
+  private isVideoFile(url: string): boolean {
+    const lower = url.toLowerCase();
+    return /\.(mp4|webm|mov|mkv|ogg|avi|m4v|3gp|flv|wmv)$/.test(lower);
+  }
+
+  getDirectMediaUrl(url: string): string {
+    // Para videos, usar la URL de embed que permite reproducción
+    return this.getDirectVideoUrl(url);
   }
 
   // Métodos para manejar arrays dinámicos
@@ -760,24 +916,49 @@ export class VerEjerciciosComponent implements OnInit {
   }
 
   async guardarRutina() {
+    console.log('🟢 [guardarRutina] INICIO');
     try {
       // Validaciones
       if (!this.rutinaActual.nombre.trim()) {
+        console.log('❌ Validación fallida: nombre vacío');
         await this.toastService.mostrarError('El nombre de la rutina es obligatorio');
         return;
       }
 
       if (this.ejerciciosSeleccionados.length === 0) {
+        console.log('❌ Validación fallida: sin ejercicios');
         await this.toastService.mostrarError('Debe agregar al menos un ejercicio a la rutina');
         return;
       }
 
-      this.loadingRutinas = true;
+      // Validar repeticiones
+      for (const ej of this.ejerciciosSeleccionados) {
+        if (!this.validarRepeticiones(ej.repeticiones)) {
+          console.log('❌ Validación fallida: repeticiones inválidas');
+          await this.toastService.mostrarError('Las repeticiones no pueden ser mayores a 20. Formato válido: "12" o "10-15"');
+          return;
+        }
+      }
+
+      // Validar descanso (máximo 4 minutos = 240 segundos)
+      for (const ej of this.ejerciciosSeleccionados) {
+        const descanso = parseInt(ej.descanso_segundos?.toString() || '0');
+        if (descanso > 240) {
+          console.log('❌ Validación fallida: descanso demasiado largo');
+          await this.toastService.mostrarError('El descanso no puede superar los 4 minutos (240 segundos)');
+          return;
+        }
+      }
+
+      console.log('✅ Validaciones pasadas, mostrando spinner global');
+      // Mostrar spinner global
+      this.mostrarSpinnerGlobal = true;
 
       let rutinaId: number;
 
       if (this.editModeRutina && this.rutinaActual.id) {
         // Actualizar rutina existente
+        console.log('🔄 Actualizando rutina ID:', this.rutinaActual.id);
         const { data, error } = await this.rutinaService.actualizarRutina(this.rutinaActual.id, {
           nombre: this.rutinaActual.nombre,
           descripcion: this.rutinaActual.descripcion,
@@ -787,12 +968,15 @@ export class VerEjerciciosComponent implements OnInit {
         });
 
         if (error) {
-          this.loadingRutinas = false;
+          console.log('❌ Error actualizando rutina:', error);
+          // Ocultar spinner global
+          this.mostrarSpinnerGlobal = false;
           throw error;
         }
         rutinaId = this.rutinaActual.id;
       } else {
         // Crear nueva rutina
+        console.log('➕ Creando nueva rutina');
         const { data, error } = await this.rutinaService.crearRutina({
           nombre: this.rutinaActual.nombre,
           descripcion: this.rutinaActual.descripcion,
@@ -803,7 +987,9 @@ export class VerEjerciciosComponent implements OnInit {
         });
 
         if (error || !data) {
-          this.loadingRutinas = false;
+          console.log('❌ Error creando rutina:', error);
+          // Ocultar spinner global
+          this.mostrarSpinnerGlobal = false;
           throw error;
         }
         rutinaId = data.id!;
@@ -821,52 +1007,101 @@ export class VerEjerciciosComponent implements OnInit {
         notas: ej.notas
       }));
 
+      console.log('💾 Guardando ejercicios en rutina');
       const { success, error: errorEjercicios } = await this.rutinaService.guardarEjerciciosEnRutina(rutinaId, ejerciciosParaGuardar);
 
       if (!success) {
-        this.loadingRutinas = false;
+        console.log('❌ Error guardando ejercicios:', errorEjercicios);
+        // Ocultar spinner global
+        this.mostrarSpinnerGlobal = false;
         throw errorEjercicios;
       }
 
-      // Detener spinner inmediatamente al éxito
-      this.loadingRutinas = false;
-      
-      // Cerrar modal primero (inmediato)
+      console.log('✅ Operación exitosa');
+      // Cerrar modal
       this.cerrarModalRutina();
-      
-      // Mostrar toast (sin await para que no bloquee)
-      this.toastService.mostrarExito(this.editModeRutina ? 'Rutina actualizada correctamente' : 'Rutina creada correctamente');
-      
-      // Recargar rutinas en segundo plano (sin await para que no bloquee)
-      this.cargarRutinas(true).then(() => {
-        console.log('Rutinas recargadas');
+
+      // Ocultar spinner global
+      this.mostrarSpinnerGlobal = false;
+
+      console.log('📢 Mostrando toast de éxito');
+      // Mostrar toast de éxito
+      await this.toastService.mostrarExito(
+        this.editModeRutina ? 'Rutina actualizada correctamente' : 'Rutina creada correctamente'
+      );
+
+      console.log('🔄 Recargando rutinas en segundo plano');
+      // Recargar rutinas en segundo plano
+      this.cargarRutinas(true).catch(error => {
+        console.error('Error recargando rutinas:', error);
       });
+      console.log('🏁 Proceso completado');
     } catch (error) {
-      // En caso de error, detener spinner inmediatamente
-      this.loadingRutinas = false;
+      console.log('💥 Excepción capturada:', error);
+      // Ocultar spinner global en caso de error
+      this.mostrarSpinnerGlobal = false;
+
       console.error('Error al guardar rutina:', error);
       await this.toastService.mostrarError('Error al guardar rutina');
     }
+    console.log('🔴 [guardarRutina] FIN');
   }
 
   async eliminarRutina(rutina: Rutina) {
     if (!rutina.id) return;
 
     try {
-      this.loadingRutinas = true;
+      // Alert de confirmación
+      const alert = await this.alertController.create({
+        header: 'Confirmar eliminación',
+        message: `¿Eliminar la rutina "${rutina.nombre}"?`,
+        buttons: [
+          {
+            text: 'Cancelar',
+            role: 'cancel'
+          },
+          {
+            text: 'Eliminar',
+            role: 'destructive'
+          }
+        ]
+      });
+
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+
+      // Si canceló, salir
+      if (role === 'cancel') return;
+      // Eliminación optimista: quitar de la UI inmediatamente
+      const originalRutinas = [...this.rutinas];
+      const originalFiltradas = [...this.rutinasFiltradas];
+
+      this.rutinas = this.rutinas.filter(r => r.id !== rutina.id);
+      this.aplicarFiltrosRutinas();
+      // Actualizar caché local para reflejar el cambio inmediato
+      this.cacheRutinas = this.rutinas;
+      this.ultimaCargaRutinas = Date.now();
+      this.cdr.detectChanges();
+
+      // Llamada al servicio en background
       const { success, error } = await this.rutinaService.eliminarRutina(rutina.id);
 
       if (success) {
-        await this.toastService.mostrarExito('Rutina eliminada');
-        await this.cargarRutinas();
+        // Eliminado correctamente en backend
+        this.toastService.mostrarExito('Rutina eliminada');
       } else {
+        // Revertir UI si falla
+        this.rutinas = originalRutinas;
+        this.rutinasFiltradas = originalFiltradas;
+        this.cacheRutinas = this.rutinas;
+        this.cdr.detectChanges();
         await this.toastService.mostrarError(error || 'Error al eliminar rutina');
       }
     } catch (error) {
       console.error('Error al eliminar rutina:', error);
       await this.toastService.mostrarError('Error inesperado');
     } finally {
-      this.loadingRutinas = false;
+      // No bloquear con spinner; la UI ya fue actualizada optimísticamente
     }
   }
 
@@ -999,15 +1234,66 @@ export class VerEjerciciosComponent implements OnInit {
     return this.ejerciciosSeleccionados.some(e => e.ejercicio_id === ejercicioId);
   }
 
-  eliminarEjercicioDeRutina(index: number) {
-    this.ejerciciosSeleccionados.splice(index, 1);
-    // Reordenar
-    this.ejerciciosSeleccionados.forEach((ej, i) => {
-      ej.orden = i + 1;
+  async eliminarEjercicioDeRutina(index: number) {
+    const ejercicio = this.ejerciciosSeleccionados[index];
+    
+    const alert = await this.alertController.create({
+      header: 'Confirmar eliminación',
+      message: `¿Estás seguro de que deseas eliminar "${ejercicio.ejercicio?.nombre}" de esta rutina?`,
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Eliminar',
+          role: 'destructive',
+          handler: () => {
+            this.ejerciciosSeleccionados.splice(index, 1);
+            // Reordenar
+            this.ejerciciosSeleccionados.forEach((ej, i) => {
+              ej.orden = i + 1;
+            });
+          }
+        }
+      ]
     });
+
+    await alert.present();
+  }
+
+  validarRepeticiones(repeticiones: string): boolean {
+    if (!repeticiones || repeticiones.trim() === '') {
+      return true; // Permitir vacío
+    }
+
+    const repsStr = repeticiones.trim();
+
+    // Si es un rango (contiene "-")
+    if (repsStr.includes('-')) {
+      const partes = repsStr.split('-');
+      if (partes.length !== 2) {
+        return false;
+      }
+
+      const num1 = parseInt(partes[0].trim());
+      const num2 = parseInt(partes[1].trim());
+
+      // Validar que ambos sean números válidos y no mayores a 20
+      if (isNaN(num1) || isNaN(num2) || num1 < 1 || num2 < 1 || num1 > 20 || num2 > 20) {
+        return false;
+      }
+
+      return true;
+    } else {
+      // Si es un número simple
+      const num = parseInt(repsStr);
+      return !isNaN(num) && num >= 1 && num <= 20;
+    }
   }
 
   moverEjercicioArriba(index: number) {
+    console.log('Mover arriba:', index);
     if (index === 0) return;
     const temp = this.ejerciciosSeleccionados[index];
     this.ejerciciosSeleccionados[index] = this.ejerciciosSeleccionados[index - 1];
@@ -1019,6 +1305,7 @@ export class VerEjerciciosComponent implements OnInit {
   }
 
   moverEjercicioAbajo(index: number) {
+    console.log('Mover abajo:', index);
     if (index === this.ejerciciosSeleccionados.length - 1) return;
     const temp = this.ejerciciosSeleccionados[index];
     this.ejerciciosSeleccionados[index] = this.ejerciciosSeleccionados[index + 1];
@@ -1105,23 +1392,16 @@ export class VerEjerciciosComponent implements OnInit {
 
   // Abrir modal de detalle de rutina
   async verDetalleRutina(rutina: RutinaConDetalles) {
-    console.log('📋 Abriendo detalle de rutina:', rutina);
-    console.log('📊 Ejercicios en la rutina:', rutina.ejercicios);
-    console.log('🔢 Cantidad de ejercicios:', rutina.ejercicios?.length || 0);
-    
     // Si la rutina no tiene ejercicios cargados, cargarlos
     if (!rutina.ejercicios || rutina.ejercicios.length === 0) {
-      console.log('⚠️ No hay ejercicios, intentando cargar...');
       if (rutina.id) {
         const { data: ejerciciosRutina } = await this.rutinaService.obtenerEjerciciosDeRutina(rutina.id);
-        console.log('✅ Ejercicios cargados:', ejerciciosRutina);
         rutina.ejercicios = ejerciciosRutina || [];
       }
     }
     
     this.rutinaDetalle = rutina;
     this.showModalDetalle = true;
-    console.log('✅ Modal abierto con rutina:', this.rutinaDetalle);
   }
 
   // Cerrar modal de detalle

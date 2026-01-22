@@ -5,6 +5,9 @@
       Mi Entrenamiento
     </ion-title>
     <ion-buttons slot="end">
+      <ion-button (click)="cargarRutinaAsignada()">
+        <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+      </ion-button>
       <ion-button (click)="logout()">
         <ion-icon name="log-out-outline" slot="icon-only"></ion-icon>
       </ion-button>
@@ -130,28 +133,28 @@
               <div class="stat-box">
                 <ion-icon name="repeat-outline"></ion-icon>
                 <div>
-                  <small>Series</small>
+                  <small>Series: </small>
                   <strong>{{ ej.series || 'N/A' }}</strong>
                 </div>
               </div>
               <div class="stat-box">
                 <ion-icon name="trending-up-outline"></ion-icon>
                 <div>
-                  <small>Reps</small>
+                  <small>Repeticiones: </small>
                   <strong>{{ ej.repeticiones || 'N/A' }}</strong>
                 </div>
               </div>
               <div class="stat-box">
                 <ion-icon name="time-outline"></ion-icon>
                 <div>
-                  <small>Descanso</small>
+                  <small>Descanso: </small>
                   <strong>{{ ej.descanso_segundos || 60 }}s</strong>
                 </div>
               </div>
               <div class="stat-box">
                 <ion-icon name="flash-outline"></ion-icon>
                 <div>
-                  <small>Fuerza</small>
+                  <small>Fuerza: </small>
                   <strong>{{ ej.porcentaje_fuerza || 100 }}%</strong>
                 </div>
               </div>
@@ -170,15 +173,18 @@
               </ion-button>
             </div>
 
-            <!-- Video -->
-            <div *ngIf="ej.ejercicio?.enlace_video" class="video-container">
-              <iframe
-                [src]="getSafeUrl(ej.ejercicio.enlace_video)"
-                frameborder="0"
-                allowfullscreen
-                loading="lazy"
-                class="exercise-video">
-              </iframe>
+            <!-- Video o Imagen del ejercicio -->
+            <div *ngIf="ej.ejercicio?.enlace_video" class="media-container">
+              <!-- Si es imagen/GIF -->
+              <div *ngIf="ej.ejercicio && isImageUrl(ej.ejercicio.enlace_video)" class="image-container">
+                <img
+                  [src]="getDirectImageUrl(ej.ejercicio.enlace_video)"
+                  alt="{{ ej.ejercicio.nombre }}"
+                  class="exercise-image"
+                  loading="lazy"
+                  (error)="$event.target.style.display='none'">
+              </div>
+              
             </div>
 
             <!-- Notas del ejercicio -->

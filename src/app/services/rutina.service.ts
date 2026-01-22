@@ -172,9 +172,19 @@ export class RutinaService {
         return { data: null, error: errorEjercicios };
       }
 
+      // Filtrar ejercicios que fueron eliminados (ejercicio === null)
+      const ejerciciosOriginales = ejercicios || [];
+      const ejerciciosValidos = ejerciciosOriginales.filter(ej => ej.ejercicio !== null);
+      
+      console.log(`📊 Rutina ${id}: ${ejerciciosOriginales.length} ejercicios totales, ${ejerciciosValidos.length} válidos`);
+      
+      if (ejerciciosOriginales.length !== ejerciciosValidos.length) {
+        console.warn(`⚠️ Se filtraron ${ejerciciosOriginales.length - ejerciciosValidos.length} ejercicios eliminados`);
+      }
+
       const rutinaCompleta: RutinaConDetalles = {
         ...rutina,
-        ejercicios: ejercicios || []
+        ejercicios: ejerciciosValidos
       };
 
       return { data: rutinaCompleta, error: null };
@@ -224,14 +234,14 @@ export class RutinaService {
   }
 
   /**
-   * Eliminar una rutina (soft delete)
+   * Eliminar una rutina (delete permanente)
    */
   async eliminarRutina(id: number): Promise<{ success: boolean; error: any }> {
     try {
       const supabase = this.supabaseService['supabase'];
       const { error } = await supabase
         .from('rutinas')
-        .update({ activo: false })
+        .delete()
         .eq('id', id);
 
       return { success: !error, error };
@@ -260,7 +270,21 @@ export class RutinaService {
         .eq('rutina_id', rutinaId)
         .order('orden', { ascending: true });
 
-      return { data, error };
+      if (error) {
+        return { data: null, error };
+      }
+
+      // Filtrar ejercicios eliminados
+      const ejerciciosOriginales = data || [];
+      const ejerciciosValidos = ejerciciosOriginales.filter(ej => ej.ejercicio !== null);
+      
+      console.log(`📊 Rutina ${rutinaId}: ${ejerciciosOriginales.length} ejercicios totales, ${ejerciciosValidos.length} válidos`);
+      
+      if (ejerciciosOriginales.length !== ejerciciosValidos.length) {
+        console.warn(`⚠️ Se filtraron ${ejerciciosOriginales.length - ejerciciosValidos.length} ejercicios eliminados`);
+      }
+
+      return { data: ejerciciosValidos, error: null };
     } catch (error) {
       console.error('Error al obtener ejercicios de rutina:', error);
       return { data: null, error };
@@ -357,6 +381,56 @@ export class RutinaService {
   // ============================================
   // ASIGNACIÓN DE RUTINAS A CLIENTES
   // ============================================
+
+  /**
+   * Verificar si la rutina ya está asignada a algún cliente en el mismo día
+   */
+  async verificarRutinaAsignadaMismoDia(
+    rutinaId: number,
+    clienteIds: number[],
+    diaSemana: number
+  ): Promise<{ existe: boolean; cliente: string }> {
+    try {
+      const supabase = this.supabaseService['supabase'];
+      
+      const { data, error } = await supabase
+        .from('rutinas_clientes')
+        .select(`
+          cliente_id,
+          clientes!inner(nombre, apellido)
+        `)
+        .eq('rutina_id', rutinaId)
+        .eq('dia_semana', diaSemana)
+        .in('cliente_id', clienteIds)
+        .limit(1)
+        .single();
+
+      if (error) {
+        console.error('Error al verificar rutina:', error);
+        return { existe: false, cliente: '' };
+      }
+
+      if (data) {
+        // `clientes` puede venir como un objeto o como un array (dependiendo del JOIN de Supabase).
+        // Normalizamos para obtener el primer cliente si es un array.
+        let clienteInfo: any = data.clientes;
+        if (Array.isArray(clienteInfo)) {
+          clienteInfo = clienteInfo[0] || null;
+        }
+
+        const nombre = clienteInfo?.nombre ?? '';
+        const apellido = clienteInfo?.apellido ?? '';
+        const nombreCompleto = `${nombre} ${apellido}`.trim();
+
+        return { existe: true, cliente: nombreCompleto };
+      }
+
+      return { existe: false, cliente: '' };
+    } catch (error) {
+      console.error('Error en verificarRutinaAsignadaMismoDia:', error);
+      return { existe: false, cliente: '' };
+    }
+  }
 
   /**
    * Asignar una rutina a uno o varios clientes

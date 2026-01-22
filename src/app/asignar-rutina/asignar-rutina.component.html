@@ -11,6 +11,11 @@
 
 <ion-content [fullscreen]="true" class="main-content">
   
+  <!-- Spinner de carga -->
+  <div *ngIf="guardando" class="spinner-overlay-transparent">
+    <app-spinner></app-spinner>
+  </div>
+  
   <!-- Loading -->
   <div *ngIf="loading" class="loading-container">
     <ion-spinner name="crescent"></ion-spinner>

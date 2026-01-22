@@ -18,6 +18,16 @@
     </ion-buttons>
   </ion-toolbar>
   
+  <!-- Spinner global para operaciones -->
+  <div *ngIf="mostrarSpinnerGlobal" class="spinner-overlay-transparent">
+    <app-spinner></app-spinner>
+  </div>
+  
+  <!-- Spinner para eliminación de ejercicio -->
+  <div *ngIf="eliminandoEjercicio" class="spinner-overlay-transparent">
+    <app-spinner></app-spinner>
+  </div>
+  
   <!-- Segment para cambiar entre Ejercicios y Rutinas -->
   <ion-toolbar color="dark" class="segment-toolbar">
     <ion-segment [(ngModel)]="segmentValue" (ionChange)="onSegmentChange($event)" mode="md">
@@ -149,14 +159,30 @@
 
         <!-- Video/GIF embebido desde Google Drive -->
         <div *ngIf="ejercicio.enlace_video" class="video-container">
-          <iframe 
-            [src]="getVideoEmbedUrl(ejercicio.enlace_video)" 
-            frameborder="0" 
-            allowfullscreen
-            allow="autoplay"
-            loading="lazy"
-            class="exercise-video">
-          </iframe>
+          <ng-container *ngIf="isImageUrl(ejercicio.enlace_video); else videoIframe">
+            <img [src]="getDirectImageUrl(ejercicio.enlace_video)" alt="Ejercicio" style="width:100%; height:auto; border-radius:8px;" />
+          </ng-container>
+          <ng-template #videoIframe>
+            <ng-container *ngIf="isVideoUrl(ejercicio.enlace_video); else iframeFallback">
+              <iframe [src]="getSafeUrl(getDirectVideoUrl(ejercicio.enlace_video))" 
+                      frameborder="0" 
+                      allowfullscreen
+                      allow="autoplay"
+                      loading="lazy"
+                      style="width:100%; height:250px; border-radius:8px; border:2px solid rgba(0,255,136,0.3);">
+              </iframe>
+            </ng-container>
+            <ng-template #iframeFallback>
+              <iframe 
+                [src]="getVideoEmbedUrl(ejercicio.enlace_video)" 
+                frameborder="0" 
+                allowfullscreen
+                allow="autoplay"
+                loading="lazy"
+                class="exercise-video">
+              </iframe>
+            </ng-template>
+          </ng-template>
         </div>
 
         <div *ngIf="ejercicio.musculos_secundarios && ejercicio.musculos_secundarios.length > 0" class="secondary-muscles">
@@ -296,6 +322,11 @@
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
+
+    <!-- Spinner dentro del modal -->
+    <div *ngIf="mostrarSpinnerGlobal" class="spinner-overlay-transparent">
+      <app-spinner></app-spinner>
+    </div>
 
     <ion-content class="modal-content">
       <form (ngSubmit)="guardarEjercicio()">
@@ -531,9 +562,8 @@
 
         <!-- Botones -->
         <div class="form-actions">
-          <ion-button expand="block" type="submit" [disabled]="loading">
-            <ion-spinner *ngIf="loading" name="crescent"></ion-spinner>
-            <span *ngIf="!loading">{{ editMode ? 'Actualizar' : 'Crear' }} Ejercicio</span>
+          <ion-button expand="block" type="submit">
+            {{ editMode ? 'Actualizar' : 'Crear' }} Ejercicio
           </ion-button>
         </div>
       </form>
@@ -618,6 +648,7 @@
           <!-- Buscador de ejercicios -->
           <ion-searchbar
             [(ngModel)]="filtroEjercicioModal"
+            name="filtroEjercicioModal"
             (ionInput)="filtrarEjerciciosModal()"
             (ionChange)="filtrarEjerciciosModal()"
             placeholder="Buscar ejercicios por nombre, músculo o categoría..."
@@ -643,7 +674,7 @@
                   (click)="agregarEjercicioARutina(ej)"
                   [disabled]="isEjercicioYaAgregado(ej.id)">
                   <ion-icon 
-                    name="add-circle" 
+                    name="add-circle-outline" 
                     slot="start" 
                     [color]="isEjercicioYaAgregado(ej.id) ? 'medium' : 'success'">
                   </ion-icon>
@@ -698,9 +729,29 @@
                 <strong style="color: var(--primary-green); flex: 1;">
                   {{ ejSel.ejercicio?.nombre || 'Nombre no disponible' }}
                 </strong>
-                <ion-button fill="clear" color="danger" size="small" (click)="eliminarEjercicioDeRutina(i)" title="Eliminar ejercicio" style="margin-right: 10px;">
+                
+                <!-- Botones de reordenamiento -->
+                <div class="reorder-buttons">
+                  <ion-button 
+                    fill="clear" 
+                    size="small" 
+                    [disabled]="i === 0"
+                    (click)="moverEjercicioArriba(i)" 
+                    title="Mover arriba">
+                    <ion-icon name="arrow-up" slot="icon-only"></ion-icon>
+                  </ion-button>
+                  <ion-button 
+                    fill="clear" 
+                    size="small" 
+                    [disabled]="i === ejerciciosSeleccionados.length - 1"
+                    (click)="moverEjercicioAbajo(i)" 
+                    title="Mover abajo">
+                    <ion-icon name="arrow-down" slot="icon-only"></ion-icon>
+                  </ion-button>
+                </div>
+                
+                <ion-button fill="clear" color="danger" size="small" (click)="eliminarEjercicioDeRutina(i)" title="Eliminar ejercicio">
                   <ion-icon name="trash" slot="icon-only"></ion-icon>
-                  Eliminar
                 </ion-button>
               </div>
               
@@ -740,7 +791,7 @@
                 </ion-item>
 
                 <ion-item lines="none">
-                  <ion-label position="stacked">% Fuerza/Intensidad</ion-label>
+                  <ion-label position="stacked">Porcentaje de fuerza</ion-label>
                   <ion-input 
                     [(ngModel)]="ejSel.porcentaje_fuerza" 
                     [name]="'porcentaje_' + i"
@@ -763,9 +814,8 @@
 
         <!-- Botones -->
         <div class="form-actions">
-          <ion-button expand="block" type="submit" [disabled]="loadingRutinas">
-            <ion-spinner *ngIf="loadingRutinas" name="crescent"></ion-spinner>
-            <span *ngIf="!loadingRutinas">{{ editModeRutina ? 'Actualizar' : 'Crear' }} Rutina</span>
+          <ion-button expand="block" type="submit">
+            {{ editModeRutina ? 'Actualizar' : 'Crear' }} Rutina
           </ion-button>
         </div>
       </form>
@@ -912,13 +962,29 @@
                 <!-- Video del ejercicio -->
                 <div *ngIf="ej.ejercicio?.enlace_video" style="margin-top: 20px;">
                   <div style="background: #000000; border: 2px solid rgba(0, 255, 136, 0.3); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 255, 136, 0.2);">
-                    <iframe
-                      [src]="getSafeUrl(ej.ejercicio.enlace_video)"
-                      frameborder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowfullscreen
-                      style="width: 100%; height: 300px; display: block;">
-                    </iframe>
+                    <ng-container *ngIf="isImageUrl(ej.ejercicio.enlace_video); else mediaBlock">
+                      <img [src]="getDirectImageUrl(ej.ejercicio.enlace_video)" alt="Ejercicio" style="width:100%; height:auto; display:block;" />
+                    </ng-container>
+                    <ng-template #mediaBlock>
+                      <ng-container *ngIf="isVideoUrl(ej.ejercicio.enlace_video); else safeIframe">
+                        <iframe [src]="getSafeUrl(getDirectVideoUrl(ej.ejercicio.enlace_video))" 
+                                frameborder="0" 
+                                allowfullscreen
+                                allow="autoplay"
+                                loading="lazy"
+                                style="width:100%; height:300px; display:block;">
+                        </iframe>
+                      </ng-container>
+                      <ng-template #safeIframe>
+                        <iframe
+                          [src]="getSafeUrl(ej.ejercicio.enlace_video)"
+                          frameborder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowfullscreen
+                          style="width: 100%; height: 300px; display: block;">
+                        </iframe>
+                      </ng-template>
+                    </ng-template>
                   </div>
                 </div>
 
@@ -957,17 +1023,34 @@
 
     <ion-content class="modal-content">
       <div class="video-modal-container" *ngIf="ejercicioVideo">
-        <div class="video-wrapper">
-          <iframe 
-            [src]="getVideoEmbedUrl(ejercicioVideo.enlace_video)" 
-            width="100%" 
-            height="400" 
-            frameborder="0" 
-            allowfullscreen
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            class="video-frame">
-          </iframe>
-        </div>
+          <div class="video-wrapper">
+            <ng-container *ngIf="isImageUrl(ejercicioVideo.enlace_video); else mediaModal">
+              <img [src]="getDirectImageUrl(ejercicioVideo.enlace_video)" alt="Ejercicio" style="width:100%; height:auto; max-height:400px; display:block;" />
+            </ng-container>
+            <ng-template #mediaModal>
+              <ng-container *ngIf="isVideoUrl(ejercicioVideo.enlace_video); else modalIframe">
+                <iframe [src]="getSafeUrl(getDirectVideoUrl(ejercicioVideo.enlace_video))" 
+                        frameborder="0" 
+                        allowfullscreen
+                        allow="autoplay"
+                        loading="lazy"
+                        style="width:100%; height:400px; display:block;" 
+                        class="video-frame">
+                </iframe>
+              </ng-container>
+              <ng-template #modalIframe>
+                <iframe 
+                  [src]="getVideoEmbedUrl(ejercicioVideo.enlace_video)" 
+                  width="100%" 
+                  height="400" 
+                  frameborder="0" 
+                  allowfullscreen
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  class="video-frame">
+                </iframe>
+              </ng-template>
+            </ng-template>
+          </div>
         
         <div class="video-info">
           <h3>{{ ejercicioVideo.nombre }}</h3>
@@ -992,4 +1075,3 @@
     </ion-content>
   </ng-template>
 </ion-modal>
-

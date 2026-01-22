@@ -94,7 +94,10 @@ import {
   chevronDown,
   rocket,
   trendingUpOutline,
-  keyOutline
+  keyOutline,
+  arrowDown,
+  arrowUp,
+  barChartOutline
 } from 'ionicons/icons';
 
 import { routes } from './app/app.routes';
@@ -102,6 +105,9 @@ import { AppComponent } from './app/app.component';
 
 // Registrar iconos (todos los necesarios para el proyecto)
 addIcons({
+  "bar-chart-outline": barChartOutline,
+  "arrow-up": arrowUp,
+  "arrow-down": arrowDown,
   "key-outliney": keyOutline,
   "information-circle-outline" : informationCircleOutline,
   "trending-up-outline" : trendingUpOutline,

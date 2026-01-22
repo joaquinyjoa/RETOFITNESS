@@ -1,3 +1,16 @@
+/* ===== Fuente moderna ===== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Aplicar fuente Inter a todo el componente */
+:host {
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: var(--font-family);
+}
+
+* {
+  font-family: var(--font-family) !important;
+}
+
 /* ===== Fondo general con gradiente ===== */
 ion-content {
   --background: var(--gradient-bg);

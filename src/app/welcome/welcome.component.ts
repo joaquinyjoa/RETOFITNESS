@@ -20,8 +20,10 @@ export class WelcomeComponent implements OnInit, OnDestroy, ViewWillEnter, ViewW
   private cdr = inject(ChangeDetectorRef);
 
   ngOnInit() {
-    // Resetear spinner por si volvemos al componente
-    this.mostrarSpinner = false;
+    // Resetear spinner por si volvemos al componente - usar setTimeout para evitar NG0100
+    setTimeout(() => {
+      this.mostrarSpinner = false;
+    }, 0);
     
     setTimeout(() => {
       this.playWelcomeAnimation();
@@ -37,9 +39,11 @@ export class WelcomeComponent implements OnInit, OnDestroy, ViewWillEnter, ViewW
   }
 
   ionViewWillLeave() {
-    // Apagar spinner al salir de la vista
+    // Apagar spinner al salir de la vista - usar setTimeout para evitar NG0100
     console.log('🔴 WELCOME: ionViewWillLeave - Apagando spinner');
-    this.mostrarSpinner = false;
+    setTimeout(() => {
+      this.mostrarSpinner = false;
+    }, 0);
   }
 
   playWelcomeAnimation() {
@@ -96,8 +100,10 @@ export class WelcomeComponent implements OnInit, OnDestroy, ViewWillEnter, ViewW
   }
 
   ngOnDestroy() {
-    // Asegurar que el spinner se apague al destruir el componente
-    this.mostrarSpinner = false;
+    // Asegurar que el spinner se apague al destruir el componente - usar setTimeout para evitar NG0100
+    setTimeout(() => {
+      this.mostrarSpinner = false;
+    }, 0);
   }
 
   navegarAlLogin() {

@@ -141,15 +141,30 @@
               </div>
             </div>
 
-            <!-- Video -->
+            <!-- Video o GIF -->
             <div *ngIf="ej.ejercicio?.enlace_video" style="margin-top: 10px;">
-              <iframe
-                [src]="getSafeUrl(ej.ejercicio.enlace_video)"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen
-                style="width: 100%; height: 250px; border-radius: 8px; border: 2px solid rgba(0, 255, 136, 0.3);">
-              </iframe>
+              <ng-container *ngIf="isImageUrl(ej.ejercicio.enlace_video); else iframeBlock">
+                <img [src]="getDirectImageUrl(ej.ejercicio.enlace_video)" alt="Ejercicio" style="width:100%; height:auto; border-radius:8px; border:2px solid rgba(0,255,136,0.3);" />
+              </ng-container>
+              <ng-template #iframeBlock>
+                <ng-container *ngIf="isVideoUrl(ej.ejercicio.enlace_video); else legacyIframe">
+                  <iframe [src]="getSafeUrl(getDirectVideoUrl(ej.ejercicio.enlace_video))" 
+                          frameborder="0" 
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowfullscreen
+                          style="width:100%; height:250px; border-radius:8px; border:2px solid rgba(0,255,136,0.3);">
+                  </iframe>
+                </ng-container>
+                <ng-template #legacyIframe>
+                  <iframe
+                    [src]="getSafeUrl(ej.ejercicio.enlace_video)"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                    style="width: 100%; height: 250px; border-radius: 8px; border: 2px solid rgba(0, 255, 136, 0.3);">
+                  </iframe>
+                </ng-template>
+              </ng-template>
             </div>
 
             <!-- Notas del ejercicio -->

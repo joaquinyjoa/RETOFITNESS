@@ -7,14 +7,13 @@ import { Cliente } from '../models/cliente/cliente.interface';
 import { Cliente as ClienteSupabase } from '../services/supabase.service';
 import { ClienteService } from '../services/cliente.service';
 import { ToastService } from '../services/toast.service';
-import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule, SpinnerComponent]
+  imports: [CommonModule, IonicModule, FormsModule]
 })
 export class RegisterComponent implements OnInit {
 
@@ -132,7 +131,7 @@ export class RegisterComponent implements OnInit {
     this.cliente = {
       nombre: '',
       apellido: '',
-      edad: 25,
+      edad: 18,
       correo: '@retofitness.com',
       password: '',
       enfermedadCronica: false,
@@ -622,11 +621,11 @@ export class RegisterComponent implements OnInit {
   }
 
   validateEdad(showError: boolean = false): boolean {
-    const isValid = this.cliente.edad >= 10 && this.cliente.edad <= 80;
+    const isValid = this.cliente.edad >= 12 && this.cliente.edad <= 70;
     
     if (showError || this.fieldsTouched.edad || this.attemptedNextStep) {
       if (!isValid) {
-        this.validationErrors.edad = 'Debe tener entre 10 y 80 años';
+        this.validationErrors.edad = 'Debe tener entre 12 y 70 años';
       } else {
         this.validationErrors.edad = '';
       }

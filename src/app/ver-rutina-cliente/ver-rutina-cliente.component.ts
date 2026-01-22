@@ -15,11 +15,8 @@ import {
   IonCardSubtitle,
   IonCardContent,
   IonSpinner,
-  IonBadge,
   IonChip,
-  IonLabel,
-  IonItem,
-  IonList
+  IonLabel
 } from '@ionic/angular/standalone';
 import { RutinaService } from '../services/rutina.service';
 import { ClienteService } from '../services/cliente.service';
@@ -45,11 +42,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
     IonCardSubtitle,
     IonCardContent,
     IonSpinner,
-    IonBadge,
     IonChip,
-    IonLabel,
-    IonItem,
-    IonList
+    IonLabel
   ]
 })
 export class VerRutinaClienteComponent implements OnInit {
@@ -152,6 +146,105 @@ export class VerRutinaClienteComponent implements OnInit {
     }
     
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+
+  // Obtener URL directa de imagen/GIF desde Google Drive
+  getDirectImageUrl(url: string): string {
+    if (!url) return '';
+
+    // Extraer el ID del archivo de Google Drive
+    const patronId = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+    if (patronId) {
+      const fileId = patronId[1];
+      // Para GIFs, usar la URL especial de Google que preserva animación
+      if (url.toLowerCase().includes('.gif') || this.isLikelyGif(url)) {
+        return `https://lh3.googleusercontent.com/d/${fileId}`;
+      }
+      // Para otras imágenes, usar la URL de vista que funciona mejor
+      return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
+
+    const patronOpen = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+    if (patronOpen) {
+      const fileId = patronOpen[1];
+      if (url.toLowerCase().includes('.gif') || this.isLikelyGif(url)) {
+        return `https://lh3.googleusercontent.com/d/${fileId}`;
+      }
+      return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
+
+    return url;
+  }
+
+  // Función auxiliar para detectar si es probable que sea un GIF
+  private isLikelyGif(url: string): boolean {
+    const lower = url.toLowerCase();
+    // Si contiene 'gif' en cualquier parte de la URL
+    if (lower.includes('gif')) return true;
+    // Si es de Google Drive y no tiene extensión clara de imagen/video
+    if (lower.includes('drive.google.com') && !/\.(png|jpe?g|webp|mp4|mov|avi)/.test(lower)) return true;
+    return false;
+  }
+
+  // Obtener URL para video desde Google Drive (usando embed)
+  getDirectVideoUrl(url: string): string {
+    if (!url) return '';
+
+    // Extraer el ID del archivo de Google Drive
+    let fileId = '';
+
+    // Patrón para URLs como: https://drive.google.com/file/d/FILE_ID/view
+    const patronId = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+    if (patronId) {
+      fileId = patronId[1];
+      // Para videos, usar la URL de embed que permite reproducción
+      return `https://drive.google.com/file/d/${fileId}/preview`;
+    }
+
+    // Patrón para URLs como: https://drive.google.com/open?id=FILE_ID
+    const patronOpen = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+    if (patronOpen) {
+      fileId = patronOpen[1];
+      return `https://drive.google.com/file/d/${fileId}/preview`;
+    }
+
+    // Si no se puede extraer el ID, devolver la URL original
+    return url;
+  }
+
+  isImageUrl(url: string): boolean {
+    if (!url) return false;
+    const lower = url.toLowerCase();
+    if (/\.(gif|png|jpe?g|webp)$/.test(lower)) return true;
+    // Si ya está en formato directo de Drive que devuelve la imagen
+    if (lower.includes('uc?export=view') || lower.includes('export=download') || lower.includes('thumbnail')) return true;
+    // Para Google Drive: si NO es claramente un video, asumir que es imagen/GIF
+    if (lower.includes('drive.google.com') && !this.isVideoFile(url)) return true;
+    return false;
+  }
+
+  isVideoUrl(url: string): boolean {
+    if (!url) return false;
+    const lower = url.toLowerCase();
+    // Extensiones comunes de video
+    if (/\.(mp4|webm|mov|mkv|ogg|avi)$/.test(lower)) return true;
+    // Si ya es una URL directa de contenido de Drive
+    if (lower.includes('uc?export=download') || lower.includes('webcontent') || lower.includes('export=download')) return true;
+    // Solo para Google Drive: si es claramente un archivo de video
+    if (lower.includes('drive.google.com') && this.isVideoFile(url)) return true;
+    return false;
+  }
+
+  // Función auxiliar para detectar archivos de video por extensión
+  private isVideoFile(url: string): boolean {
+    const lower = url.toLowerCase();
+    return /\.(mp4|webm|mov|mkv|ogg|avi|m4v|3gp|flv|wmv)$/.test(lower);
+  }
+
+  // Obtener URL directa reproducible para video desde Google Drive
+  getDirectMediaUrl(url: string): string {
+    // Para videos, usar la URL de embed que permite reproducción
+    return this.getDirectVideoUrl(url);
   }
 
   getNivelLabel(nivel: string): string {
