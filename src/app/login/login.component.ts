@@ -189,6 +189,13 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
         this.enviando = false;
         this.mostrarSpinner = false;
         this.cdr.detectChanges();
+        
+        // Asegurar que el spinner se detenga
+        setTimeout(() => {
+          this.mostrarSpinner = false;
+          this.cdr.detectChanges();
+        }, 0);
+        
         return;
       }
 
@@ -207,6 +214,13 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
         this.enviando = false;
         this.mostrarSpinner = false;
         this.cdr.detectChanges();
+        
+        // Asegurar que el spinner se detenga
+        setTimeout(() => {
+          this.mostrarSpinner = false;
+          this.cdr.detectChanges();
+        }, 0);
+        
         await this.presentToast('Por favor ingresa correo y contraseña', 'top');
         return;
       }
@@ -265,6 +279,16 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
         }
 
       } catch (navError) {
+        this.enviando = false;
+        this.mostrarSpinner = false;
+        this.cdr.detectChanges();
+        
+        // Asegurar que el spinner se detenga
+        setTimeout(() => {
+          this.mostrarSpinner = false;
+          this.cdr.detectChanges();
+        }, 0);
+        
         await this.presentToast('Error al cargar el panel. Intenta de nuevo.', 'top');
         return;
       }

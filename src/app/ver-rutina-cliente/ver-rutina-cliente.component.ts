@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import {
   IonHeader,
   IonToolbar,
@@ -16,10 +17,16 @@ import {
   IonCardContent,
   IonSpinner,
   IonChip,
-  IonLabel
+  IonLabel,
+  IonModal,
+  IonSearchbar,
+  IonList,
+  IonItem,
+  AlertController
 } from '@ionic/angular/standalone';
 import { RutinaService } from '../services/rutina.service';
 import { ClienteService } from '../services/cliente.service';
+import { EjercicioService } from '../services/ejercicio.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
@@ -29,6 +36,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     IonHeader,
     IonToolbar,
     IonTitle,
@@ -43,7 +51,11 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
     IonCardContent,
     IonSpinner,
     IonChip,
-    IonLabel
+    IonLabel,
+    IonModal,
+    IonSearchbar,
+    IonList,
+    IonItem
   ]
 })
 export class VerRutinaClienteComponent implements OnInit {
@@ -51,13 +63,24 @@ export class VerRutinaClienteComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private rutinaService = inject(RutinaService);
   private clienteService = inject(ClienteService);
+  private ejercicioService = inject(EjercicioService);
   private sanitizer = inject(DomSanitizer);
   private cdr = inject(ChangeDetectorRef);
+  private alertController = inject(AlertController);
 
   clienteId: number | null = null;
   cliente: any = null;
-  rutinasAsignadas: any[] = []; // Cambiar de rutinaAsignada a array
+  rutinasAsignadas: any[] = [];
   loading = true;
+  
+  // Modal de cambio de ejercicio
+  showModalCambiarEjercicio = false;
+  ejercicioACambiar: any = null;
+  rutinaClienteActual: any = null;
+  ejerciciosDisponibles: any[] = [];
+  ejerciciosDisponiblesFiltrados: any[] = [];
+  filtroEjercicio = '';
+  cargandoEjercicios = false;
 
   // Mapeo de días
   diasSemana: { [key: number]: string } = {
@@ -267,37 +290,162 @@ export class VerRutinaClienteComponent implements OnInit {
   }
 
   async eliminarRutinaAsignada(rutinaCliente: any) {
-    // Confirmación antes de eliminar
-    const confirmado = confirm(`¿Estás seguro de que deseas eliminar la rutina "${rutinaCliente.rutina?.nombre}" del ${this.diasSemana[rutinaCliente.dia_semana]}?`);
-    
-    if (!confirmado) return;
+    const alert = await this.alertController.create({
+      header: 'Confirmar eliminación',
+      message: `¿Estás seguro de que deseas eliminar la rutina "${rutinaCliente.rutina?.nombre}" del ${this.diasSemana[rutinaCliente.dia_semana]}?`,
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Eliminar',
+          role: 'confirm',
+          cssClass: 'alert-button-confirm'
+        }
+      ]
+    });
+
+    await alert.present();
+    const { role } = await alert.onDidDismiss();
+
+    if (role !== 'confirm') return;
 
     try {
       const { success, error } = await this.rutinaService.desasignarRutinaDeCliente(rutinaCliente.id);
       
       if (success) {
-        // Eliminar de la lista local
         this.rutinasAsignadas = this.rutinasAsignadas.filter(r => r.id !== rutinaCliente.id);
         this.cdr.detectChanges();
-        alert('Rutina eliminada correctamente');
+        
+        const successAlert = await this.alertController.create({
+          header: 'Éxito',
+          message: 'Rutina eliminada correctamente',
+          buttons: ['OK']
+        });
+        await successAlert.present();
       } else {
         console.error('Error al eliminar rutina:', error);
-        alert('Error al eliminar la rutina');
+        const errorAlert = await this.alertController.create({
+          header: 'Error',
+          message: 'Error al eliminar la rutina',
+          buttons: ['OK']
+        });
+        await errorAlert.present();
       }
     } catch (error) {
       console.error('Error inesperado al eliminar rutina:', error);
-      alert('Error inesperado al eliminar la rutina');
+      const errorAlert = await this.alertController.create({
+        header: 'Error',
+        message: 'Error inesperado al eliminar la rutina',
+        buttons: ['OK']
+      });
+      await errorAlert.present();
     }
   }
 
-  cambiarEjercicio(rutinaCliente: any, ejercicioPersonalizado: any) {
-    // Por ahora, navegar a una página de selección de ejercicio
-    // o abrir un modal para seleccionar nuevo ejercicio
-    alert('Funcionalidad de cambio de ejercicio en desarrollo');
-    console.log('Cambiar ejercicio:', {
-      rutinaCliente,
-      ejercicioPersonalizado
+  async cambiarEjercicio(rutinaCliente: any, ejercicioPersonalizado: any) {
+    this.ejercicioACambiar = ejercicioPersonalizado;
+    this.rutinaClienteActual = rutinaCliente;
+    
+    // Cargar ejercicios disponibles
+    this.cargandoEjercicios = true;
+    this.showModalCambiarEjercicio = true;
+    
+    try {
+      const ejercicios = await this.ejercicioService.listarEjercicios();
+      this.ejerciciosDisponibles = ejercicios;
+      this.ejerciciosDisponiblesFiltrados = ejercicios;
+    } catch (error) {
+      console.error('Error al cargar ejercicios:', error);
+    } finally {
+      this.cargandoEjercicios = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  filtrarEjercicios() {
+    const filtro = this.filtroEjercicio.toLowerCase().trim();
+    
+    if (!filtro) {
+      this.ejerciciosDisponiblesFiltrados = [...this.ejerciciosDisponibles];
+    } else {
+      this.ejerciciosDisponiblesFiltrados = this.ejerciciosDisponibles.filter(ej => 
+        ej.nombre?.toLowerCase().includes(filtro) ||
+        ej.musculo_principal?.toLowerCase().includes(filtro) ||
+        ej.categoria?.toLowerCase().includes(filtro)
+      );
+    }
+  }
+
+  async seleccionarNuevoEjercicio(nuevoEjercicio: any) {
+    const alert = await this.alertController.create({
+      header: 'Confirmar cambio',
+      message: `¿Cambiar "${this.ejercicioACambiar.ejercicio?.nombre}" por "${nuevoEjercicio.nombre}"?`,
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Cambiar',
+          role: 'confirm'
+        }
+      ]
     });
+
+    await alert.present();
+    const { role } = await alert.onDidDismiss();
+
+    if (role !== 'confirm') return;
+
+    try {
+      const { success, error } = await this.rutinaService.cambiarEjercicioPersonalizado(
+        this.ejercicioACambiar.id,
+        nuevoEjercicio.id
+      );
+
+      if (success) {
+        // Actualizar localmente
+        this.ejercicioACambiar.ejercicio = nuevoEjercicio;
+        this.ejercicioACambiar.ejercicio_id = nuevoEjercicio.id;
+        
+        this.cerrarModalCambiarEjercicio();
+        this.cdr.detectChanges();
+
+        const successAlert = await this.alertController.create({
+          header: 'Éxito',
+          message: 'Ejercicio cambiado correctamente',
+          buttons: ['OK']
+        });
+        await successAlert.present();
+      } else {
+        console.error('Error al cambiar ejercicio:', error);
+        const errorAlert = await this.alertController.create({
+          header: 'Error',
+          message: 'Error al cambiar el ejercicio',
+          buttons: ['OK']
+        });
+        await errorAlert.present();
+      }
+    } catch (error) {
+      console.error('Error inesperado al cambiar ejercicio:', error);
+      const errorAlert = await this.alertController.create({
+        header: 'Error',
+        message: 'Error inesperado al cambiar el ejercicio',
+        buttons: ['OK']
+      });
+      await errorAlert.present();
+    }
+  }
+
+  cerrarModalCambiarEjercicio() {
+    this.showModalCambiarEjercicio = false;
+    this.ejercicioACambiar = null;
+    this.rutinaClienteActual = null;
+    this.ejerciciosDisponibles = [];
+    this.ejerciciosDisponiblesFiltrados = [];
+    this.filtroEjercicio = '';
   }
 
   asignarNuevaRutina() {

@@ -6,13 +6,14 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { ClienteService } from '../services/cliente.service';
 import { ToastService } from '../services/toast.service';
 import { Cliente } from '../services/supabase.service';
+import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
   selector: 'app-editar-cliente',
   templateUrl: './editar-cliente.component.html',
   styleUrls: ['./editar-cliente.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule]
+  imports: [CommonModule, IonicModule, FormsModule, SpinnerComponent]
 })
 export class EditarClienteComponent implements OnInit {
   
@@ -119,10 +120,16 @@ export class EditarClienteComponent implements OnInit {
     }
 
     console.log('💾 [EditarCliente] Guardando cambios...');
-    this.guardando = true;
-    this.cdr.detectChanges();
     
     try {
+      // Mostrar spinner
+      console.log('🟡 [EditarCliente] Mostrando spinner...');
+      this.guardando = true;
+      this.cdr.detectChanges();
+      
+      // Dar tiempo al spinner para mostrarse
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
       const tiempoInicio = performance.now();
       const resultado = await this.clienteService.actualizarCliente(this.clienteId!, this.cliente);
       const tiempoFin = performance.now();
@@ -131,22 +138,41 @@ export class EditarClienteComponent implements OnInit {
       
       if (resultado.success) {
         console.log('✅ [EditarCliente] Cliente actualizado exitosamente');
+        
+        // Mantener spinner visible por 800ms
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Ocultar spinner
+        console.log('🟢 [EditarCliente] Ocultando spinner...');
         this.guardando = false;
         this.cdr.detectChanges();
-        this.toastService.mostrarExito('Cliente actualizado exitosamente');
-        // Navegar inmediatamente
+        
+        // Pequeña pausa antes del toast
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Mostrar toast
+        await this.toastService.mostrarExito('Cliente actualizado exitosamente');
+        
+        // Navegar
         this.router.navigate(['/ver-clientes'], { replaceUrl: true });
       } else {
         console.error('🔴 [EditarCliente] Error:', resultado.error);
-        await this.toastService.mostrarError(resultado.error || 'Error al actualizar cliente');
         this.guardando = false;
         this.cdr.detectChanges();
+        await this.toastService.mostrarError(resultado.error || 'Error al actualizar cliente');
       }
     } catch (error) {
       console.error('🔴 [EditarCliente] Error al guardar cliente:', error);
-      await this.toastService.mostrarError('Error inesperado al guardar');
       this.guardando = false;
       this.cdr.detectChanges();
+      await this.toastService.mostrarError('Error inesperado al guardar');
+    } finally {
+      // Asegurar que el spinner esté oculto al final
+      if (this.guardando) {
+        console.log('⚠️ [EditarCliente] Spinner todavía visible en finally, ocultando...');
+        this.guardando = false;
+        this.cdr.detectChanges();
+      }
     }
   }
 

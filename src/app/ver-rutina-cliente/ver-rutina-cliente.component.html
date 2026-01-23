@@ -203,3 +203,64 @@
   </div>
 
 </ion-content>
+
+<!-- Modal para cambiar ejercicio -->
+<ion-modal 
+  [isOpen]="showModalCambiarEjercicio" 
+  (didDismiss)="cerrarModalCambiarEjercicio()"
+  [backdropDismiss]="true">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="dark">
+        <ion-title>Seleccionar nuevo ejercicio</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarModalCambiarEjercicio()">
+            <ion-icon name="close"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+      <ion-toolbar>
+        <ion-searchbar 
+          [(ngModel)]="filtroEjercicio"
+          (ionInput)="filtrarEjercicios()"
+          placeholder="Buscar ejercicio..."
+          debounce="300">
+        </ion-searchbar>
+      </ion-toolbar>
+    </ion-header>
+    
+    <ion-content>
+      <div *ngIf="cargandoEjercicios" class="loading-container">
+        <ion-spinner></ion-spinner>
+        <p>Cargando ejercicios...</p>
+      </div>
+
+      <ion-list *ngIf="!cargandoEjercicios">
+        <ion-item 
+          button
+          *ngFor="let ejercicio of ejerciciosDisponiblesFiltrados"
+          (click)="seleccionarNuevoEjercicio(ejercicio)"
+          [disabled]="ejercicio.id === ejercicioACambiar?.ejercicio_id">
+          
+          <ion-label>
+            <h3>{{ ejercicio.nombre }}</h3>
+            <p>{{ ejercicio.musculo_principal }}</p>
+            <p *ngIf="ejercicio.categoria" class="categoria-text">{{ ejercicio.categoria }}</p>
+          </ion-label>
+          
+          <ion-icon 
+            *ngIf="ejercicio.id === ejercicioACambiar?.ejercicio_id"
+            name="checkmark-circle"
+            color="primary"
+            slot="end">
+          </ion-icon>
+        </ion-item>
+
+        <div *ngIf="ejerciciosDisponiblesFiltrados.length === 0" class="no-results">
+          <ion-icon name="search-outline"></ion-icon>
+          <p>No se encontraron ejercicios</p>
+        </div>
+      </ion-list>
+    </ion-content>
+  </ng-template>
+</ion-modal>

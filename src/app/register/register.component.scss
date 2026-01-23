@@ -84,7 +84,6 @@ ion-content {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 16px;
-  backdrop-filter: blur(20px);
   box-shadow: var(--glow-shadow);
   box-sizing: border-box; /* Incluir padding en el ancho */
 }
@@ -293,7 +292,6 @@ ion-card {
   box-shadow: var(--glow-shadow);
   width: 100%;
   max-width: 100%; /* No exceder el contenedor padre */
-  backdrop-filter: blur(20px);
   transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   box-sizing: border-box; /* Incluir bordes en el ancho total */
 }
@@ -442,9 +440,8 @@ ion-item {
   background: var(--input-bg);
   color: var(--text-primary);
   font-size: 1rem;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   text-align: center;
-  backdrop-filter: blur(10px);
   margin-bottom: 10px; /* Separación adicional entre inputs */
 }
 
@@ -602,8 +599,7 @@ ion-item {
     border: 2px solid var(--border-color);
     border-radius: 12px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
+    transition: all 0.2s ease;
     
     input[type="checkbox"] {
       margin-right: 12px;
@@ -663,8 +659,7 @@ ion-item {
       border-radius: 16px;
       cursor: pointer;
       position: relative;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
+      transition: all 0.2s ease;
       
       &::before {
         content: '';
@@ -700,7 +695,6 @@ ion-item {
   border: 1px solid var(--border-color);
   border-radius: 12px;
   animation: slideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  backdrop-filter: blur(10px);
   
   .char-counter {
     text-align: right;
@@ -825,7 +819,6 @@ ion-button[color="success"] {
   padding: 40px 24px;
   background: var(--card-bg);
   border-radius: 16px;
-  backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
   box-shadow: var(--glow-shadow);
 }
@@ -889,7 +882,6 @@ ion-button[color="success"] {
   background: var(--card-bg);
   border: 2px dashed var(--border-color);
   border-radius: 12px;
-  backdrop-filter: blur(10px);
 }
 
 /* ===== Botones individuales (duplicados removidos) ===== */
@@ -1047,8 +1039,7 @@ ion-button[color="success"] {
     border-radius: 12px;
     padding: 20px;
     margin: 0;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -1591,7 +1582,6 @@ ion-card:first-of-type {
   justify-content: center !important;
   align-items: center !important;
   z-index: 10000 !important;
-  backdrop-filter: blur(8px) !important;
   animation: fadeInOverlay 0.3s ease-in-out;
 }
 

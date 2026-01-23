@@ -1,22 +1,24 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, ViewWillEnter, ViewWillLeave } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ClienteService } from '../services/cliente.service';
+import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
   selector: 'app-ver-clientes',
   templateUrl: './ver-clientes.component.html',
   styleUrls: ['./ver-clientes.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule]
+  imports: [CommonModule, IonicModule, FormsModule, SpinnerComponent]
 })
-export class VerClientesComponent implements OnInit {
+export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeave {
   clientes: any[] = [];
   filteredClientes: any[] = [];
   q: string = '';
   loading = false;
+  mostrarSpinner = false;
   
   // Caché para evitar recargas innecesarias
   private cacheClientes: any[] | null = null;
@@ -43,6 +45,21 @@ export class VerClientesComponent implements OnInit {
   async ngOnInit() {
     // Cargar sin bloquear - mostrar UI inmediatamente
     this.loadClientes();
+  }
+
+  ionViewWillEnter() {
+    // Resetear spinner al entrar a la vista
+    setTimeout(() => {
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
+    }, 0);
+  }
+
+  ionViewWillLeave() {
+    // Apagar spinner al salir de la vista
+    setTimeout(() => {
+      this.mostrarSpinner = false;
+    }, 0);
   }
 
   async loadClientes(forzarRecarga = false) {
@@ -121,11 +138,18 @@ export class VerClientesComponent implements OnInit {
     });
   }
 
-  async verMas(cliente: any) {
+  verMas(cliente: any) {
     console.log('Ver más:', cliente);
-    // Simplemente mostrar el modal con los datos que ya tenemos
-    this.clienteSeleccionado = cliente;
-    this.isModalOpen = true;
+    this.mostrarSpinner = true;
+    this.cdr.detectChanges();
+    
+    // Simulamos un pequeño delay para dar feedback visual
+    setTimeout(() => {
+      this.clienteSeleccionado = cliente;
+      this.isModalOpen = true;
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
+    }, 1500);
   }
 
   cerrarModal() {
@@ -156,12 +180,24 @@ export class VerClientesComponent implements OnInit {
 
   verRutina(cliente: any) {
     console.log('Ver rutina de:', cliente);
-    this.router.navigate(['/ver-rutina-cliente', cliente.id]);
+    this.mostrarSpinner = true;
+    this.cdr.detectChanges();
+    
+    // Dar tiempo para que se muestre el spinner antes de navegar
+    setTimeout(() => {
+      this.router.navigate(['/ver-rutina-cliente', cliente.id]);
+    }, 1500);
   }
 
   editarCliente(cliente: any) {
     console.log('Editar cliente:', cliente);
-    this.router.navigate(['/editar-cliente', cliente.id]);
+    this.mostrarSpinner = true;
+    this.cdr.detectChanges();
+    
+    // Dar tiempo para que se muestre el spinner antes de navegar
+    setTimeout(() => {
+      this.router.navigate(['/editar-cliente', cliente.id]);
+    }, 1500);
   }
 
   volver() {

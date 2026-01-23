@@ -23,7 +23,6 @@ import {
   IonSpinner,
   IonBadge,
   IonChip,
-  IonDatetime,
   IonTextarea,
   IonSelect,
   IonSelectOption,
@@ -63,7 +62,6 @@ import { SpinnerComponent } from '../spinner/spinner.component';
     IonSpinner,
     IonBadge,
     IonChip,
-    IonDatetime,
     IonTextarea,
     IonSelect,
     IonSelectOption,
@@ -92,8 +90,6 @@ export class AsignarRutinaComponent implements OnInit {
   
   filtroTexto = '';
   diaSemana = 1; // Día por defecto (Lunes)
-  fechaInicio = '';
-  fechaFin = '';
   notas = '';
 
   ngOnInit() {
@@ -284,8 +280,8 @@ export class AsignarRutinaComponent implements OnInit {
         this.rutinaId!,
         clienteIds,
         this.diaSemana,
-        this.fechaInicio || undefined,
-        this.fechaFin || undefined,
+        undefined,
+        undefined,
         this.notas || undefined
       );
 

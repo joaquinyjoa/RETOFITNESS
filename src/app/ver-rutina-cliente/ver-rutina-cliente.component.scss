@@ -112,3 +112,30 @@
 :host {
   --primary-green: #00ff88;
 }
+
+// Estilos del modal
+.categoria-text {
+  font-size: 0.85rem;
+  color: var(--ion-color-medium);
+  font-style: italic;
+}
+
+.no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--ion-color-medium);
+
+  ion-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  p {
+    margin: 0;
+    font-size: 1rem;
+  }
+}

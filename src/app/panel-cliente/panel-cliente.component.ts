@@ -29,7 +29,7 @@ export class PanelClienteComponent implements OnInit {
   rutinasPorDia: Map<number, any> = new Map();
   diaSeleccionado: number = 1;
   rutinaAsignada: any = null;
-  loading = true;
+  loading = false;
 
   // Para registrar pesos
   showModalRegistrarPeso = false;
@@ -66,8 +66,6 @@ export class PanelClienteComponent implements OnInit {
 
   async cargarRutinaAsignada() {
     console.log('🟡 [PanelCliente] === INICIO cargarRutinaAsignada ===');
-    this.loading = true;
-    this.cdr.detectChanges();
 
     try {
       if (!this.clienteId) {

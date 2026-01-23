@@ -11,11 +11,15 @@
         (click)="guardarCambios()" 
         [disabled]="guardando"
         color="primary">
-        <ion-icon name="checkmark" *ngIf="!guardando"></ion-icon>
-        <ion-spinner name="crescent" *ngIf="guardando"></ion-spinner>
+        <ion-icon name="checkmark"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
+  
+  <!-- Spinner overlay -->
+  <div *ngIf="guardando" class="spinner-overlay-transparent">
+    <app-spinner></app-spinner>
+  </div>
 </ion-header>
 
 <ion-content class="ion-padding">
