@@ -5,6 +5,11 @@
 </ion-header>
 
 <ion-content class="ion-padding">
+  <!-- Spinner de carga -->
+  <div *ngIf="showSpinner" class="spinner-overlay-transparent">
+    <app-spinner></app-spinner>
+  </div>
+
   <div class="register-container">
 
   <!-- Paso 1: Información Personal -->

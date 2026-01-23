@@ -7,13 +7,14 @@ import { Cliente } from '../models/cliente/cliente.interface';
 import { Cliente as ClienteSupabase } from '../services/supabase.service';
 import { ClienteService } from '../services/cliente.service';
 import { ToastService } from '../services/toast.service';
+import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule]
+  imports: [CommonModule, IonicModule, FormsModule, SpinnerComponent]
 })
 export class RegisterComponent implements OnInit {
 
@@ -474,16 +475,12 @@ export class RegisterComponent implements OnInit {
     console.log('Iniciando onSubmit');
     this.isSubmitting = true;
     this.showSpinner = true;
-    this.cdr.detectChanges(); // Forzar actualización UI
+    this.cdr.detectChanges();
     console.log('Spinner activado:', this.showSpinner);
 
-    // Timeout de seguridad para evitar que el spinner se quede colgado
-    const timeoutId = setTimeout(() => {
-      console.log('Timeout de seguridad activado');
-      this.showSpinner = false;
-      this.isSubmitting = false;
-      this.toastService.mostrarError('El proceso tomó demasiado tiempo. Por favor, inténtalo de nuevo.');
-    }, 30000); // 30 segundos
+    // Timer para asegurar que el spinner se muestre por al menos 1.5 segundos
+    const spinnerStartTime = Date.now();
+    const minSpinnerDuration = 1500; // 1.5 segundos
     
     try {
       // Validar datos antes del registro
@@ -491,7 +488,6 @@ export class RegisterComponent implements OnInit {
         this.isSubmitting = false;
         this.showSpinner = false;
         this.cdr.detectChanges();
-        clearTimeout(timeoutId);
         return;
       }
 
@@ -516,13 +512,13 @@ export class RegisterComponent implements OnInit {
         descripcionLesiones: this.cliente.descripcionLesiones?.trim() || '',
         fuma: this.cliente.fuma,
         alcohol: this.cliente.alcohol,
-        horas_sueno: this.cliente.horasSueno || '7', // Enviar como string para coincidir con BD
+        horas_sueno: this.cliente.horasSueno || '7',
         peso: this.cliente.peso,
         objetivo: this.cliente.objetivo,
         altura: this.cliente.altura,
         nivelActividad: this.cliente.nivelActividad || 'Medio',
         genero: this.cliente.genero || 'Hombre',
-        qr: '' // Se actualizará después de generar el QR
+        qr: ''
       };
 
       // Usar ClienteService para crear el cliente con QR automáticamente
@@ -532,16 +528,24 @@ export class RegisterComponent implements OnInit {
       
       if (!result.success) {
         console.error('Error en el registro:', result.error);
-        await this.toastService.mostrarError(result.error || 'Error al registrar el cliente');
-        this.isSubmitting = false;
+        
+        // Detener spinner inmediatamente en caso de error
         this.showSpinner = false;
+        this.isSubmitting = false;
         this.cdr.detectChanges();
-        clearTimeout(timeoutId);
+        
+        await this.toastService.mostrarError(result.error || 'Error al registrar el cliente');
         return;
       }
 
-      // Limpiar timeout de seguridad
-      clearTimeout(timeoutId);
+      // Calcular tiempo restante para cumplir los 1.5 segundos
+      const elapsedTime = Date.now() - spinnerStartTime;
+      const remainingTime = Math.max(0, minSpinnerDuration - elapsedTime);
+      
+      // Esperar el tiempo restante si es necesario
+      if (remainingTime > 0) {
+        await new Promise(resolve => setTimeout(resolve, remainingTime));
+      }
       
       // Ocultar spinner
       this.showSpinner = false;
@@ -566,11 +570,13 @@ export class RegisterComponent implements OnInit {
       
     } catch (error) {
       console.error('Error registrando cliente:', error);
-      await this.toastService.mostrarError('Error inesperado durante el registro');
-      // Limpiar timeout de seguridad
-      clearTimeout(timeoutId);
+      
+      // Detener spinner inmediatamente en caso de error
       this.showSpinner = false;
+      this.isSubmitting = false;
       this.cdr.detectChanges();
+      
+      await this.toastService.mostrarError('Error inesperado durante el registro');
     } finally {
       this.isSubmitting = false;
     }
