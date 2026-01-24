@@ -671,6 +671,40 @@
   }
 }
 
+// Lista de series
+.series-list {
+  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.serie-item {
+  background: rgba(0, 255, 136, 0.05);
+  border: 2px solid rgba(0, 255, 136, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  
+  .serie-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    
+    .serie-numero {
+      color: var(--primary-green);
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+  }
+  
+  .peso-input {
+    --background: rgba(0, 0, 0, 0.3);
+    --border-radius: 8px;
+    margin: 0;
+  }
+}
+
 // Modal de detalles del ejercicio
 .detalle-ejercicio-container {
   padding: 20px;
@@ -835,5 +869,54 @@
     border: none;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+// Estilos para ejercicio alternativo
+.alternativo-box {
+  margin: 12px 0;
+  padding: 12px;
+  background: rgba(255, 165, 0, 0.1);
+  border-left: 4px solid #ffa500;
+  border-radius: 8px;
+  
+  .alternativo-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: #ffa500;
+    font-size: 0.9rem;
+    
+    ion-icon {
+      font-size: 1.2rem;
+    }
+    
+    strong {
+      font-weight: 600;
+    }
+  }
+  
+  .alternativo-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 28px;
+    color: #ffffff;
+    font-size: 0.95rem;
+    
+    ion-badge {
+      --background: rgba(255, 165, 0, 0.2);
+      --color: #ffa500;
+      font-size: 0.75rem;
+    }
+  }
+  
+  .alternativo-nota {
+    margin-left: 28px;
+    margin-top: 5px;
+    color: #cccccc;
+    font-size: 0.8rem;
+    font-style: italic;
   }
 }

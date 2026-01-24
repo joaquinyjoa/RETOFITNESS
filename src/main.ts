@@ -99,7 +99,12 @@ import {
   arrowUp,
   barChartOutline,
   searchOutline,
-  peopleCircleOutline
+  peopleCircleOutline,
+  ellipseOutline,
+  clipboardOutline,
+  swapHorizontalOutline,
+  speedometerOutline,
+  bulbOutline
 } from 'ionicons/icons';
 
 import { routes } from './app/app.routes';
@@ -107,6 +112,15 @@ import { AppComponent } from './app/app.component';
 
 // Registrar iconos (todos los necesarios para el proyecto)
 addIcons({
+  "bulb-outline": bulbOutline,
+  "speedometer-outline": speedometerOutline,
+  "chevron-back-outline": chevronBack,
+  "timer-outline": timeOutline,
+  "swap-horizontal-outline": swapHorizontalOutline,
+  "clipboard-outline": clipboardOutline,
+  "ellipse-outline": ellipseOutline,
+  "checmark-circle": checkmarkCircle,
+  "log-in-outline": logIn,
   "people-circle-outline": peopleCircleOutline,
   "key-outline": keyOutline,
   "search-outline": searchOutline,

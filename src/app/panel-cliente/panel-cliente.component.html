@@ -154,6 +154,21 @@
               </div>
             </div>
 
+            <!-- Ejercicio alternativo -->
+            <div *ngIf="ej.ejercicio_alternativo" class="alternativo-box">
+              <div class="alternativo-header">
+                <ion-icon name="swap-horizontal-outline"></ion-icon>
+                <strong>Alternativa disponible:</strong>
+              </div>
+              <div class="alternativo-content">
+                {{ ej.ejercicio_alternativo.nombre }}
+                <ion-badge color="warning">{{ ej.ejercicio_alternativo.musculo_principal }}</ion-badge>
+              </div>
+              <div class="alternativo-nota">
+                (Si el equipo está ocupado)
+              </div>
+            </div>
+
             <!-- Botones de acción -->
             <div class="ejercicio-actions">
               <ion-button expand="block" fill="outline" (click)="abrirModalRegistrarPeso(ej)">
@@ -211,7 +226,7 @@
   <ng-template>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Registrar Peso</ion-title>
+        <ion-title>Registrar Peso por Serie</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="cerrarModalRegistrarPeso()">
             <ion-icon name="close"></ion-icon>
@@ -226,23 +241,47 @@
         <div class="modal-ejercicio-info">
           <h3>{{ ejercicioSeleccionado.ejercicio?.nombre }}</h3>
           <p>{{ ejercicioSeleccionado.series }} series × {{ ejercicioSeleccionado.repeticiones }} reps</p>
+          <ion-chip color="primary">
+            <ion-label>Series registradas: {{ pesosRegistrados.length }}/{{ ejercicioSeleccionado.series }}</ion-label>
+          </ion-chip>
         </div>
 
-        <ion-item lines="none" class="peso-input">
-          <ion-label position="stacked">Peso utilizado (kg)</ion-label>
-          <ion-input
-            type="number"
-            [(ngModel)]="pesoRegistrado"
-            placeholder="Ej: 20"
-            min="0"
-            step="0.5">
-          </ion-input>
-        </ion-item>
+        <!-- Lista de series -->
+        <div class="series-list" *ngIf="pesosRegistrados.length > 0">
+          <div class="serie-item" *ngFor="let peso of pesosRegistrados; let i = index">
+            <div class="serie-header">
+              <span class="serie-numero">Serie {{ i + 1 }}</span>
+              <ion-button fill="clear" size="small" color="danger" (click)="eliminarSeriePeso(i)">
+                <ion-icon name="trash-outline"></ion-icon>
+              </ion-button>
+            </div>
+            <ion-item lines="none" class="peso-input">
+              <ion-label position="stacked">Peso (kg)</ion-label>
+              <ion-input
+                type="number"
+                [(ngModel)]="pesosRegistrados[i]"
+                placeholder="Ej: 20"
+                min="0"
+                step="0.5">
+              </ion-input>
+            </ion-item>
+          </div>
+        </div>
+
+        <!-- Botón agregar serie -->
+        <ion-button 
+          expand="block" 
+          fill="outline" 
+          (click)="agregarSeriePeso()"
+          [disabled]="!puedaAgregarSerie()">
+          <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+          Agregar Serie
+        </ion-button>
 
         <div class="modal-actions">
-          <ion-button expand="block" (click)="guardarPeso()" [disabled]="!pesoRegistrado">
+          <ion-button expand="block" (click)="guardarPeso()" [disabled]="pesosRegistrados.length === 0">
             <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
-            Guardar Peso
+            Guardar Pesos
           </ion-button>
           <ion-button expand="block" fill="clear" (click)="cerrarModalRegistrarPeso()">
             Cancelar

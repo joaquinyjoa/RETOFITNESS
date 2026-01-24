@@ -1,0 +1,156 @@
+<ion-header class="custom-header">
+  <ion-toolbar class="custom-toolbar">
+    <ion-buttons slot="start">
+      <ion-button (click)="volver()">
+        <ion-icon name="arrow-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title class="custom-title">
+      <ion-icon name="clipboard-outline" class="title-icon"></ion-icon>
+      Asignar Rutina
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding content-background">
+  <!-- Spinner de carga -->
+  <div *ngIf="loading" class="loading-container">
+    <ion-spinner name="crescent" color="primary"></ion-spinner>
+    <p>Cargando datos...</p>
+  </div>
+
+  <!-- Contenido principal -->
+  <div *ngIf="!loading" class="asignar-container">
+    
+    <!-- Info del cliente -->
+    <div class="cliente-card" *ngIf="cliente">
+      <div class="cliente-header">
+        <ion-icon name="person-circle" class="cliente-avatar"></ion-icon>
+        <div class="cliente-info">
+          <h2>{{ cliente.nombre }} {{ cliente.apellido }}</h2>
+          <p class="cliente-correo">
+            <ion-icon name="mail-outline"></ion-icon>
+            {{ cliente.correo }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulario de asignación -->
+    <div class="form-card">
+      <div class="form-header">
+        <ion-icon name="fitness-outline" class="form-icon"></ion-icon>
+        <h3>Seleccionar Rutina</h3>
+      </div>
+
+      <!-- Buscador de rutinas -->
+      <ion-searchbar
+        class="custom-searchbar"
+        placeholder="Buscar rutina..."
+        [(ngModel)]="filtroBusqueda"
+        (ionInput)="filtrarRutinas()"
+        show-clear-button="focus">
+      </ion-searchbar>
+
+      <!-- Lista de rutinas disponibles -->
+      <div class="rutinas-list">
+        <div 
+          *ngFor="let rutina of rutinasFiltradas" 
+          class="rutina-item"
+          [class.selected]="rutinaSeleccionadaId === rutina.id"
+          (click)="seleccionarRutina(rutina.id!)">
+          <div class="rutina-content">
+            <div class="rutina-info">
+              <h4>{{ rutina.nombre }}</h4>
+              <p class="rutina-descripcion">{{ rutina.descripcion }}</p>
+              <div class="rutina-meta">
+                <ion-chip class="nivel-chip" [color]="rutina.nivel_dificultad === 'Principiante' ? 'success' : rutina.nivel_dificultad === 'Intermedio' ? 'warning' : 'danger'">
+                  <ion-label>{{ rutina.nivel_dificultad }}</ion-label>
+                </ion-chip>
+                <span class="duracion" *ngIf="rutina.duracion_semanas">
+                  <ion-icon name="time-outline"></ion-icon>
+                  {{ rutina.duracion_semanas }} semanas
+                </span>
+              </div>
+            </div>
+            <div class="rutina-check">
+              <ion-icon 
+                [name]="rutinaSeleccionadaId === rutina.id ? 'checkmark-circle' : 'ellipse-outline'"
+                [color]="rutinaSeleccionadaId === rutina.id ? 'primary' : 'medium'">
+              </ion-icon>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="rutinasFiltradas.length === 0" class="empty-state">
+          <ion-icon name="search-outline" class="empty-icon"></ion-icon>
+          <p>No se encontraron rutinas</p>
+        </div>
+      </div>
+
+      <!-- Selección de día -->
+      <div class="dia-section">
+        <label class="section-label">
+          <ion-icon name="calendar-outline"></ion-icon>
+          Día de la semana
+        </label>
+        <ion-select
+          class="custom-select"
+          [(ngModel)]="diaSeleccionado"
+          interface="popover"
+          placeholder="Seleccionar día">
+          <ion-select-option *ngFor="let dia of diasSemana" [value]="dia.value">
+            {{ dia.label }}
+          </ion-select-option>
+        </ion-select>
+      </div>
+
+      <!-- Notas del entrenador -->
+      <div class="notas-section">
+        <label class="section-label">
+          <ion-icon name="create-outline"></ion-icon>
+          Notas del entrenador (opcional)
+        </label>
+        <ion-textarea
+          class="custom-textarea"
+          [(ngModel)]="notasEntrenador"
+          placeholder="Instrucciones especiales, observaciones, etc."
+          rows="4"
+          maxlength="500">
+        </ion-textarea>
+        <div class="char-count">{{ notasEntrenador.length }}/500</div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="buttons-section">
+        <ion-button
+          expand="block"
+          color="medium"
+          fill="outline"
+          (click)="volver()"
+          [disabled]="asignando">
+          <ion-icon slot="start" name="close-circle-outline"></ion-icon>
+          Cancelar
+        </ion-button>
+
+        <ion-button
+          expand="block"
+          color="success"
+          class="btn-asignar"
+          (click)="asignarRutina()"
+          [disabled]="asignando || !rutinaSeleccionadaId">
+          <ion-spinner *ngIf="asignando" name="crescent" slot="start"></ion-spinner>
+          <ion-icon *ngIf="!asignando" slot="start" name="checkmark-circle"></ion-icon>
+          {{ asignando ? 'Asignando...' : 'Asignar Rutina' }}
+        </ion-button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Spinner overlay -->
+  <div *ngIf="mostrarSpinner" class="spinner-overlay-transparent">
+    <app-spinner></app-spinner>
+  </div>
+
+</ion-content>

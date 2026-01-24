@@ -22,11 +22,13 @@ export interface RutinaEjercicio {
   series?: number;
   repeticiones?: string;
   descanso_segundos?: number;
-  porcentaje_fuerza?: number; // Porcentaje de fuerza requerido (0-100)
+  porcentaje_fuerza?: number; // Porcentaje de fuerza requerido (0-100%)
+  ejercicio_alternativo_id?: number | null; // ID del ejercicio alternativo si el equipo está ocupado
   notas?: string;
   created_at?: string;
   // Campos extra para JOIN con ejercicios
   ejercicio?: any;
+  ejercicio_alternativo?: any; // Datos del ejercicio alternativo
 }
 
 export interface RutinaCliente {
@@ -35,8 +37,6 @@ export interface RutinaCliente {
   cliente_id: number;
   dia_semana?: number; // 1-6 (Lunes-Sábado)
   fecha_asignacion?: string;
-  fecha_inicio?: string;
-  fecha_fin?: string;
   estado: string;
   progreso?: number;
   notas?: string;
@@ -58,6 +58,44 @@ export interface RutinaConDetalles extends Rutina {
 export class RutinaService {
   
   constructor(private supabaseService: SupabaseService) {}
+
+  // ============================================
+  // MÉTODOS AUXILIARES
+  // ============================================
+
+  /**
+   * Enriquecer ejercicios con datos de ejercicios y ejercicios alternativos
+   */
+  private async enriquecerEjercicios(ejercicios: any[]): Promise<any[]> {
+    if (!ejercicios || ejercicios.length === 0) return [];
+
+    const supabase = this.supabaseService['supabase'];
+    
+    // Obtener IDs únicos de ejercicios principales y alternativos
+    const ejercicioIds = [...new Set(ejercicios.map(e => e.ejercicio_id).filter(Boolean))];
+    const alternativoIds = [...new Set(ejercicios.map(e => e.ejercicio_alternativo_id).filter(Boolean))];
+    const todosIds = [...new Set([...ejercicioIds, ...alternativoIds])];
+
+    if (todosIds.length === 0) return ejercicios;
+
+    // Cargar todos los ejercicios en una sola consulta
+    const { data: ejerciciosData } = await supabase
+      .from('ejercicios')
+      .select('*')
+      .in('id', todosIds);
+
+    if (!ejerciciosData) return ejercicios;
+
+    // Crear mapa para búsqueda rápida
+    const ejerciciosMap = new Map(ejerciciosData.map(e => [e.id, e]));
+
+    // Enriquecer cada ejercicio
+    return ejercicios.map(ej => ({
+      ...ej,
+      ejercicio: ejerciciosMap.get(ej.ejercicio_id) || null,
+      ejercicio_alternativo: ej.ejercicio_alternativo_id ? ejerciciosMap.get(ej.ejercicio_alternativo_id) || null : null
+    }));
+  }
 
   // ============================================
   // CRUD DE RUTINAS
@@ -96,7 +134,9 @@ export class RutinaService {
         .from('rutinas')
         .select(`
           *,
-          ejercicios:rutinas_ejercicios(id, ejercicio_id, orden, series, repeticiones, descanso_segundos, notas, ejercicio:ejercicios(id, nombre, musculo_principal, enlace_video, categoria)),
+          ejercicios:rutinas_ejercicios(
+            id, ejercicio_id, orden, series, repeticiones, descanso_segundos, notas, porcentaje_fuerza, ejercicio_alternativo_id
+          ),
           clientes:rutinas_clientes(id, cliente_id)
         `)
         .eq('activo', true)
@@ -108,12 +148,19 @@ export class RutinaService {
       }
 
       const tiempoConsulta = performance.now();
-      const rutinasConDetalles: RutinaConDetalles[] = rutinas.map((rutina: any) => ({
-        ...rutina,
-        ejercicios: rutina.ejercicios || [],
-        clientes_asignados: (rutina.clientes || []).length,
-        cantidad_ejercicios: (rutina.ejercicios || []).length
-      }));
+      
+      // Enriquecer ejercicios para todas las rutinas
+      const rutinasConDetalles: RutinaConDetalles[] = await Promise.all(
+        rutinas.map(async (rutina: any) => {
+          const ejerciciosEnriquecidos = await this.enriquecerEjercicios(rutina.ejercicios || []);
+          return {
+            ...rutina,
+            ejercicios: ejerciciosEnriquecidos,
+            clientes_asignados: (rutina.clientes || []).length,
+            cantidad_ejercicios: ejerciciosEnriquecidos.length
+          };
+        })
+      );
 
       const tiempoFin = performance.now();
 
@@ -146,10 +193,7 @@ export class RutinaService {
       // Obtener ejercicios de la rutina con JOIN
       const { data: ejercicios, error: errorEjercicios } = await supabase
         .from('rutinas_ejercicios')
-        .select(`
-          *,
-          ejercicio:ejercicios(*)
-        `)
+        .select('*')
         .eq('rutina_id', id)
         .order('orden', { ascending: true });
 
@@ -157,12 +201,14 @@ export class RutinaService {
         return { data: null, error: errorEjercicios };
       }
 
-      // Filtrar ejercicios que fueron eliminados (ejercicio === null)
-      const ejerciciosOriginales = ejercicios || [];
-      const ejerciciosValidos = ejerciciosOriginales.filter(ej => ej.ejercicio !== null);
+      // Enriquecer ejercicios con datos completos
+      const ejerciciosEnriquecidos = await this.enriquecerEjercicios(ejercicios || []);
 
-      if (ejerciciosOriginales.length !== ejerciciosValidos.length) {
-        console.warn(`⚠️ Se filtraron ${ejerciciosOriginales.length - ejerciciosValidos.length} ejercicios eliminados`);
+      // Filtrar ejercicios que fueron eliminados (ejercicio === null)
+      const ejerciciosValidos = ejerciciosEnriquecidos.filter(ej => ej.ejercicio !== null);
+
+      if (ejerciciosEnriquecidos.length !== ejerciciosValidos.length) {
+        console.warn(`⚠️ Se filtraron ${ejerciciosEnriquecidos.length - ejerciciosValidos.length} ejercicios eliminados`);
       }
 
       const rutinaCompleta: RutinaConDetalles = {
@@ -246,23 +292,22 @@ export class RutinaService {
       const supabase = this.supabaseService['supabase'];
       const { data, error } = await supabase
         .from('rutinas_ejercicios')
-        .select(`
-          *,
-          ejercicio:ejercicios(*)
-        `)
+        .select('*')
         .eq('rutina_id', rutinaId)
-        .order('orden', { ascending: true });
+        .order('orden', { ascending: true});
 
       if (error) {
         return { data: null, error };
       }
 
+      // Enriquecer ejercicios con datos completos
+      const ejerciciosEnriquecidos = await this.enriquecerEjercicios(data || []);
+
       // Filtrar ejercicios eliminados
-      const ejerciciosOriginales = data || [];
-      const ejerciciosValidos = ejerciciosOriginales.filter(ej => ej.ejercicio !== null);
-      
-      if (ejerciciosOriginales.length !== ejerciciosValidos.length) {
-        console.warn(`⚠️ Se filtraron ${ejerciciosOriginales.length - ejerciciosValidos.length} ejercicios eliminados`);
+      const ejerciciosValidos = ejerciciosEnriquecidos.filter(ej => ej.ejercicio !== null);
+
+      if (ejerciciosEnriquecidos.length !== ejerciciosValidos.length) {
+        console.warn(`⚠️ Se filtraron ${ejerciciosEnriquecidos.length - ejerciciosValidos.length} ejercicios eliminados`);
       }
 
       return { data: ejerciciosValidos, error: null };
@@ -420,8 +465,6 @@ export class RutinaService {
     rutinaId: number, 
     clienteIds: number[], 
     diaSemana: number,
-    fechaInicio?: string, 
-    fechaFin?: string,
     notas?: string
   ): Promise<{ success: boolean; error: any }> {
     try {
@@ -431,8 +474,6 @@ export class RutinaService {
         rutina_id: rutinaId,
         cliente_id: clienteId,
         dia_semana: diaSemana,
-        fecha_inicio: fechaInicio || null,
-        fecha_fin: fechaFin || null,
         estado: 'pendiente',
         progreso: 0,
         notas: notas || null
@@ -456,6 +497,36 @@ export class RutinaService {
     } catch (error) {
       console.error('Error al asignar rutina a clientes:', error);
       return { success: false, error };
+    }
+  }
+
+  /**
+   * Verificar si una rutina ya está asignada a un cliente en un día específico
+   */
+  async verificarRutinaDuplicada(
+    clienteId: number,
+    rutinaId: number,
+    diaSemana: number
+  ): Promise<{ existe: boolean; error: any }> {
+    try {
+      const supabase = this.supabaseService['supabase'];
+      const { data, error } = await supabase
+        .from('rutinas_clientes')
+        .select('id')
+        .eq('cliente_id', clienteId)
+        .eq('rutina_id', rutinaId)
+        .eq('dia_semana', diaSemana)
+        .limit(1);
+
+      if (error) {
+        console.error('Error al verificar rutina:', error);
+        return { existe: false, error };
+      }
+
+      return { existe: data && data.length > 0, error: null };
+    } catch (error) {
+      console.error('Error al verificar rutina:', error);
+      return { existe: false, error };
     }
   }
 
@@ -598,6 +669,7 @@ export class RutinaService {
         repeticiones: ej.repeticiones,
         descanso_segundos: ej.descanso_segundos,
         porcentaje_fuerza: ej.porcentaje_fuerza,
+        ejercicio_alternativo_id: ej.ejercicio_alternativo_id || null,
         notas: ej.notas
       }));
 
@@ -620,14 +692,18 @@ export class RutinaService {
       const supabase = this.supabaseService['supabase'];
       const { data, error } = await supabase
         .from('rutinas_clientes_ejercicios')
-        .select(`
-          *,
-          ejercicio:ejercicios(*)
-        `)
+        .select('*')
         .eq('rutina_cliente_id', rutinaClienteId)
         .order('orden', { ascending: true });
 
-      return { data, error };
+      if (error) {
+        return { data: null, error };
+      }
+
+      // Enriquecer ejercicios con datos completos
+      const ejerciciosEnriquecidos = await this.enriquecerEjercicios(data || []);
+
+      return { data: ejerciciosEnriquecidos, error: null };
     } catch (error) {
       console.error('Error al obtener ejercicios personalizados:', error);
       return { data: null, error };
@@ -639,19 +715,71 @@ export class RutinaService {
    */
   async cambiarEjercicioPersonalizado(
     ejercicioPersonalizadoId: number, 
-    nuevoEjercicioId: number
+    nuevoEjercicioId: number,
+    series?: number,
+    repeticiones?: number,
+    descansoSegundos?: number,
+    porcentajeFuerza?: number
   ): Promise<{ success: boolean; error: any }> {
     try {
       const supabase = this.supabaseService['supabase'];
+      
+      const updateData: any = { ejercicio_id: nuevoEjercicioId };
+      
+      if (series !== undefined) updateData.series = series;
+      if (repeticiones !== undefined) updateData.repeticiones = repeticiones;
+      if (descansoSegundos !== undefined) updateData.descanso_segundos = descansoSegundos;
+      if (porcentajeFuerza !== undefined) updateData.porcentaje_fuerza = porcentajeFuerza;
+      
       const { error } = await supabase
         .from('rutinas_clientes_ejercicios')
-        .update({ ejercicio_id: nuevoEjercicioId })
+        .update(updateData)
         .eq('id', ejercicioPersonalizadoId);
 
       return { success: !error, error };
     } catch (error) {
       console.error('Error al cambiar ejercicio personalizado:', error);
       return { success: false, error };
+    }
+  }
+
+  /**
+   * Obtener un ejercicio personalizado específico
+   */
+  async obtenerEjercicioPersonalizado(ejercicioPersonalizadoId: number): Promise<{ data: any | null; error: any }> {
+    try {
+      const supabase = this.supabaseService['supabase'];
+      const { data, error } = await supabase
+        .from('rutinas_clientes_ejercicios')
+        .select(`
+          *,
+          ejercicio:ejercicios(*)
+        `)
+        .eq('id', ejercicioPersonalizadoId)
+        .single();
+
+      return { data, error };
+    } catch (error) {
+      console.error('Error al obtener ejercicio personalizado:', error);
+      return { data: null, error };
+    }
+  }
+
+  /**
+   * Obtener todos los ejercicios de una rutina cliente para validación
+   */
+  async obtenerEjerciciosDeRutinaCliente(rutinaClienteId: number): Promise<{ data: any[] | null; error: any }> {
+    try {
+      const supabase = this.supabaseService['supabase'];
+      const { data, error } = await supabase
+        .from('rutinas_clientes_ejercicios')
+        .select('id, ejercicio_id')
+        .eq('rutina_cliente_id', rutinaClienteId);
+
+      return { data, error };
+    } catch (error) {
+      console.error('Error al obtener ejercicios de rutina cliente:', error);
+      return { data: null, error };
     }
   }
 

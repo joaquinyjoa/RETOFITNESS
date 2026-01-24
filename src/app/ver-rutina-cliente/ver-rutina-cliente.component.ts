@@ -18,16 +18,17 @@ import {
   IonSpinner,
   IonChip,
   IonLabel,
-  IonModal,
-  IonSearchbar,
-  IonList,
-  IonItem,
+  IonSegment,
+  IonSegmentButton,
+  IonBadge,
   AlertController
 } from '@ionic/angular/standalone';
 import { RutinaService } from '../services/rutina.service';
 import { ClienteService } from '../services/cliente.service';
 import { EjercicioService } from '../services/ejercicio.service';
+import { ToastService } from '../services/toast.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
   selector: 'app-ver-rutina-cliente',
@@ -52,10 +53,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
     IonSpinner,
     IonChip,
     IonLabel,
-    IonModal,
-    IonSearchbar,
-    IonList,
-    IonItem
+    IonSegment,
+    IonSegmentButton,
+    IonBadge,
+    SpinnerComponent
   ]
 })
 export class VerRutinaClienteComponent implements OnInit {
@@ -64,6 +65,7 @@ export class VerRutinaClienteComponent implements OnInit {
   private rutinaService = inject(RutinaService);
   private clienteService = inject(ClienteService);
   private ejercicioService = inject(EjercicioService);
+  private toastService = inject(ToastService);
   private sanitizer = inject(DomSanitizer);
   private cdr = inject(ChangeDetectorRef);
   private alertController = inject(AlertController);
@@ -71,7 +73,11 @@ export class VerRutinaClienteComponent implements OnInit {
   clienteId: number | null = null;
   cliente: any = null;
   rutinasAsignadas: any[] = [];
+  rutinasFiltradasPorDia: any = null; // La rutina del día seleccionado
   loading = true;
+  mostrarSpinner = false;
+  diaSeleccionado: number = 0; // 0 = todos, 1-6 = días específicos
+  diasDisponibles: number[] = []; // Días que tienen rutinas asignadas
   
   // Modal de cambio de ejercicio
   showModalCambiarEjercicio = false;
@@ -81,6 +87,7 @@ export class VerRutinaClienteComponent implements OnInit {
   ejerciciosDisponiblesFiltrados: any[] = [];
   filtroEjercicio = '';
   cargandoEjercicios = false;
+  cambiandoEjercicio = false;
 
   // Mapeo de días
   diasSemana: { [key: number]: string } = {
@@ -91,6 +98,14 @@ export class VerRutinaClienteComponent implements OnInit {
     5: 'Viernes',
     6: 'Sábado'
   };
+
+  // Índices de carrusel por rutina (para mantener el estado independiente)
+  carouselIndices: Map<number, number> = new Map();
+
+  // Variables para gestos táctiles
+  touchStartX: Map<number, number> = new Map();
+  currentTranslateX: Map<number, number> = new Map();
+  dragging: Map<number, boolean> = new Map();
 
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
@@ -123,8 +138,18 @@ export class VerRutinaClienteComponent implements OnInit {
             return (a.dia_semana || 0) - (b.dia_semana || 0);
           });
           
+          // Obtener días disponibles
+          this.diasDisponibles = [...new Set(this.rutinasAsignadas.map(r => r.dia_semana))].sort();
+          
+          // Si hay rutinas, seleccionar el primer día por defecto
+          if (this.diasDisponibles.length > 0) {
+            this.diaSeleccionado = this.diasDisponibles[0];
+            this.filtrarPorDia();
+          }
+          
         } else {
           this.rutinasAsignadas = [];
+          this.diasDisponibles = [];
         }
         
         const tiempoFin = performance.now();
@@ -275,19 +300,37 @@ export class VerRutinaClienteComponent implements OnInit {
     this.router.navigate(['/ver-clientes'], { replaceUrl: true });
   }
 
+  // Asignar nueva rutina
+  asignarNuevaRutina() {
+    if (!this.clienteId) return;
+
+    // Validar máximo de 6 rutinas
+    if (this.rutinasAsignadas.length >= 6) {
+      this.alertController.create({
+        header: 'Máximo de rutinas alcanzado',
+        message: 'Este cliente ya tiene 6 rutinas asignadas (una por cada día de Lunes a Sábado). No se pueden asignar más rutinas.',
+        buttons: ['OK']
+      }).then(alert => alert.present());
+      return;
+    }
+
+    this.router.navigate(['/asignar-rutina-cliente-seleccionado', this.clienteId]);
+  }
+
   async eliminarRutinaAsignada(rutinaCliente: any) {
     const alert = await this.alertController.create({
-      header: 'Confirmar eliminación',
-      message: `¿Estás seguro de que deseas eliminar la rutina "${rutinaCliente.rutina?.nombre}" del ${this.diasSemana[rutinaCliente.dia_semana]}?`,
+      header: '¿Eliminar rutina?',
+      message: `Se eliminará la rutina "${rutinaCliente.rutina?.nombre}" del ${this.diasSemana[rutinaCliente.dia_semana]}.`,
       buttons: [
         {
           text: 'Cancelar',
-          role: 'cancel'
+          role: 'cancel',
+          cssClass: 'alert-button-cancel'
         },
         {
           text: 'Eliminar',
           role: 'confirm',
-          cssClass: 'alert-button-confirm'
+          cssClass: 'alert-button-danger'
         }
       ]
     });
@@ -297,56 +340,48 @@ export class VerRutinaClienteComponent implements OnInit {
 
     if (role !== 'confirm') return;
 
+    // Pequeño delay para que el alert se cierre completamente
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    this.mostrarSpinner = true;
+    this.cdr.detectChanges();
+
     try {
-      const { success, error } = await this.rutinaService.desasignarRutinaDeCliente(rutinaCliente.id);
+      // Ejecutar eliminación y delay en paralelo
+      const [resultado] = await Promise.all([
+        this.rutinaService.desasignarRutinaDeCliente(rutinaCliente.id),
+        new Promise(resolve => setTimeout(resolve, 1500))
+      ]);
       
-      if (success) {
+      // Ocultar spinner primero
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
+      
+      if (resultado.success) {
+        // Actualizar la vista inmediatamente
         this.rutinasAsignadas = this.rutinasAsignadas.filter(r => r.id !== rutinaCliente.id);
+        this.diasDisponibles = [...new Set(this.rutinasAsignadas.map(r => r.dia_semana))].sort();
+        this.filtrarPorDia();
         this.cdr.detectChanges();
         
-        const successAlert = await this.alertController.create({
-          header: 'Éxito',
-          message: 'Rutina eliminada correctamente',
-          buttons: ['OK']
-        });
-        await successAlert.present();
+        // Mostrar toast después de actualizar la vista
+        this.toastService.mostrarExito('Rutina eliminada correctamente');
       } else {
-        console.error('Error al eliminar rutina:', error);
-        const errorAlert = await this.alertController.create({
-          header: 'Error',
-          message: 'Error al eliminar la rutina',
-          buttons: ['OK']
-        });
-        await errorAlert.present();
+        console.error('Error al eliminar rutina:', resultado.error);
+        this.toastService.mostrarError('Error al eliminar la rutina');
       }
     } catch (error) {
       console.error('Error inesperado al eliminar rutina:', error);
-      const errorAlert = await this.alertController.create({
-        header: 'Error',
-        message: 'Error inesperado al eliminar la rutina',
-        buttons: ['OK']
-      });
-      await errorAlert.present();
+      this.toastService.mostrarError('Error inesperado al eliminar la rutina');
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
     }
   }
 
   async cambiarEjercicio(rutinaCliente: any, ejercicioPersonalizado: any) {
-    this.ejercicioACambiar = ejercicioPersonalizado;
-    this.rutinaClienteActual = rutinaCliente;
-    
-    // Cargar ejercicios disponibles
-    this.cargandoEjercicios = true;
-    this.showModalCambiarEjercicio = true;
-    
-    try {
-      const ejercicios = await this.ejercicioService.listarEjercicios();
-      this.ejerciciosDisponibles = ejercicios;
-      this.ejerciciosDisponiblesFiltrados = ejercicios;
-    } catch (error) {
-      console.error('Error al cargar ejercicios:', error);
-    } finally {
-      this.cargandoEjercicios = false;
-      this.cdr.detectChanges();
+    // Navegar al componente de configuración
+    if (this.clienteId) {
+      this.router.navigate(['/configurar-ejercicio', ejercicioPersonalizado.id, this.clienteId]);
     }
   }
 
@@ -385,6 +420,10 @@ export class VerRutinaClienteComponent implements OnInit {
 
     if (role !== 'confirm') return;
 
+    // Mostrar spinner
+    this.cambiandoEjercicio = true;
+    this.cdr.detectChanges();
+
     try {
       const { success, error } = await this.rutinaService.cambiarEjercicioPersonalizado(
         this.ejercicioACambiar.id,
@@ -422,6 +461,10 @@ export class VerRutinaClienteComponent implements OnInit {
         buttons: ['OK']
       });
       await errorAlert.present();
+    } finally {
+      // Ocultar spinner
+      this.cambiandoEjercicio = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -432,12 +475,124 @@ export class VerRutinaClienteComponent implements OnInit {
     this.ejerciciosDisponibles = [];
     this.ejerciciosDisponiblesFiltrados = [];
     this.filtroEjercicio = '';
+    this.cambiandoEjercicio = false;
   }
 
-  asignarNuevaRutina() {
-    // Navegar a la página de asignar rutina
-    this.router.navigate(['/ver-ejercicios'], { 
-      queryParams: { tab: 'rutinas' }
-    });
+  cambiarDia(event: any) {
+    this.diaSeleccionado = parseInt(event.detail.value);
+    this.filtrarPorDia();
+  }
+
+  filtrarPorDia() {
+    if (this.diaSeleccionado === 0) {
+      // Mostrar todos los días
+      this.rutinasFiltradasPorDia = null;
+    } else {
+      // Filtrar por día específico
+      this.rutinasFiltradasPorDia = this.rutinasAsignadas.find(r => r.dia_semana === this.diaSeleccionado);
+    }
+    this.cdr.detectChanges();
+  }
+
+  get rutinasAMostrar() {
+    return this.diaSeleccionado === 0 ? this.rutinasAsignadas : (this.rutinasFiltradasPorDia ? [this.rutinasFiltradasPorDia] : []);
+  }
+
+  // Métodos del carrusel
+  getCarouselIndex(rutina: any): number {
+    return this.carouselIndices.get(rutina.id) || 0;
+  }
+
+  getCarouselTransform(rutina: any): string {
+    const index = this.getCarouselIndex(rutina);
+    const baseTranslate = -index * 100;
+    const currentDrag = this.currentTranslateX.get(rutina.id) || 0;
+    return `calc(${baseTranslate}% + ${currentDrag}px)`;
+  }
+
+  isDragging(rutina: any): boolean {
+    return this.dragging.get(rutina.id) || false;
+  }
+
+  anteriorEjercicio(rutina: any) {
+    const currentIndex = this.getCarouselIndex(rutina);
+    if (currentIndex > 0) {
+      this.carouselIndices.set(rutina.id, currentIndex - 1);
+      this.cdr.detectChanges();
+    }
+  }
+
+  siguienteEjercicio(rutina: any) {
+    const currentIndex = this.getCarouselIndex(rutina);
+    if (rutina.ejercicios && currentIndex < rutina.ejercicios.length - 1) {
+      this.carouselIndices.set(rutina.id, currentIndex + 1);
+      this.cdr.detectChanges();
+    }
+  }
+
+  irAEjercicio(rutina: any, index: number) {
+    this.carouselIndices.set(rutina.id, index);
+    this.cdr.detectChanges();
+  }
+
+  // Gestos táctiles para deslizar
+  onTouchStart(event: TouchEvent, rutina: any) {
+    this.touchStartX.set(rutina.id, event.touches[0].clientX);
+    this.currentTranslateX.set(rutina.id, 0);
+    this.dragging.set(rutina.id, true);
+  }
+
+  onTouchMove(event: TouchEvent, rutina: any) {
+    if (!this.dragging.get(rutina.id)) return;
+    
+    const startX = this.touchStartX.get(rutina.id) || 0;
+    const currentX = event.touches[0].clientX;
+    const diff = currentX - startX;
+    
+    // Limitar el arrastre en los bordes
+    const currentIndex = this.getCarouselIndex(rutina);
+    const maxIndex = rutina.ejercicios.length - 1;
+    
+    if ((currentIndex === 0 && diff > 0) || (currentIndex === maxIndex && diff < 0)) {
+      // Reducir el movimiento en los bordes
+      this.currentTranslateX.set(rutina.id, diff * 0.3);
+    } else {
+      this.currentTranslateX.set(rutina.id, diff);
+    }
+    
+    this.cdr.detectChanges();
+  }
+
+  onTouchEnd(event: TouchEvent, rutina: any) {
+    this.dragging.set(rutina.id, false);
+    
+    const translateX = this.currentTranslateX.get(rutina.id) || 0;
+    const threshold = 50; // Píxeles mínimos para cambiar de slide
+    
+    if (Math.abs(translateX) > threshold) {
+      if (translateX > 0) {
+        // Deslizar a la derecha - ir al anterior
+        this.anteriorEjercicio(rutina);
+      } else {
+        // Deslizar a la izquierda - ir al siguiente
+        this.siguienteEjercicio(rutina);
+      }
+    }
+    
+    // Reset
+    this.currentTranslateX.set(rutina.id, 0);
+    this.cdr.detectChanges();
+  }
+
+  // Convertir estado a texto legible
+  obtenerEstadoLegible(estado: string): string {
+    const estados: { [key: string]: string } = {
+      'pendiente': 'Pendiente',
+      'en_progreso': 'En Progreso',
+      'completada': 'Completada',
+      'pausada': 'Pausada',
+      'cancelada': 'Cancelada'
+    };
+    return estados[estado] || estado?.replace('_', ' ') || 'Pendiente';
   }
 }

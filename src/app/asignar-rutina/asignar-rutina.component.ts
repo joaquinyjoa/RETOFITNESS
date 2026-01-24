@@ -269,8 +269,6 @@ export class AsignarRutinaComponent implements OnInit {
         this.rutinaId!,
         clienteIds,
         this.diaSemana,
-        undefined,
-        undefined,
         this.notas || undefined
       );
 

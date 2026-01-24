@@ -68,13 +68,17 @@ export class VerEjerciciosComponent implements OnInit {
   clientesDisponibles: any[] = [];
   clientesSeleccionados: number[] = [];
   diaSemanaAsignacion: number = 1;
-  fechaInicioAsignacion: string = '';
-  fechaFinAsignacion: string = '';
   notasAsignacion: string = '';
 
   // Modal para ver detalle de rutina
   showModalDetalle = false;
   rutinaDetalle: RutinaConDetalles | null = null;
+
+  // Carrusel de ejercicios en modal detalle
+  currentIndexCarrusel = 0;
+  touchStartXCarrusel = 0;
+  touchEndXCarrusel = 0;
+  isDraggingCarrusel = false;
 
   // Modal para ver video
   showModalVideo = false;
@@ -1098,6 +1102,7 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
         repeticiones: ej.repeticiones,
         descanso_segundos: ej.descanso_segundos,
         porcentaje_fuerza: ej.porcentaje_fuerza || 100,
+        ejercicio_alternativo_id: ej.ejercicio_alternativo_id || null,
         notas: ej.notas
       }));
       const { success, error: errorEjercicios } = await this.rutinaService.guardarEjerciciosEnRutina(rutinaId, ejerciciosParaGuardar);
@@ -1427,8 +1432,6 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
   async abrirModalAsignar(rutina: Rutina) {
     this.rutinaParaAsignar = rutina;
     this.clientesSeleccionados = [];
-    this.fechaInicioAsignacion = new Date().toISOString().split('T')[0];
-    this.fechaFinAsignacion = '';
     this.notasAsignacion = '';
     this.diaSemanaAsignacion = 1;
 
@@ -1483,8 +1486,6 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
         this.rutinaParaAsignar.id,
         this.clientesSeleccionados,
         this.diaSemanaAsignacion,
-        this.fechaInicioAsignacion,
-        this.fechaFinAsignacion,
         this.notasAsignacion
       );
 
@@ -1537,6 +1538,7 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
     }
     
     this.rutinaDetalle = rutina;
+    this.currentIndexCarrusel = 0; // Reset carrusel index
     this.showModalDetalle = true;
   }
 
@@ -1544,5 +1546,58 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
   cerrarModalDetalle() {
     this.showModalDetalle = false;
     this.rutinaDetalle = null;
+    this.currentIndexCarrusel = 0;
+  }
+
+  // === MÉTODOS DE CARRUSEL ===
+  onTouchStartCarrusel(event: TouchEvent) {
+    this.touchStartXCarrusel = event.touches[0].clientX;
+    this.isDraggingCarrusel = true;
+  }
+
+  onTouchMoveCarrusel(event: TouchEvent) {
+    if (!this.isDraggingCarrusel) return;
+    this.touchEndXCarrusel = event.touches[0].clientX;
+  }
+
+  onTouchEndCarrusel() {
+    if (!this.isDraggingCarrusel) return;
+    this.isDraggingCarrusel = false;
+
+    const diff = this.touchStartXCarrusel - this.touchEndXCarrusel;
+    const threshold = 50;
+
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0) {
+        this.siguienteEjercicioCarrusel();
+      } else {
+        this.anteriorEjercicioCarrusel();
+      }
+    }
+
+    this.touchStartXCarrusel = 0;
+    this.touchEndXCarrusel = 0;
+  }
+
+  anteriorEjercicioCarrusel() {
+    if (this.currentIndexCarrusel > 0) {
+      this.currentIndexCarrusel--;
+    }
+  }
+
+  siguienteEjercicioCarrusel() {
+    const totalEjercicios = this.rutinaDetalle?.ejercicios?.length || 0;
+    if (this.currentIndexCarrusel < totalEjercicios - 1) {
+      this.currentIndexCarrusel++;
+    }
+  }
+
+  irAEjercicioCarrusel(index: number) {
+    this.currentIndexCarrusel = index;
+  }
+
+  // Método para manejar la carga de imágenes
+  onImageLoad(videoUrl: string) {
+    console.log('Imagen cargada para:', videoUrl);
   }
 }

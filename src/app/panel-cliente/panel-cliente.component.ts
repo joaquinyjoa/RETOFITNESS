@@ -34,7 +34,7 @@ export class PanelClienteComponent implements OnInit {
   // Para registrar pesos
   showModalRegistrarPeso = false;
   ejercicioSeleccionado: any = null;
-  pesoRegistrado: number | null = null;
+  pesosRegistrados: number[] = []; // Array de pesos, uno por serie
 
   // Para ver detalles del ejercicio
   showModalDetalleEjercicio = false;
@@ -148,7 +148,17 @@ export class PanelClienteComponent implements OnInit {
 
   abrirModalRegistrarPeso(ejercicio: any) {
     this.ejercicioSeleccionado = ejercicio;
-    this.pesoRegistrado = ejercicio.peso_registrado || null;
+    
+    // Cargar pesos guardados o inicializar array vacío
+    const pesosGuardados = this.obtenerPesosCache();
+    const cacheEjercicio = pesosGuardados[ejercicio.ejercicio_id];
+    
+    if (cacheEjercicio && Array.isArray(cacheEjercicio.pesos)) {
+      this.pesosRegistrados = [...cacheEjercicio.pesos];
+    } else {
+      this.pesosRegistrados = [];
+    }
+    
     this.showModalRegistrarPeso = true;
   }
 
@@ -190,36 +200,43 @@ export class PanelClienteComponent implements OnInit {
   cerrarModalRegistrarPeso() {
     this.showModalRegistrarPeso = false;
     this.ejercicioSeleccionado = null;
-    this.pesoRegistrado = null;
+    this.pesosRegistrados = [];
   }
 
   async guardarPeso() {
-    if (!this.ejercicioSeleccionado || this.pesoRegistrado === null) {
-      this.toastService.mostrarError('Debe ingresar un peso válido');
+    if (!this.ejercicioSeleccionado) {
+      this.toastService.mostrarError('No hay ejercicio seleccionado');
+      return;
+    }
+
+    // Validar que haya al menos un peso registrado
+    const pesosValidos = this.pesosRegistrados.filter(p => p !== null && p !== undefined && p > 0);
+    if (pesosValidos.length === 0) {
+      this.toastService.mostrarError('Debe registrar al menos el peso de una serie');
       return;
     }
 
     // Actualizar localmente
-    this.ejercicioSeleccionado.peso_registrado = this.pesoRegistrado;
+    this.ejercicioSeleccionado.pesos_registrados = [...this.pesosRegistrados];
     
     // Guardar en caché (localStorage)
-    this.guardarPesoEnCache(this.ejercicioSeleccionado.ejercicio_id, this.pesoRegistrado);
+    this.guardarPesoEnCache(this.ejercicioSeleccionado.ejercicio_id, this.pesosRegistrados);
     
     // Cerrar modal primero
     this.cerrarModalRegistrarPeso();
     
     // Mostrar toast después de cerrar el modal
-    await this.toastService.mostrarExito('Peso registrado correctamente');
+    await this.toastService.mostrarExito(`${pesosValidos.length} serie(s) registrada(s) correctamente`);
   }
 
   // Guardar peso en localStorage
-  private guardarPesoEnCache(ejercicioId: number, peso: number) {
+  private guardarPesoEnCache(ejercicioId: number, pesos: number[]) {
     try {
       const cacheKey = `${this.PESOS_CACHE_KEY}_${this.clienteId}`;
       const pesosGuardados = this.obtenerPesosCache();
       
       pesosGuardados[ejercicioId] = {
-        peso: peso,
+        pesos: pesos,
         fecha: new Date().toISOString()
       };
       
@@ -228,9 +245,33 @@ export class PanelClienteComponent implements OnInit {
       console.error('❌ Error al guardar peso en caché:', error);
     }
   }
+  // Agregar nueva serie de peso
+  agregarSeriePeso() {
+    if (!this.ejercicioSeleccionado) return;
+    
+    const maxSeries = this.ejercicioSeleccionado.series || 3;
+    
+    if (this.pesosRegistrados.length >= maxSeries) {
+      this.toastService.mostrarAdvertencia(`Máximo ${maxSeries} series permitidas`);
+      return;
+    }
+    
+    this.pesosRegistrados.push(0);
+  }
 
+  // Eliminar serie de peso
+  eliminarSeriePeso(index: number) {
+    this.pesosRegistrados.splice(index, 1);
+  }
+
+  // Verificar si se puede agregar más series
+  puedaAgregarSerie(): boolean {
+    if (!this.ejercicioSeleccionado) return false;
+    const maxSeries = this.ejercicioSeleccionado.series || 3;
+    return this.pesosRegistrados.length < maxSeries;
+  }
   // Obtener pesos del caché
-  private obtenerPesosCache(): { [key: number]: { peso: number, fecha: string } } {
+  private obtenerPesosCache(): { [key: number]: { peso?: number, pesos?: number[], fecha: string } } {
     try {
       const cacheKey = `${this.PESOS_CACHE_KEY}_${this.clienteId}`;
       const cache = localStorage.getItem(cacheKey);

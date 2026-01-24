@@ -43,8 +43,37 @@
       </ion-button>
     </div>
 
+    <!-- Filtro por días -->
+    <div *ngIf="rutinasAsignadas.length > 0" style="margin-bottom: 20px;">
+      <ion-segment [value]="diaSeleccionado.toString()" (ionChange)="cambiarDia($event)" scrollable="true" mode="md">
+        <ion-segment-button value="0">
+          <ion-label>Todos</ion-label>
+        </ion-segment-button>
+        <ion-segment-button *ngFor="let dia of diasDisponibles" [value]="dia.toString()">
+          <ion-label>{{ diasSemana[dia] || 'Día ' + dia }}</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+    </div>
+
+    <!-- Botón para asignar nueva rutina -->
+    <ion-button 
+      *ngIf="rutinasAsignadas.length > 0 && rutinasAsignadas.length < 6"
+      class="fab-button"
+      (click)="asignarNuevaRutina()"
+      expand="block"
+      color="success">
+      <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+      Asignar Nueva Rutina ({{ rutinasAsignadas.length }}/6)
+    </ion-button>
+
+    <!-- Mensaje cuando ya tiene 6 rutinas -->
+    <div *ngIf="rutinasAsignadas.length >= 6" class="max-rutinas-message">
+      <ion-icon name="checkmark-circle-outline"></ion-icon>
+      <p>Este cliente ya tiene el máximo de rutinas asignadas (6 días)</p>
+    </div>
+
     <!-- Rutinas asignadas por día -->
-    <div *ngFor="let rutinaAsignada of rutinasAsignadas">
+    <div *ngFor="let rutinaAsignada of rutinasAMostrar">
       <ion-card class="rutina-card">
         <ion-card-header>
           <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -54,9 +83,6 @@
                 <ion-chip color="primary" style="font-weight: bold;">
                   <ion-icon name="calendar-outline"></ion-icon>
                   <ion-label>{{ diasSemana[rutinaAsignada.dia_semana] || 'Día ' + rutinaAsignada.dia_semana }}</ion-label>
-                </ion-chip>
-                <ion-chip [color]="rutinaAsignada.estado === 'en_progreso' ? 'success' : rutinaAsignada.estado === 'completada' ? 'primary' : 'medium'">
-                  <ion-label style="text-transform: capitalize;">{{ rutinaAsignada.estado?.replace('_', ' ') || 'Pendiente' }}</ion-label>
                 </ion-chip>
               </div>
               
@@ -93,15 +119,9 @@
           <!-- Fechas -->
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px;">
             <div style="background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 8px;">
-              <small style="color: var(--ion-color-medium);">Fecha de inicio</small>
+              <small style="color: var(--ion-color-medium);">Fecha de asignación</small>
               <div style="color: var(--primary-green); font-weight: bold;">
-                {{ rutinaAsignada.fecha_inicio ? (rutinaAsignada.fecha_inicio | date: 'dd/MM/yyyy') : 'No especificada' }}
-              </div>
-            </div>
-            <div style="background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 8px;">
-              <small style="color: var(--ion-color-medium);">Fecha de fin</small>
-              <div style="color: var(--primary-green); font-weight: bold;">
-                {{ rutinaAsignada.fecha_fin ? (rutinaAsignada.fecha_fin | date: 'dd/MM/yyyy') : 'No especificada' }}
+                {{ rutinaAsignada.fecha_asignacion ? (rutinaAsignada.fecha_asignacion | date: 'dd/MM/yyyy') : 'No especificada' }}
               </div>
             </div>
             <div style="background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 8px;">
@@ -118,81 +138,124 @@
             <p style="color: var(--ion-color-medium); margin: 5px 0 0 0;">{{ rutinaAsignada.notas }}</p>
           </div>
 
-          <!-- Ejercicios personalizados -->
+          <!-- Ejercicios personalizados en carrusel -->
           <div *ngIf="rutinaAsignada.ejercicios && rutinaAsignada.ejercicios.length > 0">
-            <h3 style="color: var(--primary-green); margin: 15px 0 10px 0;">
-              <ion-icon name="list-outline"></ion-icon>
-              Ejercicios ({{ rutinaAsignada.ejercicios.length }})
-            </h3>
+            <div class="ejercicios-header">
+              <h3>
+                <ion-icon name="barbell-outline"></ion-icon>
+                Ejercicios
+              </h3>
+              <ion-chip color="success" class="contador-chip">
+                <ion-label>{{ getCarouselIndex(rutinaAsignada) + 1 }}/{{ rutinaAsignada.ejercicios.length }}</ion-label>
+              </ion-chip>
+            </div>
 
-            <div *ngFor="let ej of rutinaAsignada.ejercicios; let i = index" 
-                 style="background: rgba(0, 255, 136, 0.05); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+            <!-- Carrusel de ejercicios con gestos -->
+            <div class="ejercicios-carousel">
+              <div class="carousel-wrapper"
+                   (touchstart)="onTouchStart($event, rutinaAsignada)"
+                   (touchmove)="onTouchMove($event, rutinaAsignada)"
+                   (touchend)="onTouchEnd($event, rutinaAsignada)">
+                <div class="carousel-track" 
+                     [style.transform]="'translateX(' + getCarouselTransform(rutinaAsignada) + ')'"
+                     [class.transitioning]="!isDragging(rutinaAsignada)">
+                  <div class="ejercicio-slide" *ngFor="let ej of rutinaAsignada.ejercicios; let i = index">
+                    <div class="ejercicio-card">
+                      
+                      <!-- Header compacto -->
+                      <div class="card-header">
+                        <div class="numero-badge">{{ i + 1 }}</div>
+                        <div class="titulo-ejercicio">
+                          <h4>{{ ej.ejercicio?.nombre || 'Ejercicio sin nombre' }}</h4>
+                          <p><ion-icon name="body-outline"></ion-icon>{{ ej.ejercicio?.musculo_principal || 'N/A' }}</p>
+                        </div>
+                        <ion-button fill="clear" size="small" (click)="cambiarEjercicio(rutinaAsignada, ej)" class="btn-swap">
+                          <ion-icon name="swap-horizontal-outline"></ion-icon>
+                        </ion-button>
+                      </div>
+
+                      <!-- Parámetros compactos -->
+                      <div class="parametros-row">
+                        <div class="param-box">
+                          <ion-icon name="repeat-outline"></ion-icon>
+                          <span class="valor">{{ ej.series || 'N/A' }}</span>
+                          <span class="label">SERIES</span>
+                        </div>
+                        <div class="param-box">
+                          <ion-icon name="fitness-outline"></ion-icon>
+                          <span class="valor">{{ ej.repeticiones || 'N/A' }}</span>
+                          <span class="label">REPS</span>
+                        </div>
+                        <div class="param-box">
+                          <ion-icon name="timer-outline"></ion-icon>
+                          <span class="valor">{{ ej.descanso_segundos || 60 }}s</span>
+                          <span class="label">DESCANSO</span>
+                        </div>
+                        <div class="param-box">
+                          <ion-icon name="flash-outline"></ion-icon>
+                          <span class="valor">{{ ej.porcentaje_fuerza || 100 }}%</span>
+                          <span class="label">FUERZA</span>
+                        </div>
+                      </div>
+
+                      <!-- Ejercicio alternativo -->
+                      <div *ngIf="ej.ejercicio_alternativo" class="alternativo-box">
+                        <div class="alternativo-header">
+                          <ion-icon name="swap-horizontal-outline"></ion-icon>
+                          <strong>Alternativa disponible:</strong>
+                        </div>
+                        <div class="alternativo-content">
+                          {{ ej.ejercicio_alternativo.nombre }}
+                          <ion-badge color="warning">{{ ej.ejercicio_alternativo.musculo_principal }}</ion-badge>
+                        </div>
+                        <div class="alternativo-nota">
+                          (Si el equipo está ocupado)
+                        </div>
+                      </div>
+
+                      <!-- Media centrado -->
+                      <div *ngIf="ej.ejercicio?.enlace_video" class="media-wrapper">
+                        <ng-container *ngIf="isImageUrl(ej.ejercicio.enlace_video); else iframeBlock">
+                          <img [src]="getDirectImageUrl(ej.ejercicio.enlace_video)" alt="Ejercicio" class="media-content" />
+                        </ng-container>
+                        <ng-template #iframeBlock>
+                          <ng-container *ngIf="isVideoUrl(ej.ejercicio.enlace_video); else legacyIframe">
+                            <iframe [src]="getSafeUrl(getDirectVideoUrl(ej.ejercicio.enlace_video))" 
+                                    frameborder="0" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen
+                                    class="media-content">
+                            </iframe>
+                          </ng-container>
+                          <ng-template #legacyIframe>
+                            <iframe
+                              [src]="getSafeUrl(ej.ejercicio.enlace_video)"
+                              frameborder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowfullscreen
+                              class="media-content">
+                            </iframe>
+                          </ng-template>
+                        </ng-template>
+                      </div>
+
+                      <!-- Notas -->
+                      <div *ngIf="ej.notas" class="notas-box">
+                        <ion-icon name="information-circle"></ion-icon>
+                        <span>{{ ej.notas }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
               
-              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                <div style="background: var(--primary-green); color: #000000; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">
-                  {{ i + 1 }}
-                </div>
-                <div style="flex: 1;">
-                  <h3 style="color: var(--primary-green); margin: 0; font-size: 1.1rem;">
-                    {{ ej.ejercicio?.nombre || 'Ejercicio sin nombre' }}
-                  </h3>
-                  <p style="color: var(--ion-color-medium); margin: 3px 0 0 0; font-size: 0.9rem;">
-                    <ion-icon name="body-outline" style="vertical-align: middle;"></ion-icon>
-                    {{ ej.ejercicio?.musculo_principal || 'N/A' }}
-                  </p>
-                </div>
-                <!-- Botón para cambiar ejercicio -->
-                <ion-button fill="clear" size="small" color="warning" (click)="cambiarEjercicio(rutinaAsignada, ej)">
-                  <ion-icon name="swap-horizontal-outline" slot="icon-only"></ion-icon>
-                </ion-button>
-              </div>
-
-              <!-- Parámetros -->
-              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px;">
-                <div style="background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 6px; text-align: center;">
-                  <small style="color: var(--ion-color-medium);">Series</small>
-                  <div style="color: var(--primary-green); font-weight: bold; font-size: 1.1rem;">{{ ej.series || 'N/A' }}</div>
-                </div>
-                <div style="background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 6px; text-align: center;">
-                  <small style="color: var(--ion-color-medium);">Reps</small>
-                  <div style="color: var(--primary-green); font-weight: bold; font-size: 1.1rem;">{{ ej.repeticiones || 'N/A' }}</div>
-                </div>
-                <div style="background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 6px; text-align: center;">
-                  <small style="color: var(--ion-color-medium);">Descanso</small>
-                  <div style="color: var(--primary-green); font-weight: bold; font-size: 1.1rem;">{{ ej.descanso_segundos || 60 }}s</div>
-                </div>
-              </div>
-
-              <!-- Video o GIF -->
-              <div *ngIf="ej.ejercicio?.enlace_video" style="margin-top: 10px;">
-                <ng-container *ngIf="isImageUrl(ej.ejercicio.enlace_video); else iframeBlock">
-                  <img [src]="getDirectImageUrl(ej.ejercicio.enlace_video)" alt="Ejercicio" style="width:100%; height:auto; border-radius:8px; border:2px solid rgba(0,255,136,0.3);" />
-                </ng-container>
-                <ng-template #iframeBlock>
-                  <ng-container *ngIf="isVideoUrl(ej.ejercicio.enlace_video); else legacyIframe">
-                    <iframe [src]="getSafeUrl(getDirectVideoUrl(ej.ejercicio.enlace_video))" 
-                            frameborder="0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowfullscreen
-                            style="width:100%; height:250px; border-radius:8px; border:2px solid rgba(0,255,136,0.3);">
-                    </iframe>
-                  </ng-container>
-                  <ng-template #legacyIframe>
-                    <iframe
-                      [src]="getSafeUrl(ej.ejercicio.enlace_video)"
-                      frameborder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowfullscreen
-                      style="width: 100%; height: 250px; border-radius: 8px; border: 2px solid rgba(0, 255, 136, 0.3);">
-                    </iframe>
-                  </ng-template>
-                </ng-template>
-              </div>
-
-              <!-- Notas del ejercicio -->
-              <div *ngIf="ej.notas" style="margin-top: 10px; padding: 10px; background: rgba(0, 255, 136, 0.08); border-left: 3px solid var(--primary-green); border-radius: 4px;">
-                <small style="color: var(--ion-color-medium);">Nota:</small>
-                <p style="margin: 3px 0 0 0; color: #ffffff;">{{ ej.notas }}</p>
+              <!-- Indicadores -->
+              <div class="carousel-dots" *ngIf="rutinaAsignada.ejercicios.length > 1">
+                <span *ngFor="let ej of rutinaAsignada.ejercicios; let i = index" 
+                      class="dot" 
+                      [class.active]="i === getCarouselIndex(rutinaAsignada)"
+                      (click)="irAEjercicio(rutinaAsignada, i)">
+                </span>
               </div>
             </div>
           </div>
@@ -202,65 +265,9 @@
 
   </div>
 
+  <!-- Spinner overlay -->
+  <div *ngIf="mostrarSpinner" class="spinner-overlay-transparent">
+    <app-spinner></app-spinner>
+  </div>
+
 </ion-content>
-
-<!-- Modal para cambiar ejercicio -->
-<ion-modal 
-  [isOpen]="showModalCambiarEjercicio" 
-  (didDismiss)="cerrarModalCambiarEjercicio()"
-  [backdropDismiss]="true">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar color="dark">
-        <ion-title>Seleccionar nuevo ejercicio</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="cerrarModalCambiarEjercicio()">
-            <ion-icon name="close"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-      <ion-toolbar>
-        <ion-searchbar 
-          [(ngModel)]="filtroEjercicio"
-          (ionInput)="filtrarEjercicios()"
-          placeholder="Buscar ejercicio..."
-          debounce="300">
-        </ion-searchbar>
-      </ion-toolbar>
-    </ion-header>
-    
-    <ion-content>
-      <div *ngIf="cargandoEjercicios" class="loading-container">
-        <ion-spinner></ion-spinner>
-        <p>Cargando ejercicios...</p>
-      </div>
-
-      <ion-list *ngIf="!cargandoEjercicios">
-        <ion-item 
-          button
-          *ngFor="let ejercicio of ejerciciosDisponiblesFiltrados"
-          (click)="seleccionarNuevoEjercicio(ejercicio)"
-          [disabled]="ejercicio.id === ejercicioACambiar?.ejercicio_id">
-          
-          <ion-label>
-            <h3>{{ ejercicio.nombre }}</h3>
-            <p>{{ ejercicio.musculo_principal }}</p>
-            <p *ngIf="ejercicio.categoria" class="categoria-text">{{ ejercicio.categoria }}</p>
-          </ion-label>
-          
-          <ion-icon 
-            *ngIf="ejercicio.id === ejercicioACambiar?.ejercicio_id"
-            name="checkmark-circle"
-            color="primary"
-            slot="end">
-          </ion-icon>
-        </ion-item>
-
-        <div *ngIf="ejerciciosDisponiblesFiltrados.length === 0" class="no-results">
-          <ion-icon name="search-outline"></ion-icon>
-          <p>No se encontraron ejercicios</p>
-        </div>
-      </ion-list>
-    </ion-content>
-  </ng-template>
-</ion-modal>

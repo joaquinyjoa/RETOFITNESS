@@ -46,6 +46,14 @@ export const routes: Routes = [
     loadComponent: () => import('./ver-rutina-cliente/ver-rutina-cliente.component').then((m) => m.VerRutinaClienteComponent),
   },
   {
+    path: 'asignar-rutina-cliente-seleccionado/:id',
+    loadComponent: () => import('./asignar-rutina-cliente-seleccionado/asignar-rutina-cliente-seleccionado.component').then((m) => m.AsignarRutinaClienteSeleccionadoComponent),
+  },
+  {
+    path: 'configurar-ejercicio/:id/:clienteId',
+    loadComponent: () => import('./configurar-ejercicio/configurar-ejercicio.component').then((m) => m.ConfigurarEjercicioComponent),
+  },
+  {
     path: 'cambiar-password/:id',
     loadComponent: () => import('./cambiar-password/cambiar-password.component').then((m) => m.CambiarPasswordComponent),
   },
