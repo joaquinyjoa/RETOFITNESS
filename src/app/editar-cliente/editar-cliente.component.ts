@@ -69,26 +69,20 @@ export class EditarClienteComponent implements OnInit {
   }
 
   async cargarCliente() {
-    console.log('🟡 [EditarCliente] === INICIO cargarCliente ===');
-    console.log('🟡 [EditarCliente] Activando spinner (loading = true)...');
     this.loading = true;
     this.cdr.detectChanges();
     
     try {
-      console.log('🟡 [EditarCliente] Cargando cliente ID:', this.clienteId);
       const tiempoInicio = performance.now();
       
       const clienteEncontrado = await this.clienteService.obtenerClientePorId(this.clienteId!);
       
       const tiempoFin = performance.now();
       const duracion = (tiempoFin - tiempoInicio).toFixed(2);
-      console.log(`🟢 [EditarCliente] Cliente cargado en ${duracion}ms`);
       
       if (clienteEncontrado) {
-        console.log('🟢 [EditarCliente] Cliente encontrado:', clienteEncontrado.nombre, clienteEncontrado.apellido);
         this.cliente = { ...clienteEncontrado };
       } else {
-        console.error('🔴 [EditarCliente] Cliente no encontrado');
         await this.toastService.mostrarError('Cliente no encontrado');
         this.router.navigate(['/ver-clientes'], { replaceUrl: true });
       }
@@ -96,9 +90,7 @@ export class EditarClienteComponent implements OnInit {
       console.error('🔴 [EditarCliente] Error al cargar cliente:', error);
       await this.toastService.mostrarError('Error al cargar la información del cliente');
     } finally {
-      console.log('🟡 [EditarCliente] Desactivando spinner (loading = false)...');
       this.loading = false;
-      console.log('🟡 [EditarCliente] Forzando detección de cambios...');
       
       // Forzar detección de cambios
       this.cdr.detectChanges();
@@ -107,10 +99,7 @@ export class EditarClienteComponent implements OnInit {
       setTimeout(() => {
         this.loading = false;
         this.cdr.detectChanges();
-        console.log('🟡 [EditarCliente] Segunda detección de cambios ejecutada');
       }, 0);
-      
-      console.log('🟡 [EditarCliente] === FIN cargarCliente ===\n');
     }
   }
 
@@ -119,11 +108,8 @@ export class EditarClienteComponent implements OnInit {
       return;
     }
 
-    console.log('💾 [EditarCliente] Guardando cambios...');
-    
     try {
       // Mostrar spinner
-      console.log('🟡 [EditarCliente] Mostrando spinner...');
       this.guardando = true;
       this.cdr.detectChanges();
       
@@ -134,16 +120,12 @@ export class EditarClienteComponent implements OnInit {
       const resultado = await this.clienteService.actualizarCliente(this.clienteId!, this.cliente);
       const tiempoFin = performance.now();
       
-      console.log(`💾 [EditarCliente] Actualización completada en ${(tiempoFin - tiempoInicio).toFixed(2)}ms`);
-      
       if (resultado.success) {
-        console.log('✅ [EditarCliente] Cliente actualizado exitosamente');
-        
+       
         // Mantener spinner visible por 800ms
         await new Promise(resolve => setTimeout(resolve, 800));
         
         // Ocultar spinner
-        console.log('🟢 [EditarCliente] Ocultando spinner...');
         this.guardando = false;
         this.cdr.detectChanges();
         
@@ -169,7 +151,6 @@ export class EditarClienteComponent implements OnInit {
     } finally {
       // Asegurar que el spinner esté oculto al final
       if (this.guardando) {
-        console.log('⚠️ [EditarCliente] Spinner todavía visible en finally, ocultando...');
         this.guardando = false;
         this.cdr.detectChanges();
       }

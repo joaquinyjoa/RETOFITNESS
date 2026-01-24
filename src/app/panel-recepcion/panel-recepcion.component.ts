@@ -37,7 +37,6 @@ export class PanelRecepcionComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      console.log('Cargando clientes con filtro:', this.filtro);
 
       if (this.filtro === 'pendientes') {
         this.clientes = await this.clienteService.listarClientesPendientes();
@@ -52,7 +51,6 @@ export class PanelRecepcionComponent implements OnInit {
         );
       }
 
-      console.log('Clientes cargados:', this.clientes.length);
       this.aplicarFiltroCorreo();
     } catch (error) {
       console.error('Error al cargar clientes:', error);
@@ -85,14 +83,12 @@ export class PanelRecepcionComponent implements OnInit {
     }
 
     const nuevoEstado = !cliente.Estado;
-    console.log(`Cambiando estado de ${cliente.nombre} a ${nuevoEstado}`);
 
     const exito = await this.clienteService.aprobarCliente(cliente.id, nuevoEstado);
 
     if (exito) {
       // Actualizar el estado local
       cliente.Estado = nuevoEstado;
-      console.log('Estado actualizado correctamente');
       
       // Recargar la lista para reflejar cambios
       await this.cargarClientes();

@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { QrService } from './qr.service';
 import { SupabaseService, Cliente } from './supabase.service';
 
 @Injectable({
@@ -8,18 +7,16 @@ import { SupabaseService, Cliente } from './supabase.service';
 export class ClienteService {
 
   constructor(
-    private qrService: QrService,
     private supabaseService: SupabaseService
   ) {}
   /**
-   * Crear un nuevo cliente con QR generado automáticamente
+   * Crear un nuevo cliente
    * @param clienteData - Datos del cliente
    * @param password - Contraseña del cliente (se enviará a Supabase Auth)
    * @returns Promise con el resultado del registro
    */
   async crearCliente(clienteData: Cliente, password: string): Promise<{ success: boolean; data?: any; error?: string; requiresConfirmation?: boolean }> {
     try {
-      console.log('ClienteService: Iniciando registro de cliente:', clienteData);
 
       // 1. Verificar si el email ya existe
       const emailExists = await this.supabaseService.verificarEmailExistente(clienteData.correo);
@@ -33,8 +30,6 @@ export class ClienteService {
       if (!authResult.success || !authResult.userId) {
         return { success: false, error: authResult.error || 'Error al crear usuario' };
       }
-
-      console.log('Usuario Auth creado con ID:', authResult.userId);
       const requiresConfirmation = authResult.requiresConfirmation || false;
 
       // 3. Agregar user_id y Estado a los datos del cliente
@@ -62,14 +57,6 @@ export class ClienteService {
           }
         }
       });
-      
-      // Depuración: verificar campos después de normalización
-      console.log('ClienteService: Datos después de normalización:', {
-        descripcionEnfermedad: clienteConUserId.descripcionEnfermedad,
-        descripcionMedicacion: clienteConUserId.descripcionMedicacion,
-        descripcionCirugias: clienteConUserId.descripcionCirugias,
-        descripcionLesiones: clienteConUserId.descripcionLesiones
-      });
 
       // 4. Registrar cliente en la base de datos
       const result = await this.supabaseService.registrarCliente(clienteConUserId);
@@ -82,26 +69,6 @@ export class ClienteService {
       }
 
       const clienteRegistrado = result.data;
-      console.log('Cliente registrado exitosamente:', clienteRegistrado);
-
-      // 5. Generar código QR con el ID del cliente
-      const qrDataUrl = await this.qrService.generarQRCliente(clienteRegistrado.id);
-      
-      // 6. Convertir DataURL a Blob y subir imagen QR al storage
-      const qrBlob = this.dataURLtoBlob(qrDataUrl);
-      const fileName = `qr_cliente_${clienteRegistrado.id}.png`;
-      const uploadResult = await this.supabaseService.subirImagenQR(qrBlob, fileName);
-      
-      if (!uploadResult.success || !uploadResult.url) {
-        console.warn('Cliente registrado, pero no se pudo generar el QR');
-        return { success: true, data: clienteRegistrado, error: 'Cliente registrado, pero no se pudo generar el QR' };
-      } else {
-        // 7. Actualizar el cliente con la URL del QR
-        const updateResult = await this.supabaseService.actualizarQRCliente(clienteRegistrado.id, uploadResult.url);
-        if (!updateResult.success) {
-          console.warn('No se pudo actualizar la URL del QR en el cliente');
-        }
-      }
 
       return { 
         success: true, 
@@ -213,7 +180,6 @@ export class ClienteService {
    */
   async obtenerClientePorId(id: number): Promise<any> {
     try {
-      console.log('🔹 ClienteService: Buscando cliente con ID:', id);
       
       const { data, error } = await this.supabaseService['supabase']
         .from('clientes')
@@ -225,28 +191,11 @@ export class ClienteService {
         console.error('❌ ClienteService.obtenerClientePorId error:', error);
         return null;
       }
-
-      console.log('✅ ClienteService: Cliente encontrado:', data);
       return data;
     } catch (error: any) {
       console.error('❌ Error en obtenerClientePorId:', error);
       return null;
     }
-  }
-
-  /**
-   * Convertir DataURL a Blob para subir archivo
-   */
-  private dataURLtoBlob(dataurl: string): Blob {
-    const arr = dataurl.split(',');
-    const mime = arr[0].match(/:(.*?);/)![1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) {
-      u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new Blob([u8arr], { type: mime });
   }
 
   /**
@@ -266,8 +215,6 @@ export class ClienteService {
    */
   async actualizarCliente(id: number, clienteData: Partial<Cliente>): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      console.log('ClienteService: Actualizando cliente ID:', id, clienteData);
-
       // Normalizar campos de texto opcionales similar al método crearCliente
       const dataToUpdate = { ...clienteData };
       
@@ -317,8 +264,6 @@ export class ClienteService {
         console.error('ClienteService.actualizarCliente error:', error);
         return { success: false, error: error.message };
       }
-
-      console.log('Cliente actualizado exitosamente:', data);
       return { success: true, data };
       
     } catch (error: any) {

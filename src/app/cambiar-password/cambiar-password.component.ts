@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
@@ -6,43 +6,39 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ClienteService } from '../services/cliente.service';
 import { Cliente } from '../services/supabase.service';
-import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
   selector: 'app-cambiar-password',
   templateUrl: './cambiar-password.component.html',
   styleUrls: ['./cambiar-password.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule, SpinnerComponent]
+  imports: [CommonModule, IonicModule, FormsModule]
 })
 export class CambiarPasswordComponent  implements OnInit {
   clienteId: number | null = null;
   cliente: Cliente | null = null;
   nuevaPassword = '';
   confirmarPassword = '';
-  mostrarSpinner = false;
+  mostrarNuevaPassword = false;
+  mostrarConfirmarPassword = false;
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private authService: AuthService,
-    private clienteService: ClienteService
+    private clienteService: ClienteService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   async ngOnInit() {
-    console.log('🔷 CambiarPassword: ngOnInit iniciado');
     const id = this.route.snapshot.paramMap.get('id');
-    console.log('🔷 ID del parámetro:', id);
     
     if (id) {
       this.clienteId = parseInt(id, 10);
-      console.log('🔷 Cliente ID parseado:', this.clienteId);
       await this.cargarCliente();
     } else {
-      console.warn('⚠️ No se proporcionó ID, volviendo...');
       this.volver();
     }
-    console.log('🔷 CambiarPassword: ngOnInit completado');
   }
 
   async cargarCliente() {
@@ -51,39 +47,19 @@ export class CambiarPasswordComponent  implements OnInit {
       return;
     }
     
-    console.log('🔷 Iniciando carga de cliente ID:', this.clienteId);
-    this.mostrarSpinner = true;
-    
-    // Timeout de seguridad: 10 segundos máximo
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Timeout: La carga del cliente tardó demasiado')), 10000);
-    });
-    
     try {
-      console.log('🔷 Llamando a obtenerClientePorId...');
-      
-      // Race entre la carga del cliente y el timeout
-      this.cliente = await Promise.race([
-        this.clienteService.obtenerClientePorId(this.clienteId),
-        timeoutPromise
-      ]) as any;
-      
-      console.log('🔷 Cliente obtenido:', this.cliente);
+      this.cliente = await this.clienteService.obtenerClientePorId(this.clienteId);
       
       if (!this.cliente) {
-        console.error('❌ Cliente no encontrado');
         alert('Cliente no encontrado');
         this.volver();
       } else {
-        console.log('✅ Cliente cargado exitosamente:', this.cliente.nombre);
+        // Forzar detección de cambios
+        this.cdr.detectChanges();
       }
     } catch (error: any) {
-      console.error('❌ Error al cargar cliente:', error);
       alert(`Error al cargar el cliente: ${error.message || 'Error desconocido'}`);
       this.volver();
-    } finally {
-      console.log('🔷 Ocultando spinner');
-      this.mostrarSpinner = false;
     }
   }
 
@@ -108,8 +84,6 @@ export class CambiarPasswordComponent  implements OnInit {
       alert('Las contraseñas no coinciden');
       return;
     }
-
-    this.mostrarSpinner = true;
     
     try {
       const resultado = await this.authService.cambiarPasswordCliente(
@@ -126,12 +100,18 @@ export class CambiarPasswordComponent  implements OnInit {
     } catch (error: any) {
       console.error('Error inesperado:', error);
       alert('Error inesperado al cambiar la contraseña');
-    } finally {
-      this.mostrarSpinner = false;
     }
   }
 
   volver() {
     this.router.navigate(['/panel-recepcion']);
+  }
+
+  toggleNuevaPasswordVisibility() {
+    this.mostrarNuevaPassword = !this.mostrarNuevaPassword;
+  }
+
+  toggleConfirmarPasswordVisibility() {
+    this.mostrarConfirmarPassword = !this.mostrarConfirmarPassword;
   }
 }

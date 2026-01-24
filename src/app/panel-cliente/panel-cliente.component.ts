@@ -45,8 +45,6 @@ export class PanelClienteComponent implements OnInit {
   private readonly PESOS_CACHE_KEY = 'pesos_ejercicios_cache';
 
   async ngOnInit() {
-    console.log('🚀 [PanelCliente] Inicializando...');
-    
     // Obtener información del usuario logueado
     const sesion = this.authService.obtenerSesion();
     
@@ -54,26 +52,21 @@ export class PanelClienteComponent implements OnInit {
       const clienteData = sesion.data as any;
       this.clienteId = clienteData.id;
       this.nombreCliente = clienteData.nombre || 'Cliente';
-      console.log('👤 Cliente ID:', this.clienteId);
       
       await this.cargarRutinaAsignada();
     } else {
-      console.error('❌ No hay sesión activa');
       this.toastService.mostrarError('Sesión no válida');
       this.router.navigate(['/login']);
     }
   }
 
   async cargarRutinaAsignada() {
-    console.log('🟡 [PanelCliente] === INICIO cargarRutinaAsignada ===');
 
     try {
       if (!this.clienteId) {
         console.error('❌ No hay cliente ID');
         return;
       }
-
-      console.log('🟡 [PanelCliente] Cargando rutinas del cliente...');
       const tiempoInicio = performance.now();
 
       // Limpiar caché y datos antiguos
@@ -83,7 +76,6 @@ export class PanelClienteComponent implements OnInit {
       const { data, error } = await this.rutinaService.obtenerRutinasDeCliente(this.clienteId);
 
       const tiempoFin = performance.now();
-      console.log(`🟢 [PanelCliente] Rutinas cargadas en ${(tiempoFin - tiempoInicio).toFixed(2)}ms`);
 
       if (error) {
         console.error('❌ Error al cargar rutinas:', error);
@@ -91,8 +83,6 @@ export class PanelClienteComponent implements OnInit {
       }
 
       if (data && data.length > 0) {
-        console.log('🟢 [PanelCliente] Rutinas encontradas:', data.length);
-        
         this.rutinasAsignadas = data;
         
         // Organizar rutinas por día
@@ -112,14 +102,12 @@ export class PanelClienteComponent implements OnInit {
         // Seleccionar rutina del día 1 por defecto
         this.seleccionarDia(1);
       } else {
-        console.log('⚠️ [PanelCliente] No hay rutinas asignadas');
         this.rutinaAsignada = null;
       }
     } catch (error) {
       console.error('❌ [PanelCliente] Error:', error);
       this.toastService.mostrarError('Error al cargar tu rutina');
     } finally {
-      console.log('🟡 [PanelCliente] Desactivando spinner...');
       this.loading = false;
       this.cdr.detectChanges();
       
@@ -127,8 +115,6 @@ export class PanelClienteComponent implements OnInit {
         this.loading = false;
         this.cdr.detectChanges();
       }, 0);
-      
-      console.log('🟡 [PanelCliente] === FIN cargarRutinaAsignada ===\n');
     }
   }
 
@@ -140,8 +126,6 @@ export class PanelClienteComponent implements OnInit {
       // Cargar pesos desde caché
       this.cargarPesosDesdeCache();
     }
-    
-    console.log(`📅 Día ${dia} seleccionado`, this.rutinaAsignada);
   }
 
   get diasDisponibles(): number[] {
@@ -163,14 +147,12 @@ export class PanelClienteComponent implements OnInit {
   }
 
   abrirModalRegistrarPeso(ejercicio: any) {
-    console.log('📝 Abriendo modal para registrar peso:', ejercicio);
     this.ejercicioSeleccionado = ejercicio;
     this.pesoRegistrado = ejercicio.peso_registrado || null;
     this.showModalRegistrarPeso = true;
   }
 
   async abrirModalDetalleEjercicio(ejercicio: any) {
-    console.log('🔍 Abriendo detalles del ejercicio:', ejercicio);
     this.showModalDetalleEjercicio = true;
     this.cargandoDetalle = true;
     this.ejercicioDetalle = null;
@@ -178,12 +160,10 @@ export class PanelClienteComponent implements OnInit {
     try {
       if (ejercicio.ejercicio_id || ejercicio.ejercicio?.id) {
         const ejercicioId = ejercicio.ejercicio_id || ejercicio.ejercicio.id;
-        console.log('📡 Obteniendo ejercicio ID:', ejercicioId);
 
         const { data, error } = await this.rutinaService.obtenerEjercicioPorId(ejercicioId);
 
         if (data && !error) {
-          console.log('✅ Ejercicio obtenido:', data);
           this.ejercicioDetalle = data;
         } else {
           console.error('❌ Error al obtener ejercicio:', error);
@@ -197,7 +177,6 @@ export class PanelClienteComponent implements OnInit {
       console.error('💥 Error inesperado:', error);
       this.toastService.mostrarError('Error inesperado al cargar ejercicio');
     } finally {
-      console.log('🔄 Desactivando spinner...');
       this.cargandoDetalle = false;
       this.cdr.detectChanges();
     }
@@ -220,8 +199,6 @@ export class PanelClienteComponent implements OnInit {
       return;
     }
 
-    console.log('💾 Guardando peso:', this.pesoRegistrado, 'kg para ejercicio:', this.ejercicioSeleccionado);
-    
     // Actualizar localmente
     this.ejercicioSeleccionado.peso_registrado = this.pesoRegistrado;
     
@@ -247,7 +224,6 @@ export class PanelClienteComponent implements OnInit {
       };
       
       localStorage.setItem(cacheKey, JSON.stringify(pesosGuardados));
-      console.log('✅ Peso guardado en caché:', ejercicioId, '=', peso, 'kg');
     } catch (error) {
       console.error('❌ Error al guardar peso en caché:', error);
     }
@@ -270,19 +246,16 @@ export class PanelClienteComponent implements OnInit {
     if (!this.rutinaAsignada?.detalles?.ejercicios) return;
 
     const pesosCache = this.obtenerPesosCache();
-    console.log('📦 Pesos en caché:', pesosCache);
 
     this.rutinaAsignada.detalles.ejercicios.forEach((ejercicio: any) => {
       const ejercicioId = ejercicio.ejercicio_id;
       if (pesosCache[ejercicioId]) {
         ejercicio.peso_registrado = pesosCache[ejercicioId].peso;
-        console.log('✅ Peso recuperado para ejercicio', ejercicioId, ':', ejercicio.peso_registrado, 'kg');
       }
     });
   }
 
   logout() {
-    console.log('👋 Cerrando sesión...');
     this.authService.cerrarSesion();
     this.router.navigate(['/login']);
   }
@@ -295,8 +268,6 @@ export class PanelClienteComponent implements OnInit {
   getDirectImageUrl(url: string): string {
     if (!url) return '';
 
-    console.log('🎨 getDirectImageUrl - URL original:', url);
-
     // Extraer el ID del archivo de Google Drive
     let fileId = '';
 
@@ -304,17 +275,14 @@ export class PanelClienteComponent implements OnInit {
     const patronId = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
     if (patronId) {
       fileId = patronId[1];
-      console.log('🎨 File ID extraído:', fileId);
 
       // Para GIFs, intentar diferentes URLs
       if (url.toLowerCase().includes('.gif') || this.isLikelyGif(url)) {
-        console.log('🎨 Detectado como GIF, usando URL especial de Google');
         // URL alternativa que podría funcionar mejor para GIFs
         return `https://lh3.googleusercontent.com/d/${fileId}`;
       }
 
       // Para otras imágenes, usar la URL de vista
-      console.log('🎨 Usando URL de vista para imagen normal');
       return `https://drive.google.com/uc?export=view&id=${fileId}`;
     }
 
@@ -322,16 +290,13 @@ export class PanelClienteComponent implements OnInit {
     const patronOpen = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
     if (patronOpen) {
       fileId = patronOpen[1];
-      console.log('🎨 File ID extraído (open):', fileId);
 
       if (url.toLowerCase().includes('.gif') || this.isLikelyGif(url)) {
-        console.log('🎨 Detectado como GIF (open), usando URL especial de Google');
         return `https://lh3.googleusercontent.com/d/${fileId}`;
       }
       return `https://drive.google.com/uc?export=view&id=${fileId}`;
     }
 
-    console.log('🎨 No se pudo extraer ID, devolviendo URL original');
     // Si no se puede extraer el ID, devolver la URL original
     return url;
   }
@@ -380,54 +345,44 @@ export class PanelClienteComponent implements OnInit {
   isImageUrl(url: string): boolean {
     if (!url) return false;
     const lower = url.toLowerCase();
-    console.log('🔍 isImageUrl - URL:', url);
 
     // Extensiones de imagen/GIF
     if (/\.(gif|png|jpe?g|webp)$/.test(lower)) {
-      console.log('🔍 Detectado como imagen por extensión');
       return true;
     }
 
     // URLs ya procesadas de Drive
     if (lower.includes('uc?export=view') || lower.includes('export=download') || lower.includes('thumbnail')) {
-      console.log('🔍 Detectado como imagen por URL procesada');
       return true;
     }
 
     // Para Google Drive: si NO es claramente un video, asumir que es imagen/GIF
     if (lower.includes('drive.google.com') && !this.isVideoFile(url)) {
-      console.log('🔍 Detectado como imagen por ser Google Drive no-video');
       return true;
     }
 
-    console.log('🔍 No detectado como imagen');
     return false;
   }
 
   isVideoUrl(url: string): boolean {
     if (!url) return false;
     const lower = url.toLowerCase();
-    console.log('🎥 isVideoUrl - URL:', url);
 
     // Extensiones de video
     if (/\.(mp4|mov|avi|webm|m4v|flv|wmv|mkv)$/.test(lower)) {
-      console.log('🎥 Detectado como video por extensión');
       return true;
     }
 
     // URLs de embed de Google Drive (que son para videos)
     if (lower.includes('drive.google.com') && lower.includes('/preview')) {
-      console.log('🎥 Detectado como video por URL de embed');
       return true;
     }
 
     // Para Google Drive: si NO es imagen, asumir que es video
     if (lower.includes('drive.google.com') && !this.isImageFile(url)) {
-      console.log('🎥 Detectado como video por ser Google Drive no-imagen');
       return true;
     }
 
-    console.log('🎥 No detectado como video');
     return false;
   }
 
@@ -451,7 +406,6 @@ export class PanelClienteComponent implements OnInit {
     if (!url) return this.sanitizer.bypassSecurityTrustResourceUrl('');
 
     const embedUrl = this.getDirectVideoUrl(url);
-    console.log('🎬 getVideoEmbedUrl - URL original:', url, '-> Embed:', embedUrl);
 
     return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
   }

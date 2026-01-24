@@ -63,13 +63,11 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
   }
 
   async loadClientes(forzarRecarga = false) {
-    console.log('🔄 [Ver Clientes] Iniciando carga...');
     const inicioTotal = performance.now();
     
     // Usar caché si está disponible y no ha expirado
     const ahora = Date.now();
     if (!forzarRecarga && this.cacheClientes && (ahora - this.ultimaCarga) < this.CACHE_TTL) {
-      console.log('✅ [Ver Clientes] Usando caché (válido por', Math.round((this.CACHE_TTL - (ahora - this.ultimaCarga)) / 1000), 'segundos más)');
       this.clientes = this.cacheClientes;
       this.applyFilter();
       return;
@@ -86,13 +84,11 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
     }, 3000);
     
     try {
-      console.log('📥 [Ver Clientes] Solicitando datos al servidor...');
       const inicioQuery = performance.now();
       
       const list = await this.clienteService.listarClientesResumido();
       
       const finQuery = performance.now();
-      console.log(`✅ [Ver Clientes] Datos recibidos en ${(finQuery - inicioQuery).toFixed(2)}ms`);
       
       clearTimeout(timeoutId);
       this.clientes = Array.isArray(list) ? list : [];
@@ -101,12 +97,9 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
       this.cacheClientes = this.clientes;
       this.ultimaCarga = ahora;
       
-      console.log(`📊 [Ver Clientes] Total de clientes: ${this.clientes.length}`);
-      
       this.applyFilter();
       
       const finTotal = performance.now();
-      console.log(`🎉 [Ver Clientes] Carga completa en ${(finTotal - inicioTotal).toFixed(2)}ms`);
     } catch (err) {
       clearTimeout(timeoutId);
       console.error('❌ [Ver Clientes] Error cargando clientes:', err);
@@ -139,7 +132,6 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
   }
 
   verMas(cliente: any) {
-    console.log('Ver más:', cliente);
     this.mostrarSpinner = true;
     this.cdr.detectChanges();
     
@@ -179,7 +171,6 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
   }
 
   verRutina(cliente: any) {
-    console.log('Ver rutina de:', cliente);
     this.mostrarSpinner = true;
     this.cdr.detectChanges();
     
@@ -190,7 +181,6 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
   }
 
   editarCliente(cliente: any) {
-    console.log('Editar cliente:', cliente);
     this.mostrarSpinner = true;
     this.cdr.detectChanges();
     

@@ -30,7 +30,6 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
   }
 
   ngOnInit() {
-    console.log('🔷 PANEL: ngOnInit ejecutado');
     // Resetear spinner por si volvemos al componente
     this.mostrarSpinner = false;
     
@@ -38,7 +37,6 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
   }
 
   ionViewWillEnter() {
-    console.log('🔷 PANEL: ionViewWillEnter ejecutado');
     // Este hook se ejecuta SIEMPRE antes de entrar a la vista
     setTimeout(() => {
       this.mostrarSpinner = false;
@@ -50,28 +48,23 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
   }
 
   private cargarDatosEntrenador() {
-    console.log('🔷 PANEL: Cargando datos del entrenador...');
     // Pequeño delay para asegurar que localStorage esté disponible
     setTimeout(() => {
       // Obtener información del entrenador logueado
       this.entrenador = this.authService.obtenerSesion();
-      console.log('🔷 PANEL: Datos cargados:', this.entrenador);
       
       // Verificar si hay sesión
       if (!this.entrenador) {
-        console.log('❌ PANEL: No hay sesión, redirigiendo a login');
         this.router.navigate(['/login']);
         return;
       }
       
       // Verificar si es entrenador
       if (this.entrenador.tipo !== 'entrenador') {
-        console.log('❌ PANEL: Usuario no es entrenador, redirigiendo a login');
         this.router.navigate(['/login']);
         return;
       }
       
-      console.log('✅ PANEL: Entrenador verificado:', this.datosEntrenador?.nombre);
       this.cdr.detectChanges();
     }, 100);
   }

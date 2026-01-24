@@ -87,13 +87,10 @@ export class RutinaService {
    * OPTIMIZADO: Usa una sola query con JOIN en lugar de N+1 queries
    */
   async obtenerRutinasConDetalles(): Promise<{ data: RutinaConDetalles[] | null; error: any }> {
-    console.log('🟣 [RutinaService] Iniciando obtenerRutinasConDetalles...');
     const tiempoInicio = performance.now();
     
     try {
       const supabase = this.supabaseService['supabase'];
-      
-      console.log('🟣 [RutinaService] Realizando consulta a Supabase con JOINs...');
       // Una sola query con JOIN para obtener todo
       const { data: rutinas, error: errorRutinas } = await supabase
         .from('rutinas')
@@ -111,11 +108,6 @@ export class RutinaService {
       }
 
       const tiempoConsulta = performance.now();
-      console.log(`🟢 [RutinaService] Consulta completada en ${(tiempoConsulta - tiempoInicio).toFixed(2)}ms`);
-      console.log(`🟢 [RutinaService] Rutinas recibidas: ${rutinas.length}`);
-
-      // Mapear resultados agregando contadores
-      console.log('🟣 [RutinaService] Procesando rutinas...');
       const rutinasConDetalles: RutinaConDetalles[] = rutinas.map((rutina: any) => ({
         ...rutina,
         ejercicios: rutina.ejercicios || [],
@@ -124,13 +116,6 @@ export class RutinaService {
       }));
 
       const tiempoFin = performance.now();
-      console.log(`🟢 [RutinaService] Rutinas procesadas en ${(tiempoFin - tiempoConsulta).toFixed(2)}ms`);
-      console.log(`🟢 [RutinaService] Tiempo total: ${(tiempoFin - tiempoInicio).toFixed(2)}ms`);
-      console.log('🟢 [RutinaService] Primeras rutinas:', rutinasConDetalles.slice(0, 2).map(r => ({
-        nombre: r.nombre,
-        ejercicios: r.ejercicios?.length,
-        clientes: r.clientes_asignados
-      })));
 
       return { data: rutinasConDetalles, error: null };
     } catch (error) {
@@ -175,9 +160,7 @@ export class RutinaService {
       // Filtrar ejercicios que fueron eliminados (ejercicio === null)
       const ejerciciosOriginales = ejercicios || [];
       const ejerciciosValidos = ejerciciosOriginales.filter(ej => ej.ejercicio !== null);
-      
-      console.log(`📊 Rutina ${id}: ${ejerciciosOriginales.length} ejercicios totales, ${ejerciciosValidos.length} válidos`);
-      
+
       if (ejerciciosOriginales.length !== ejerciciosValidos.length) {
         console.warn(`⚠️ Se filtraron ${ejerciciosOriginales.length - ejerciciosValidos.length} ejercicios eliminados`);
       }
@@ -277,8 +260,6 @@ export class RutinaService {
       // Filtrar ejercicios eliminados
       const ejerciciosOriginales = data || [];
       const ejerciciosValidos = ejerciciosOriginales.filter(ej => ej.ejercicio !== null);
-      
-      console.log(`📊 Rutina ${rutinaId}: ${ejerciciosOriginales.length} ejercicios totales, ${ejerciciosValidos.length} válidos`);
       
       if (ejerciciosOriginales.length !== ejerciciosValidos.length) {
         console.warn(`⚠️ Se filtraron ${ejerciciosOriginales.length - ejerciciosValidos.length} ejercicios eliminados`);
@@ -565,7 +546,6 @@ export class RutinaService {
    */
   async obtenerEjercicioPorId(ejercicioId: number): Promise<{ data: any | null; error: any }> {
     try {
-      console.log(`🔹 [RutinaService] Obteniendo ejercicio ID: ${ejercicioId}`);
       const supabase = this.supabaseService['supabase'];
       
       const { data, error } = await supabase
@@ -579,8 +559,6 @@ export class RutinaService {
         console.error('❌ Error al obtener ejercicio:', error);
         return { data: null, error };
       }
-
-      console.log('✅ Ejercicio obtenido:', data);
       return { data, error: null };
     } catch (error) {
       console.error('❌ Error inesperado al obtener ejercicio:', error);

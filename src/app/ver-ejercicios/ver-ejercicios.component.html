@@ -160,7 +160,12 @@
         <!-- Video/GIF embebido desde Google Drive -->
         <div *ngIf="ejercicio.enlace_video" class="video-container">
           <ng-container *ngIf="isImageUrl(ejercicio.enlace_video); else videoIframe">
-            <img [src]="getDirectImageUrl(ejercicio.enlace_video)" alt="Ejercicio" style="width:100%; height:auto; border-radius:8px;" />
+            <img 
+              [src]="getDirectImageUrl(ejercicio.enlace_video)" 
+              alt="Ejercicio" 
+              style="width:100%; height:auto; border-radius:8px; display:block;"
+              (error)="onImageError($event, ejercicio.enlace_video)"
+              (load)="onImageLoad(ejercicio.enlace_video)" />
           </ng-container>
           <ng-template #videoIframe>
             <ng-container *ngIf="isVideoUrl(ejercicio.enlace_video); else iframeFallback">
@@ -385,49 +390,91 @@
 
         <!-- Video del ejercicio -->
         <div class="form-section">
-          <h4>Video del ejercicio</h4>
+          <h4>Media del ejercicio (GIF o Video)</h4>
           
-          <ion-item>
-            <ion-label position="stacked">URL de Google Drive *</ion-label>
-            <ion-input 
-              [(ngModel)]="ejercicioActual.enlace_video" 
-              name="enlace_video"
-              placeholder="https://drive.google.com/file/d/..."
-              (ionBlur)="validarUrlDrive()"
-              required>
-            </ion-input>
-          </ion-item>
-          
-          <div class="url-validation" *ngIf="ejercicioActual.enlace_video">
-            <ion-item *ngIf="urlValida" lines="none" class="validation-success">
-              <ion-icon name="checkmark-circle" slot="start" color="success"></ion-icon>
-              <ion-label color="success">URL válida de Google Drive</ion-label>
+          <!-- Opción 1: Subir archivo -->
+          <div class="upload-section" style="margin-bottom: 20px;">
+            <ion-button expand="block" fill="outline" (click)="fileInput.click()">
+              <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
+              Subir GIF o Video
+            </ion-button>
+            <input 
+              #fileInput
+              type="file" 
+              accept=".gif,video/mp4,video/quicktime,video/webm"
+              (change)="onFileSelected($event)"
+              style="display: none;">
+          </div>
+
+          <!-- Preview del archivo seleccionado -->
+          <div *ngIf="archivoSeleccionado && previewUrl" class="file-preview" style="margin-bottom: 20px;">
+            <ion-card>
+              <ion-card-header>
+                <ion-card-subtitle style="color: var(--ion-color-success);">
+                  <ion-icon name="checkmark-circle"></ion-icon>
+                  Archivo: {{ archivoSeleccionado.name }}
+                </ion-card-subtitle>
+              </ion-card-header>
+              <ion-card-content>
+                <img [src]="previewUrl" alt="Preview" style="width: 100%; border-radius: 8px;">
+                <ion-button 
+                  expand="block" 
+                  fill="clear" 
+                  color="danger" 
+                  size="small"
+                  (click)="archivoSeleccionado = null; previewUrl = null; fileInput.value = ''">
+                  <ion-icon name="trash-outline" slot="start"></ion-icon>
+                  Quitar archivo
+                </ion-button>
+              </ion-card-content>
+            </ion-card>
+          </div>
+
+          <!-- Separador -->
+          <div *ngIf="!archivoSeleccionado" style="text-align: center; margin: 20px 0; position: relative;">
+            <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
+            <span style="position: relative; background: var(--ion-background-color); padding: 0 10px; color: rgba(255,255,255,0.6);">o</span>
+          </div>
+
+          <!-- Opción 2: URL de Google Drive (solo si no hay archivo) -->
+          <div *ngIf="!archivoSeleccionado">
+            <ion-item>
+              <ion-label position="stacked">URL de Google Drive</ion-label>
+              <ion-input 
+                [(ngModel)]="ejercicioActual.enlace_video" 
+                name="enlace_video"
+                placeholder="https://drive.google.com/file/d/..."
+                (ionBlur)="validarUrlDrive()">
+              </ion-input>
             </ion-item>
             
-            <ion-item *ngIf="!urlValida && ejercicioActual.enlace_video" lines="none" class="validation-error">
-              <ion-icon name="close-circle" slot="start" color="danger"></ion-icon>
-              <ion-label color="danger">URL no válida. Usa formato: drive.google.com/file/d/...</ion-label>
-            </ion-item>
-          </div>
-          
-          <ion-note>
-            <strong>Requisitos:</strong><br>
-            • Debe ser un enlace de Google Drive<br>
-            • Solo videos o imágenes<br>
-            • Videos: máximo 20 segundos<br>
-            • Formato: https://drive.google.com/file/d/ID/view
-          </ion-note>
+            <div class="url-validation" *ngIf="ejercicioActual.enlace_video">
+              <ion-item *ngIf="urlValida" lines="none" class="validation-success">
+                <ion-icon name="checkmark-circle" slot="start" color="success"></ion-icon>
+                <ion-label color="success">URL válida de Google Drive</ion-label>
+              </ion-item>
+              
+              <ion-item *ngIf="!urlValida && ejercicioActual.enlace_video" lines="none" class="validation-error">
+                <ion-icon name="close-circle" slot="start" color="danger"></ion-icon>
+                <ion-label color="danger">URL no válida. Usa formato: drive.google.com/file/d/...</ion-label>
+              </ion-item>
+            </div>
+            
+            <ion-note>
+              <strong>Opción alternativa:</strong> Puedes usar una URL de Google Drive si prefieres no subir el archivo.
+            </ion-note>
 
-          <!-- Preview del video si la URL es válida -->
-          <div *ngIf="urlValida && ejercicioActual.enlace_video" class="video-preview">
-            <ion-button 
-              fill="outline" 
-              size="small" 
-              (click)="previsualizarVideo()"
-              class="preview-button">
-              <ion-icon name="play-circle" slot="start"></ion-icon>
-              Vista previa del video
-            </ion-button>
+            <!-- Preview del video si la URL es válida -->
+            <div *ngIf="urlValida && ejercicioActual.enlace_video" class="video-preview">
+              <ion-button 
+                fill="outline" 
+                size="small" 
+                (click)="previsualizarVideo()"
+                class="preview-button">
+                <ion-icon name="play-circle" slot="start"></ion-icon>
+                Vista previa del video
+              </ion-button>
+            </div>
           </div>
         </div>
 

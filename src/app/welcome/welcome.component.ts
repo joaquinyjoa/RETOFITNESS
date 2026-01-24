@@ -40,7 +40,6 @@ export class WelcomeComponent implements OnInit, OnDestroy, ViewWillEnter, ViewW
 
   ionViewWillLeave() {
     // Apagar spinner al salir de la vista - usar setTimeout para evitar NG0100
-    console.log('🔴 WELCOME: ionViewWillLeave - Apagando spinner');
     setTimeout(() => {
       this.mostrarSpinner = false;
     }, 0);

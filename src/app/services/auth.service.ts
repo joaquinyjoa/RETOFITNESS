@@ -23,7 +23,6 @@ export class AuthService {
   // Intentar login verificando clientes, entrenadores y recepción
   async login(correo: string, contraseña: string): Promise<{ success: boolean; usuario?: UsuarioLogueado; error?: string }> {
     try {
-      console.log('AuthService: Iniciando proceso de login para:', correo);
 
       // Validar que correo y contraseña no estén vacíos
       if (!correo || !contraseña || correo.trim() === '' || contraseña.trim() === '') {
@@ -42,11 +41,6 @@ export class AuthService {
           error: 'El correo debe tener un formato válido' 
         };
       }
-
-      console.log('AuthService: Intentando autenticación con credenciales:', {
-        correo: correo,
-        passwordLength: contraseña.length
-      });
 
       // Primero autenticar con Supabase Auth (UNA SOLA VEZ)
       const supabase = this.supabaseService['supabase']; // Acceder a la instancia de supabase
@@ -87,15 +81,12 @@ export class AuthService {
       }
 
       if (!authData.user) {
-        console.log('AuthService: No se obtuvo usuario después de autenticación');
         return { success: false, error: 'Error al obtener datos del usuario' };
       }
 
       const userId = authData.user.id;
-      console.log('AuthService: Autenticación exitosa, user_id:', userId);
 
       // Intentar obtener datos como cliente
-      console.log('AuthService: Buscando en tabla clientes...');
       const { data: cliente, error: clienteError } = await supabase
         .from('clientes')
         .select('*')
@@ -110,14 +101,12 @@ export class AuthService {
       if (cliente) {
         // Validar que el cliente esté habilitado (campo Estado con mayúscula)
         if (cliente.Estado === false) {
-          console.log('AuthService: Cliente encontrado pero Estado = false (no habilitado)');
           return {
             success: false,
             error: 'Tu cuenta no ha sido habilitada por recepción. Por favor contacta con el gimnasio.'
           };
         }
         
-        console.log('AuthService: Login exitoso como cliente con Estado =', cliente.Estado);
         return {
           success: true,
           usuario: {
@@ -128,7 +117,6 @@ export class AuthService {
       }
 
       // Si no es cliente, intentar como entrenador
-      console.log('AuthService: No es cliente, buscando en tabla entrenadores...');
       const { data: entrenador, error: entrenadorError } = await supabase
         .from('entrenadores')
         .select('*')
@@ -136,7 +124,6 @@ export class AuthService {
         .single();
 
       if (entrenador) {
-        console.log('AuthService: Login exitoso como entrenador');
         return {
           success: true,
           usuario: {
@@ -147,7 +134,6 @@ export class AuthService {
       }
 
       // Si no es entrenador, intentar como recepción
-      console.log('AuthService: No es entrenador, buscando en tabla recepcion...');
       const { data: recepcion, error: recepcionError } = await supabase
         .from('recepcion')
         .select('*')
@@ -155,7 +141,6 @@ export class AuthService {
         .single();
 
       if (recepcion) {
-        console.log('AuthService: Login exitoso como recepción');
         return {
           success: true,
           usuario: {
@@ -166,7 +151,6 @@ export class AuthService {
       }
 
       // Si no es ni cliente ni entrenador ni recepción, cerrar sesión
-      console.log('AuthService: Usuario no encontrado en ninguna tabla');
       await supabase.auth.signOut();
       return { 
         success: false, 
@@ -179,8 +163,6 @@ export class AuthService {
       // Manejo específico del error de NavigatorLock de Supabase
       if (error.message?.includes('NavigatorLockAcquireTimeoutError') || 
           error.message?.includes('lock:sb-')) {
-        console.log('AuthService: Error de lock detectado, reintentando...');
-        
         // Esperar un momento y reintentar
         await new Promise(resolve => setTimeout(resolve, 300));
         
@@ -247,8 +229,6 @@ export class AuthService {
         return { success: false, error: 'No se encontró el cliente' };
       }
 
-      console.log(`Cambiando contraseña para cliente: ${cliente.nombre} (user_id: ${cliente.user_id})`);
-
       // Llamar a la función RPC que actualiza auth.users
       const { data, error } = await supabase.rpc('cambiar_password_usuario', {
         p_user_id: cliente.user_id,
@@ -266,7 +246,6 @@ export class AuthService {
       // La función RPC retorna un JSON con success y message/error
       if (data && typeof data === 'object') {
         if (data.success) {
-          console.log('✅ Contraseña cambiada exitosamente en auth.users');
           return { success: true };
         } else {
           console.error('Error en función RPC:', data.error);

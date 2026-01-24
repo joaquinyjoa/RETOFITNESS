@@ -30,8 +30,7 @@ export class EntrenadorService {
   // Verificar login de entrenador
   async loginEntrenador(correo: string, contraseña: string): Promise<{ success: boolean; data?: Entrenador; error?: string }> {
     try {
-      console.log('EntrenadorService: Intentando login con Supabase Auth:', correo);
-      
+
       // Usar el sistema de autenticación de Supabase
       const { data: authData, error: authError } = await this.supabase.auth.signInWithPassword({
         email: correo,
@@ -39,7 +38,6 @@ export class EntrenadorService {
       });
 
       if (authError) {
-        console.log('EntrenadorService: Error de autenticación:', authError.message);
         return { 
           success: false, 
           error: authError.message === 'Invalid login credentials' 
@@ -49,11 +47,8 @@ export class EntrenadorService {
       }
 
       if (!authData.user) {
-        console.log('EntrenadorService: No se obtuvo usuario después de autenticación');
         return { success: false, error: 'Error al obtener datos del usuario' };
       }
-
-      console.log('EntrenadorService: Autenticación exitosa, obteniendo datos del entrenador...');
 
       // Obtener los datos del entrenador usando el user_id
       const { data: entrenador, error: entrenadorError } = await this.supabase
@@ -63,13 +58,10 @@ export class EntrenadorService {
         .single();
 
       if (entrenadorError || !entrenador) {
-        console.log('EntrenadorService: No se encontró entrenador para este usuario');
         // Cerrar la sesión si no es entrenador
         await this.supabase.auth.signOut();
         return { success: false, error: 'No se encontraron datos del entrenador' };
       }
-
-      console.log('EntrenadorService: Login de entrenador exitoso');
       return { success: true, data: entrenador };
 
     } catch (error: any) {

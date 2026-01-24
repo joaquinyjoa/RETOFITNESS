@@ -103,48 +103,37 @@ export class VerRutinaClienteComponent implements OnInit {
   }
 
   async cargarDatos() {
-    console.log('🟪 [VerRutinaCliente] === INICIO cargarDatos ===');
-    console.log('🟪 [VerRutinaCliente] Activando spinner (loading = true)...');
     this.loading = true;
     this.cdr.detectChanges();
     
     try {
       // Cargar información del cliente
       if (this.clienteId) {
-        console.log('🟪 [VerRutinaCliente] Cargando cliente ID:', this.clienteId);
         const tiempoInicio = performance.now();
         
         this.cliente = await this.clienteService.obtenerClientePorId(this.clienteId);
-        console.log('🟢 [VerRutinaCliente] Cliente cargado:', this.cliente?.nombre);
         
         // Cargar TODAS las rutinas del cliente con ejercicios personalizados
-        console.log('🟪 [VerRutinaCliente] Cargando rutinas del cliente con ejercicios personalizados...');
         const { data, error } = await this.rutinaService.obtenerRutinasClienteConEjercicios(this.clienteId);
         
         if (!error && data && data.length > 0) {
-          console.log('🟢 [VerRutinaCliente] Rutinas encontradas:', data.length);
           
           // Ordenar por día de semana
           this.rutinasAsignadas = data.sort((a: any, b: any) => {
             return (a.dia_semana || 0) - (b.dia_semana || 0);
           });
           
-          console.log('🟢 [VerRutinaCliente] Rutinas ordenadas por día:', this.rutinasAsignadas);
         } else {
-          console.log('⚠️ [VerRutinaCliente] No se encontraron rutinas para el cliente');
           this.rutinasAsignadas = [];
         }
         
         const tiempoFin = performance.now();
         const duracion = (tiempoFin - tiempoInicio).toFixed(2);
-        console.log(`🟢 [VerRutinaCliente] Datos cargados en ${duracion}ms`);
       }
     } catch (error) {
       console.error('🔴 [VerRutinaCliente] Error al cargar datos:', error);
     } finally {
-      console.log('🟪 [VerRutinaCliente] Desactivando spinner (loading = false)...');
       this.loading = false;
-      console.log('🟪 [VerRutinaCliente] Forzando detección de cambios...');
       
       // Forzar detección de cambios
       this.cdr.detectChanges();
@@ -153,10 +142,7 @@ export class VerRutinaClienteComponent implements OnInit {
       setTimeout(() => {
         this.loading = false;
         this.cdr.detectChanges();
-        console.log('🟪 [VerRutinaCliente] Segunda detección de cambios ejecutada');
       }, 0);
-      
-      console.log('🟪 [VerRutinaCliente] === FIN cargarDatos ===\n');
     }
   }
 

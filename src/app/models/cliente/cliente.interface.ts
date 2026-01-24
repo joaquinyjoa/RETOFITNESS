@@ -25,5 +25,4 @@ export interface Cliente {
   altura: number;
   nivelActividad: string;
   genero: string;
-  qr: string;
 }

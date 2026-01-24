@@ -197,9 +197,7 @@ export class AsignarRutinaComponent implements OnInit {
     return this.clientesSeleccionados.size > 0 && !this.todosSeleccionados;
   }
 
-  async asignarRutina() {
-    console.log('🚀 Botón Asignar Rutina presionado');
-    
+  async asignarRutina() {    
     if (this.clientesSeleccionados.size === 0) {
       await this.mostrarToast('Debes seleccionar al menos un cliente', 'warning');
       return;
@@ -210,7 +208,6 @@ export class AsignarRutinaComponent implements OnInit {
       return;
     }
 
-    console.log('💬 Mostrando alert de confirmación');
     const alert = await this.alertController.create({
       header: 'Confirmar asignación',
       message: `¿Deseas asignar esta rutina a ${this.clientesSeleccionados.size} cliente(s)?`,
@@ -218,15 +215,11 @@ export class AsignarRutinaComponent implements OnInit {
         {
           text: 'Cancelar',
           role: 'cancel',
-          handler: () => {
-            console.log('❌ Usuario canceló la asignación');
-          }
         },
         {
           text: 'Asignar',
           role: 'confirm',
           handler: () => {
-            console.log('✅ Usuario confirmó');
             return true; // Cierra el alert
           }
         }
@@ -237,16 +230,13 @@ export class AsignarRutinaComponent implements OnInit {
     
     // Esperar a que se cierre el alert y verificar el resultado
     const { role } = await alert.onDidDismiss();
-    console.log('🚪 Alert cerrado con role:', role);
     
     if (role === 'confirm') {
-      console.log('🎬 Llamando a confirmarAsignacion()');
       this.confirmarAsignacion();
     }
   }
 
   async confirmarAsignacion() {
-    console.log('🎬 Iniciando asignación de rutina');
     
     try {
       // Mostrar spinner
@@ -266,7 +256,6 @@ export class AsignarRutinaComponent implements OnInit {
       );
 
       if (existe) {
-        console.log('⚠️ Validación fallida - rutina ya asignada');
         this.guardando = false;
         this.cdr.detectChanges();
         await this.mostrarToast(
@@ -284,8 +273,6 @@ export class AsignarRutinaComponent implements OnInit {
         undefined,
         this.notas || undefined
       );
-
-      console.log('✅ Asignación completada');
 
       if (success) {
         // Mantener spinner visible por un momento
@@ -316,7 +303,6 @@ export class AsignarRutinaComponent implements OnInit {
         await this.mostrarToast('Error al asignar la rutina', 'danger');
       }
     } catch (error) {
-      console.log('❌ Error en asignación');
       console.error('Error al asignar rutina:', error);
       this.guardando = false;
       this.cdr.detectChanges();
@@ -324,7 +310,6 @@ export class AsignarRutinaComponent implements OnInit {
     } finally {
       // Asegurar que el spinner esté oculto al final
       if (this.guardando) {
-        console.log('⚠️ Spinner todavía visible en finally, ocultando...');
         this.guardando = false;
         this.cdr.detectChanges();
       }

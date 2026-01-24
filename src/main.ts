@@ -97,7 +97,9 @@ import {
   keyOutline,
   arrowDown,
   arrowUp,
-  barChartOutline
+  barChartOutline,
+  searchOutline,
+  peopleCircleOutline
 } from 'ionicons/icons';
 
 import { routes } from './app/app.routes';
@@ -105,6 +107,9 @@ import { AppComponent } from './app/app.component';
 
 // Registrar iconos (todos los necesarios para el proyecto)
 addIcons({
+  "people-circle-outline": peopleCircleOutline,
+  "key-outline": keyOutline,
+  "search-outline": searchOutline,
   "bar-chart-outline": barChartOutline,
   "arrow-up": arrowUp,
   "arrow-down": arrowDown,

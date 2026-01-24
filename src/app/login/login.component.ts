@@ -109,9 +109,12 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
     
   }
 
-  // Métodos para eventos de focus
+  // Método para cuando el usuario hace foco en un campo
   onInputFocus(field: string) {
-    console.log(`Focus en ${field}`);
+    // Limpiar error cuando el usuario hace foco en el campo
+    if (this.validationErrors[field as keyof typeof this.validationErrors]) {
+      (this.validationErrors as any)[field] = '';
+    }
   }
 
   // Validación del correo
@@ -166,12 +169,6 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
 
   // Proceso de login
   async onLogin() {
-    console.log('=== INICIANDO LOGIN ===');
-    console.log('Credenciales antes de trim:', {
-      correo: this.credenciales.correo,
-      passwordLength: this.credenciales.password.length
-    });
-    
     this.intentoLogin = true;
     this.enviando = true;
     this.mostrarSpinner = true;
@@ -180,7 +177,6 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
     try {
       // Validar datos antes del login
       if (!this.isFormValid()) {
-        console.log('❌ Validación falló');
         
         // Forzar validación visual
         this.validateCorreo(true);
@@ -202,11 +198,6 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
       // Preparar credenciales
       const correoLimpio = this.credenciales.correo.trim();
       const passwordLimpio = this.credenciales.password.trim();
-      
-      console.log('Credenciales después de trim:', {
-        correo: correoLimpio,
-        passwordLength: passwordLimpio.length
-      });
 
       // Validar que no estén vacías después del trim
       if (!correoLimpio || !passwordLimpio) {
@@ -253,7 +244,6 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
         
         // Verificar que se guardó correctamente
         const sesionGuardada = this.authService.obtenerSesion();
-        console.log('🔍 Verificando sesión guardada:', sesionGuardada);
       }
 
       // Mostrar éxito en la parte superior
@@ -293,8 +283,6 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
         return;
       }
       
-      console.log('🏁 Proceso de login completado exitosamente');
-      
     } catch (error) {
       console.error('💥 ERROR INESPERADO:', error);
       
@@ -315,7 +303,6 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
       
     } finally {
       // Este finally se ejecuta siempre
-      console.log('🔚 Finally ejecutado - enviando se establece a false');
       this.enviando = false;
       this.mostrarSpinner = false;
       this.cdr.detectChanges();

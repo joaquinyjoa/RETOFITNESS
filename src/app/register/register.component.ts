@@ -45,8 +45,7 @@ export class RegisterComponent implements OnInit {
     objetivo: '',
     altura: 170,
     nivelActividad: 'Medio',
-    genero: 'Hombre',
-    qr: '' // Se generará después del registro con el id
+    genero: 'Hombre'
   };
 
   // Mensajes de error para validación
@@ -107,7 +106,6 @@ export class RegisterComponent implements OnInit {
   private cdr: ChangeDetectorRef
   ) { 
     // Asegurar que el objeto cliente esté completamente inicializado
-    console.log('Cliente inicializado:', this.cliente);
   }
 
   ngOnInit() {
@@ -154,8 +152,7 @@ export class RegisterComponent implements OnInit {
       objetivo: '',
       altura: 170,
       nivelActividad: 'Medio',
-      genero: 'Hombre',
-      qr: ''
+      genero: 'Hombre'
     };
     
     // Resetear objetivos
@@ -246,11 +243,6 @@ export class RegisterComponent implements OnInit {
     }
   }
 
-  // Métodos para eventos de focus
-  onInputFocus(field: string) {
-    console.log(`Focus en ${field}`);
-  }
-
   // Método para cuando el usuario sale del campo (blur)
   onInputBlur(field: string) {
     // Marcar el campo como tocado
@@ -278,6 +270,14 @@ export class RegisterComponent implements OnInit {
         break;
     }
    
+  }
+
+  // Método para cuando el usuario hace foco en un campo
+  onInputFocus(field: string) {
+    // Limpiar error cuando el usuario hace foco en el campo
+    if (this.validationErrors[field as keyof typeof this.validationErrors]) {
+      (this.validationErrors as any)[field] = '';
+    }
   }
 
   // Actualizar objetivos múltiples
@@ -327,13 +327,11 @@ export class RegisterComponent implements OnInit {
         }
 
         // Validar que el correo no esté registrado en la base de datos
-        console.log('🔍 Verificando si el correo existe...');
         this.showSpinner = true;
         this.cdr.detectChanges(); // Forzar actualización UI
         
         try {
           const emailExists = await this.clienteService.verificarEmailExistente(this.cliente.correo.trim());
-          console.log('✅ Verificación completada. Email existe:', emailExists);
           
           this.showSpinner = false;
           this.cdr.detectChanges(); // Forzar actualización UI
@@ -358,12 +356,6 @@ export class RegisterComponent implements OnInit {
           return;
         }
       }
-      
-      // Si estamos en el paso 3, solo refrescar condiciones sin validación adicional
-      if (this.currentStep === 3) {
-        console.log('Avanzando desde paso 3 al paso 4');
-        // No llamar refreshSelectedConditions aquí para evitar problemas de timing
-      }
 
       this.animateStepTransition('next');
     }
@@ -376,7 +368,6 @@ export class RegisterComponent implements OnInit {
   }
 
   animateStepTransition(direction: 'next' | 'back') {
-    console.log(`animateStepTransition: ${direction}, currentStep: ${this.currentStep}`);
     this.isAnimating = true;
     
     // Envolver en setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
@@ -393,11 +384,8 @@ export class RegisterComponent implements OnInit {
           this.currentStep--;
         }
 
-        console.log(`Paso cambiado a: ${this.currentStep}`);
-
         // Si llegamos al paso 4, refrescar condiciones para asegurar que se muestren
         if (this.currentStep === 4) {
-          console.log('Llegando al paso 4, refrescando condiciones...');
           this.refreshSelectedConditions();
         }
 
@@ -472,11 +460,9 @@ export class RegisterComponent implements OnInit {
   }
 
   async onSubmit() {
-    console.log('Iniciando onSubmit');
     this.isSubmitting = true;
     this.showSpinner = true;
     this.cdr.detectChanges();
-    console.log('Spinner activado:', this.showSpinner);
 
     // Timer para asegurar que el spinner se muestre por al menos 1.5 segundos
     const spinnerStartTime = Date.now();
@@ -517,14 +503,11 @@ export class RegisterComponent implements OnInit {
         objetivo: this.cliente.objetivo,
         altura: this.cliente.altura,
         nivelActividad: this.cliente.nivelActividad || 'Medio',
-        genero: this.cliente.genero || 'Hombre',
-        qr: ''
+        genero: this.cliente.genero || 'Hombre'
       };
 
-      // Usar ClienteService para crear el cliente con QR automáticamente
-      console.log('Intentando registrar cliente:', clienteSupabase);
+      // Usar ClienteService para crear el cliente
       const result = await this.clienteService.crearCliente(clienteSupabase, this.cliente.password.trim());
-      console.log('Resultado del registro:', result);
       
       if (!result.success) {
         console.error('Error en el registro:', result.error);
@@ -566,8 +549,6 @@ export class RegisterComponent implements OnInit {
         this.router.navigate(['/login']);
       }, result.requiresConfirmation ? 3000 : 1500);
       
-      console.log('Proceso completado exitosamente');
-      
     } catch (error) {
       console.error('Error registrando cliente:', error);
       
@@ -585,11 +566,8 @@ export class RegisterComponent implements OnInit {
   // Método para probar el spinner
   testSpinner() {
     this.showSpinner = true;
-    console.log('Spinner de prueba activado:', this.showSpinner);
-    
     setTimeout(() => {
       this.showSpinner = false;
-      console.log('Spinner de prueba desactivado');
     }, 3000);
   }
 
@@ -766,8 +744,6 @@ export class RegisterComponent implements OnInit {
     if (this.cliente.alcohol) list.push({ label: 'Consumo de alcohol' });
 
     this.selectedConditions = list;
-    // Log para depuración rápida cuando el listado se refresca
-    console.log('refreshSelectedConditions (solo condiciones true) ->', this.selectedConditions);
     
     // Eliminamos detectChanges() para evitar conflictos con ion-icon duplicado
     // La detección de cambios se hará automáticamente
@@ -775,7 +751,6 @@ export class RegisterComponent implements OnInit {
 
   hasSelectedConditions(): boolean {
     const hasConditions = this.selectedConditions && this.selectedConditions.length > 0;
-    console.log('hasSelectedConditions:', hasConditions, 'selectedConditions:', this.selectedConditions);
     return hasConditions;
   }
 
@@ -791,26 +766,11 @@ export class RegisterComponent implements OnInit {
            this.cliente.lesiones || 
            this.cliente.fuma || 
            this.cliente.alcohol;
-           
-    console.log('hasAnyMedicalCondition:', hasConditions, 'cliente condiciones:', {
-      enfermedadCronica: this.cliente.enfermedadCronica,
-      diabetes: this.cliente.diabetes,
-      hipotension: this.cliente.hipotension,
-      hipotiroide: this.cliente.hipotiroide,
-      hipotiroidismo: this.cliente.hipotiroidismo,
-      medicacionRegular: this.cliente.medicacionRegular,
-      cirugias: this.cliente.cirugias,
-      lesiones: this.cliente.lesiones,
-      fuma: this.cliente.fuma,
-      alcohol: this.cliente.alcohol
-    });
-    
     return hasConditions;
   }
 
   // Método para actualizar condiciones cuando cambien durante el paso 3
   onMedicalConditionChange() {
-    console.log('Condición médica cambió, actualizando lista...');
     this.refreshSelectedConditions();
   }
 

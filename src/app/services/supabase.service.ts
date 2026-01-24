@@ -31,7 +31,6 @@ export interface Cliente {
   alcohol: boolean;
   horas_sueno?: string; // Cambiado a string para coincidir con BD (text)
   objetivo: string;
-  qr?: string;
   genero: string;
   peso: number;
   altura: number;
@@ -54,16 +53,6 @@ export class SupabaseService {
   // Registrar un nuevo cliente
   async registrarCliente(cliente: Cliente): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      console.log('SupabaseService: Iniciando registro de cliente:', cliente);
-      
-      // Depuración adicional para campos problemáticos
-      console.log('SupabaseService: Campos de descripción:', {
-        descripcionEnfermedad: cliente.descripcionEnfermedad,
-        descripcionMedicacion: cliente.descripcionMedicacion,
-        descripcionCirugias: cliente.descripcionCirugias,
-        descripcionLesiones: cliente.descripcionLesiones
-      });
-      
       const { data, error } = await this.supabase
         .from('clientes')
         .insert([cliente])
@@ -74,8 +63,6 @@ export class SupabaseService {
         console.error('SupabaseService: Error al registrar cliente:', error);
         return { success: false, error: error.message };
       }
-
-      console.log('SupabaseService: Cliente registrado exitosamente:', data);
       return { success: true, data };
     } catch (error: any) {
       console.error('SupabaseService: Error en registrarCliente:', error);
@@ -86,8 +73,6 @@ export class SupabaseService {
   // Verificar si un email ya existe
   async verificarEmailExistente(correo: string): Promise<boolean> {
     try {
-      console.log('SupabaseService: Verificando si existe el correo:', correo);
-      
       const { data, error } = await this.supabase
         .from('clientes')
         .select('id')
@@ -100,7 +85,6 @@ export class SupabaseService {
       }
 
       const existe = data !== null;
-      console.log('SupabaseService: Email existe:', existe);
       return existe;
     } catch (error) {
       console.error('SupabaseService: Error inesperado en verificarEmailExistente:', error);
@@ -111,8 +95,6 @@ export class SupabaseService {
   // Crear usuario en Supabase Auth
   async crearUsuarioAuth(email: string, password: string): Promise<{ success: boolean; userId?: string; error?: string; requiresConfirmation?: boolean }> {
     try {
-      console.log('SupabaseService: Creando usuario en Supabase Auth:', email);
-      
       const { data, error } = await this.supabase.auth.signUp({
         email: email,
         password: password,
@@ -138,18 +120,6 @@ export class SupabaseService {
 
       // Detectar si el usuario requiere confirmación de email
       const requiresConfirmation = !data.user.email_confirmed_at;
-      
-      console.log('SupabaseService: Usuario Auth creado exitosamente:', data.user.id);
-      console.log('Email confirmado:', data.user.email_confirmed_at ? 'Sí' : 'No');
-      
-      if (requiresConfirmation) {
-        console.log('⚠️ CONFIRMACIÓN DE EMAIL REQUERIDA');
-        console.log('El usuario debe confirmar su email antes de poder iniciar sesión.');
-        console.log('Para desarrollo, puedes:');
-        console.log('1. Desactivar "Enable email confirmations" en Supabase Dashboard > Authentication > Settings');
-        console.log('2. O confirmar manualmente el email en Authentication > Users');
-      }
-      
       return { 
         success: true, 
         userId: data.user.id,
@@ -165,8 +135,6 @@ export class SupabaseService {
   // Login de cliente
   async loginCliente(correo: string, contraseña: string): Promise<{ success: boolean; data?: Cliente; error?: string }> {
     try {
-      console.log('SupabaseService: Intentando login con Supabase Auth:', correo);
-      
       // Usar el sistema de autenticación de Supabase
       const { data: authData, error: authError } = await this.supabase.auth.signInWithPassword({
         email: correo,
@@ -174,7 +142,6 @@ export class SupabaseService {
       });
 
       if (authError) {
-        console.log('SupabaseService: Error de autenticación:', authError.message);
         return { 
           success: false, 
           error: authError.message === 'Invalid login credentials' 
@@ -184,12 +151,8 @@ export class SupabaseService {
       }
 
       if (!authData.user) {
-        console.log('SupabaseService: No se obtuvo usuario después de autenticación');
         return { success: false, error: 'Error al obtener datos del usuario' };
       }
-
-      console.log('SupabaseService: Autenticación exitosa, obteniendo datos del cliente...');
-
       // Obtener los datos del cliente usando el user_id
       const { data: cliente, error: clienteError } = await this.supabase
         .from('clientes')
@@ -198,64 +161,14 @@ export class SupabaseService {
         .single();
 
       if (clienteError || !cliente) {
-        console.log('SupabaseService: No se encontró cliente para este usuario (puede ser un entrenador)');
         // Cerrar la sesión de auth para que el entrenador pueda intentar
         await this.supabase.auth.signOut();
         return { success: false, error: 'No se encontraron datos del cliente' };
       }
-
-      console.log('SupabaseService: Login de cliente exitoso');
       return { success: true, data: cliente };
 
     } catch (error: any) {
       console.error('SupabaseService: Error inesperado en loginCliente:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  // Subir imagen QR al storage
-  async subirImagenQR(file: Blob, fileName: string): Promise<{ success: boolean; url?: string; error?: string }> {
-    try {
-      const { data, error } = await this.supabase.storage
-        .from('qrImages')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (error) {
-        console.error('Error al subir QR:', error);
-        return { success: false, error: error.message };
-      }
-
-      // Obtener la URL pública de la imagen
-      const { data: urlData } = this.supabase.storage
-        .from('qrImages')
-        .getPublicUrl(fileName);
-
-      return { success: true, url: urlData.publicUrl };
-    } catch (error: any) {
-      console.error('Error en subirImagenQR:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  // Actualizar la URL del QR en el cliente
-  async actualizarQRCliente(clienteId: number, qrUrl: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { error } = await this.supabase
-        .from('clientes')
-        .update({ qr: qrUrl })
-        .eq('id', clienteId);
-
-      if (error) {
-        console.error('Error al actualizar QR del cliente:', error);
-        return { success: false, error: error.message };
-      }
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error en actualizarQRCliente:', error);
       return { success: false, error: error.message };
     }
   }

@@ -13,11 +13,9 @@ export class EjercicioService {
    * Listar todos los ejercicios activos
    */
   async listarEjercicios(): Promise<Ejercicio[]> {
-    console.log('🔵 [EjercicioService] Iniciando listarEjercicios...');
     const tiempoInicio = performance.now();
     
     try {
-      console.log('🔵 [EjercicioService] Realizando consulta a Supabase...');
       const { data, error } = await this.supabaseService['supabase']
         .from('ejercicios')
         .select('*')
@@ -31,9 +29,7 @@ export class EjercicioService {
 
       const tiempoFin = performance.now();
       const duracion = (tiempoFin - tiempoInicio).toFixed(2);
-      console.log(`🟢 [EjercicioService] Ejercicios cargados exitosamente: ${data?.length || 0} ejercicios en ${duracion}ms`);
-      console.log('🟢 [EjercicioService] Datos recibidos:', data);
-      
+
       return Array.isArray(data) ? data : [];
     } catch (error: any) {
       const tiempoFin = performance.now();
@@ -48,8 +44,6 @@ export class EjercicioService {
    */
   async crearEjercicio(ejercicio: Ejercicio): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      console.log('EjercicioService: Creando ejercicio:', ejercicio);
-
       // Validar que el enlace de Google Drive sea válido
       if (!this.isValidGoogleDriveUrl(ejercicio.enlace_video)) {
         return { success: false, error: 'El enlace de Google Drive no es válido' };
@@ -80,8 +74,6 @@ export class EjercicioService {
         
         return { success: false, error: error.message };
       }
-
-      console.log('EjercicioService: Ejercicio creado exitosamente:', data);
       return { success: true, data };
     } catch (error: any) {
       console.error('Error en crearEjercicio:', error);
@@ -201,16 +193,23 @@ export class EjercicioService {
   }
 
   /**
-   * Validar que el enlace sea de Google Drive (URL directa o preview)
+   * Validar que el enlace sea de Google Drive o Supabase Storage
    */
   private isValidGoogleDriveUrl(url: string): boolean {
+    // Patrones de Google Drive
     const googleDrivePatterns = [
       /^https:\/\/drive\.google\.com\/(file\/d\/|open\?id=)/,
       /^https:\/\/drive\.google\.com\/file\/d\/[a-zA-Z0-9-_]+\/preview$/,
       /^https:\/\/drive\.google\.com\/file\/d\/[a-zA-Z0-9-_]+\/view$/
     ];
     
-    return googleDrivePatterns.some(pattern => pattern.test(url));
+    // Patrón de Supabase Storage
+    const supabasePattern = /^https:\/\/[a-zA-Z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\//;
+    
+    const isGoogleDrive = googleDrivePatterns.some(pattern => pattern.test(url));
+    const isSupabaseStorage = supabasePattern.test(url);
+    
+    return isGoogleDrive || isSupabaseStorage;
   }
 
   /**

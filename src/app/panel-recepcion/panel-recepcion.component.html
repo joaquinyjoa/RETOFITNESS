@@ -13,9 +13,12 @@
 </ion-header>
 
 <ion-content class="ion-padding recepcion-content">
-  <app-spinner *ngIf="mostrarSpinner"></app-spinner>
+  <!-- Spinner Overlay -->
+  <div class="spinner-overlay" *ngIf="mostrarSpinner">
+    <app-spinner></app-spinner>
+  </div>
 
-  <div class="recepcion-container" *ngIf="!mostrarSpinner">
+  <div class="recepcion-container">
     <!-- Header con info de recepción -->
     <div class="welcome-card">
       <div class="welcome-header">
@@ -109,10 +112,10 @@
               fill="solid" 
               size="small" 
               (click)="abrirModalCambiarPassword(cliente)" 
-              color="success"
-              class="password-button">
+              class="password-button"
+              [disabled]="mostrarSpinner">
               <ion-icon slot="start" name="key-outline"></ion-icon>
-              Contraseña
+              <span>Contraseña</span>
             </ion-button>
             <ion-toggle 
               class="custom-toggle"
