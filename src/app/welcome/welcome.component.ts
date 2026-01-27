@@ -106,14 +106,12 @@ export class WelcomeComponent implements OnInit, OnDestroy, ViewWillEnter, ViewW
   }
 
   navegarAlLogin() {
-
-    this.mostrarSpinner = true;
-    // Navegar inmediatamente, el spinner se apagará en ngOnDestroy
-    setTimeout(() => this.router.navigate(['/login']), 500);
+    // Navegar inmediatamente sin mostrar spinner
+    this.router.navigate(['/login']);
   }
 
   navegarAlRegistro() {
-    this.mostrarSpinner = true;
-    setTimeout(() => this.router.navigate(['/register']), 500);
+    // Navegar inmediatamente sin mostrar spinner
+    this.router.navigate(['/register']);
   }
 }
