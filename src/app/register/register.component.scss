@@ -199,6 +199,22 @@ ion-button {
   }
 }
 
+/* Icona de retroceso en toolbar: neón */
+.back-icon {
+  color: var(--primary-green) !important;
+  font-size: 22px;
+}
+
+/* Ajuste para botón de retroceso transparente */
+.toolbar-back {
+  --background: transparent;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ===== Animaciones de transición de pasos mejoradas ===== */
 .step-container {
   width: 100%;
