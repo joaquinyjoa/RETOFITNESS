@@ -135,8 +135,7 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
   }
 
   async confirmarAsignacion() {
-    this.mostrarSpinner = true;
-    this.cdr.detectChanges();
+    // No mostrar spinner ni esperar: proceder directo a asignación
 
     try {
       if (!this.clienteId || !this.rutinaSeleccionadaId) {
@@ -153,6 +152,7 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
       if (verificacion.existe) {
         this.toastService.mostrarAdvertencia('Rutina existente en el mismo día');
         this.mostrarSpinner = false;
+        this.asignando = false;
         this.cdr.detectChanges();
         return;
       }
@@ -162,27 +162,23 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
       if (rutinasCliente && rutinasCliente.some((rc: any) => rc.dia_semana === this.diaSeleccionado)) {
         this.toastService.mostrarAdvertencia('El cliente ya tiene una rutina asignada en ese día');
         this.mostrarSpinner = false;
+        this.asignando = false;
         this.cdr.detectChanges();
         return;
       }
 
-      // Ejecutar la asignación y el delay en paralelo
-      const [resultado] = await Promise.all([
-        this.rutinaService.asignarRutinaAClientes(
-          this.rutinaSeleccionadaId,
-          [this.clienteId],
-          this.diaSeleccionado,
-          this.notasEntrenador
-        ),
-        new Promise(resolve => setTimeout(resolve, 1500))
-      ]);
+      // Ejecutar la asignación sin esperas artificiales
+      const resultado = await this.rutinaService.asignarRutinaAClientes(
+        this.rutinaSeleccionadaId!,
+        [this.clienteId!],
+        this.diaSeleccionado,
+        this.notasEntrenador
+      );
 
       if (resultado.success) {
         this.toastService.mostrarExito('Rutina asignada exitosamente');
-        // Redirigir después de un pequeño delay para que se vea el toast
-        setTimeout(() => {
-          this.router.navigate(['/ver-rutina-cliente', this.clienteId]);
-        }, 500);
+        // Navegar inmediatamente sin esperas
+        this.router.navigate(['/ver-rutina-cliente', this.clienteId]);
       } else {
         const mensajeError = resultado.error?.message || resultado.error?.error_description || 'Error al asignar rutina';
         this.toastService.mostrarError(mensajeError);
@@ -192,7 +188,7 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
       const mensajeError = error?.message || 'Error al asignar la rutina';
       this.toastService.mostrarError(mensajeError);
     } finally {
-      this.mostrarSpinner = false;
+      // Asegurar detección de cambios; no mostramos spinner aquí
       this.cdr.detectChanges();
     }
   }

@@ -754,7 +754,7 @@
           </div>
 
           <div *ngIf="ejerciciosSeleccionados.length > 0" class="selected-exercises-list">
-            <div *ngFor="let ejSel of ejerciciosSeleccionados; let i = index" class="exercise-item">
+            <div *ngFor="let ejSel of ejerciciosSeleccionados; let i = index; trackBy: trackByEjercicioId" class="exercise-item">
               <div class="exercise-header">
                 <span class="order-number">{{ i + 1 }}</span>
                 <strong style="color: var(--primary-green); flex: 1;">
@@ -791,7 +791,7 @@
                   <ion-label position="stacked">Series</ion-label>
                   <ion-input 
                     [(ngModel)]="ejSel.series" 
-                    [name]="'series_' + i"
+                    [name]="'series_' + (ejSel.ejercicio_id || i)"
                     type="number"
                     min="1"
                     max="5"
@@ -804,7 +804,7 @@
                   <ion-label position="stacked">Repeticiones</ion-label>
                   <ion-input 
                     [(ngModel)]="ejSel.repeticiones" 
-                    [name]="'reps_' + i"
+                    [name]="'reps_' + (ejSel.ejercicio_id || i)"
                     placeholder="10-12">
                   </ion-input>
                 </ion-item>
@@ -813,7 +813,7 @@
                   <ion-label position="stacked">Descanso (seg)</ion-label>
                   <ion-input 
                     [(ngModel)]="ejSel.descanso_segundos" 
-                    [name]="'descanso_' + i"
+                    [name]="'descanso_' + (ejSel.ejercicio_id || i)"
                     type="number"
                     min="0"
                     placeholder="60"
@@ -825,7 +825,7 @@
                   <ion-label position="stacked">Porcentaje de fuerza</ion-label>
                   <ion-input 
                     [(ngModel)]="ejSel.porcentaje_fuerza" 
-                    [name]="'porcentaje_' + i"
+                    [name]="'porcentaje_' + (ejSel.ejercicio_id || i)"
                     type="number"
                     min="0"
                     max="100"

@@ -13,14 +13,24 @@
 </ion-header>
 
 <ion-content class="ion-padding content-background">
-  <!-- Spinner de carga -->
-  <div *ngIf="loading" class="loading-container">
-    <ion-spinner name="crescent" color="primary"></ion-spinner>
-    <p>Cargando datos...</p>
-  </div>
-
   <!-- Contenido principal -->
   <div *ngIf="!loading" class="asignar-container">
+
+    <!-- Panel de depuración si no hay datos -->
+    <div *ngIf="(!cliente || rutinasFiltradas.length === 0)" class="debug-panel" style="margin-bottom:16px;">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Debug: datos faltantes</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p><strong>Cliente:</strong></p>
+          <pre style="white-space: pre-wrap; word-break: break-word; max-height:120px; overflow:auto;">{{ cliente | json }}</pre>
+          <p><strong>Rutinas disponibles:</strong> {{ rutinasDisponibles?.length || 0 }}</p>
+          <p><strong>Rutinas filtradas:</strong> {{ rutinasFiltradas?.length || 0 }}</p>
+          <ion-button size="small" (click)="cargarDatos()">Reintentar carga</ion-button>
+        </ion-card-content>
+      </ion-card>
+    </div>
     
     <!-- Info del cliente -->
     <div class="cliente-card" *ngIf="cliente">
@@ -134,19 +144,15 @@
           color="success"
           class="btn-asignar"
           (click)="asignarRutina()"
-          [disabled]="asignando || !rutinaSeleccionadaId">
-          <ion-spinner *ngIf="asignando" name="crescent" slot="start"></ion-spinner>
-          <ion-icon *ngIf="!asignando" slot="start" name="checkmark-circle"></ion-icon>
-          {{ asignando ? 'Asignando...' : 'Asignar Rutina' }}
+          [disabled]="!rutinaSeleccionadaId">
+          <ion-icon slot="start" name="checkmark-circle"></ion-icon>
+          Asignar Rutina
         </ion-button>
       </div>
     </div>
 
   </div>
 
-  <!-- Spinner overlay -->
-  <div *ngIf="mostrarSpinner" class="spinner-overlay-transparent">
-    <app-spinner></app-spinner>
-  </div>
+  <!-- No overlay spinner here: asignación no muestra espera -->
 
 </ion-content>

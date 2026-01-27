@@ -872,6 +872,10 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
     return index;
   }
 
+  trackByEjercicioId(index: number, item: any): number | string {
+    return item?.ejercicio_id ?? index;
+  }
+
   goBack() {
     this.router.navigate(['/panel-entrenador']);
   }
