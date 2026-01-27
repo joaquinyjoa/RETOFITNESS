@@ -1,0 +1,129 @@
+:host {
+  --primary-green: #00ff88;
+  --secondary-green: #00cc6a;
+}
+
+.confirm-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.confirm-modal-container {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  border: 2px solid rgba(0, 255, 136, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 255, 136, 0.2), 0 0 60px rgba(0, 255, 136, 0.15);
+  border-radius: 16px;
+  max-width: 360px;
+  width: 90%;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+  
+  h2 {
+    margin: 0;
+    color: var(--primary-green);
+    font-weight: 700;
+    font-size: 1.3rem;
+    text-align: center;
+  }
+}
+
+.modal-body {
+  padding: 24px;
+  
+  p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1rem;
+    line-height: 1.5;
+    text-align: center;
+  }
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-top: 1px solid rgba(0, 255, 136, 0.1);
+}
+
+.btn-cancel,
+.btn-confirm {
+  flex: 1;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: 44px;
+}
+
+.btn-cancel {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.btn-confirm {
+  background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+  color: #000000;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(0, 255, 136, 0.4);
+  
+  &:hover {
+    box-shadow: 0 6px 20px rgba(0, 255, 136, 0.6);
+    transform: translateY(-2px);
+  }
+  
+  &:active {
+    transform: translateY(0) scale(0.98);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

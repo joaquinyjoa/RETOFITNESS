@@ -28,11 +28,13 @@ import {
   IonSelectOption,
   AlertController,
   ToastController,
-  LoadingController
+  LoadingController,
+  ModalController
 } from '@ionic/angular/standalone';
 import { RutinaService, Rutina } from '../services/rutina.service';
 import { ClienteService } from '../services/cliente.service';
 import { SpinnerComponent } from '../spinner/spinner.component';
+import { ConfirmService } from '../services/confirm.service';
 
 @Component({
   selector: 'app-asignar-rutina',
@@ -77,6 +79,8 @@ export class AsignarRutinaComponent implements OnInit {
   private alertController = inject(AlertController);
   private toastController = inject(ToastController);
   private loadingController = inject(LoadingController);
+  private confirmService = inject(ConfirmService);
+  private modalController = inject(ModalController);
   private cdr = inject(ChangeDetectorRef);
 
   rutina: Rutina | null = null;
@@ -208,32 +212,16 @@ export class AsignarRutinaComponent implements OnInit {
       return;
     }
 
-    const alert = await this.alertController.create({
-      header: 'Confirmar asignación',
-      message: `¿Deseas asignar esta rutina a ${this.clientesSeleccionados.size} cliente(s)?`,
-      buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel',
-        },
-        {
-          text: 'Asignar',
-          role: 'confirm',
-          handler: () => {
-            return true; // Cierra el alert
-          }
-        }
-      ]
-    });
+    // Mostrar confirmación con diseño neon (igual que "Cerrar sesión")
+    const confirmado = await this.confirmService.confirm(
+      `¿Deseas asignar esta rutina a ${this.clientesSeleccionados.size} cliente(s)?`,
+      'Confirmar asignación',
+      'Asignar'
+    );
 
-    await alert.present();
-    
-    // Esperar a que se cierre el alert y verificar el resultado
-    const { role } = await alert.onDidDismiss();
-    
-    if (role === 'confirm') {
-      this.confirmarAsignacion();
-    }
+    if (!confirmado) return;
+
+    this.confirmarAsignacion();
   }
 
   async confirmarAsignacion() {
@@ -292,6 +280,9 @@ export class AsignarRutinaComponent implements OnInit {
         // Esperar un momento adicional antes de navegar
         await new Promise(resolve => setTimeout(resolve, 200));
 
+        // Asegurar que no queden overlays abiertos y ocultar cualquier overlay residual
+        await this.dismissAllOverlays();
+
         // Navegar de vuelta
         this.router.navigate(['/ver-ejercicios'], { replaceUrl: true });
       } else {
@@ -315,14 +306,53 @@ export class AsignarRutinaComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['/ver-ejercicios'], { replaceUrl: true });
+    // Antes de volver, limpiar overlays
+    this.dismissAllOverlays().then(() => {
+      this.router.navigate(['/ver-ejercicios'], { replaceUrl: true });
+    });
+  }
+
+  // Intentar descartar modales/alerts/loaders abiertos y ocultar overlays residuales
+  private async dismissAllOverlays() {
+    try {
+      const modal = await this.modalController.getTop();
+      if (modal) await modal.dismiss();
+    } catch (e) {
+      console.debug('No modal to dismiss', e);
+    }
+
+    try {
+      const alert = await this.alertController.getTop();
+      if (alert) await alert.dismiss();
+    } catch (e) {
+      console.debug('No alert to dismiss', e);
+    }
+
+    try {
+      const loading = await this.loadingController.getTop();
+      if (loading) await loading.dismiss();
+    } catch (e) {
+      console.debug('No loading to dismiss', e);
+    }
+
+    // Forzar ocultación de overlays residuales en el DOM (fallback)
+    try {
+      document.querySelectorAll('.spinner-overlay-transparent').forEach(el => {
+        (el as HTMLElement).style.display = 'none';
+      });
+      document.querySelectorAll('.confirm-modal-backdrop').forEach(el => {
+        (el as HTMLElement).style.display = 'none';
+      });
+    } catch (e) {
+      console.debug('Error hiding residual overlays', e);
+    }
   }
 
   private async mostrarToast(message: string, color: 'success' | 'danger' | 'warning') {
     const toast = await this.toastController.create({
       message,
       duration: 2500,
-      position: 'bottom',
+      position: 'top',
       color
     });
     await toast.present();

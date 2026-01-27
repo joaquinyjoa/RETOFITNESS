@@ -27,6 +27,7 @@ import { RutinaService } from '../services/rutina.service';
 import { ClienteService } from '../services/cliente.service';
 import { EjercicioService } from '../services/ejercicio.service';
 import { ToastService } from '../services/toast.service';
+import { ConfirmService } from '../services/confirm.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { SpinnerComponent } from '../spinner/spinner.component';
 
@@ -69,6 +70,7 @@ export class VerRutinaClienteComponent implements OnInit {
   private sanitizer = inject(DomSanitizer);
   private cdr = inject(ChangeDetectorRef);
   private alertController = inject(AlertController);
+  private confirmService = inject(ConfirmService);
 
   clienteId: number | null = null;
   cliente: any = null;
@@ -320,29 +322,13 @@ export class VerRutinaClienteComponent implements OnInit {
   }
 
   async eliminarRutinaAsignada(rutinaCliente: any) {
-    const alert = await this.alertController.create({
-      header: '¿Eliminar rutina?',
-      message: `Se eliminará la rutina "${rutinaCliente.rutina?.nombre}" del ${this.diasSemana[rutinaCliente.dia_semana]}.`,
-      buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel',
-          cssClass: 'alert-button-cancel'
-        },
-        {
-          text: 'Eliminar',
-          role: 'confirm',
-          cssClass: 'alert-button-danger'
-        }
-      ]
-    });
+    const header = '¿Eliminar rutina?';
+    const message = `Se eliminará la rutina "${rutinaCliente.rutina?.nombre}" del ${this.diasSemana[rutinaCliente.dia_semana]}.`;
+    const confirm = await this.confirmService.confirm(message, header, 'Eliminar');
 
-    await alert.present();
-    const { role } = await alert.onDidDismiss();
+    if (!confirm) return;
 
-    if (role !== 'confirm') return;
-
-    // Pequeño delay para que el alert se cierre completamente
+    // Pequeño delay para asegurar cierre de diálogo
     await new Promise(resolve => setTimeout(resolve, 100));
 
     this.mostrarSpinner = true;
@@ -354,18 +340,18 @@ export class VerRutinaClienteComponent implements OnInit {
         this.rutinaService.desasignarRutinaDeCliente(rutinaCliente.id),
         new Promise(resolve => setTimeout(resolve, 1500))
       ]);
-      
+
       // Ocultar spinner primero
       this.mostrarSpinner = false;
       this.cdr.detectChanges();
-      
+
       if (resultado.success) {
         // Actualizar la vista inmediatamente
         this.rutinasAsignadas = this.rutinasAsignadas.filter(r => r.id !== rutinaCliente.id);
         this.diasDisponibles = [...new Set(this.rutinasAsignadas.map(r => r.dia_semana))].sort();
         this.filtrarPorDia();
         this.cdr.detectChanges();
-        
+
         // Mostrar toast después de actualizar la vista
         this.toastService.mostrarExito('Rutina eliminada correctamente');
       } else {

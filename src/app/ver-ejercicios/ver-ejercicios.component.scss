@@ -1785,11 +1785,14 @@ ion-header {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.35); // menos opaco para que no tape completamente
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 20000;
+  z-index: 12000; // mantener por encima del contenido pero por debajo de modales críticos
+  backdrop-filter: blur(2px);
+  transition: opacity 180ms ease-in-out, background-color 180ms ease-in-out;
+  pointer-events: auto;
 }
 
 // === ESTILOS DE CARRUSEL ===

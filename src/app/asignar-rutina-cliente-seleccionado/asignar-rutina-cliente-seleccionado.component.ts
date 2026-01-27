@@ -123,19 +123,19 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
     return true;
   }
 
-  // Asignar rutina al cliente
+  // Asignar rutina al cliente (sin cuadro de diálogo de confirmación)
   async asignarRutina() {
     if (!this.validarFormulario()) return;
 
-    const mensaje = `¿Está seguro de asignar esta rutina a ${this.cliente?.nombre} ${this.cliente?.apellido}?`;
-    const confirmado = await this.confirmService.confirm(mensaje, 'Confirmar asignación', 'Asignar');
-    if (confirmado) {
-      await this.confirmarAsignacion();
-    }
-  }
+    // Mostrar diálogo de confirmación con el mismo diseño que cerrar sesión
+    const cantidad = 1; // aquí es un solo cliente en esta pantalla
+    const confirmado = await this.confirmService.confirm(
+      `¿Deseas asignar esta rutina a ${cantidad} cliente(s)?`,
+      'Confirmar asignación',
+      'Asignar'
+    );
 
-  async confirmarAsignacion() {
-    // No mostrar spinner ni esperar: proceder directo a asignación
+    if (!confirmado) return;
 
     try {
       if (!this.clienteId || !this.rutinaSeleccionadaId) {
@@ -151,9 +151,6 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
 
       if (verificacion.existe) {
         this.toastService.mostrarAdvertencia('Rutina existente en el mismo día');
-        this.mostrarSpinner = false;
-        this.asignando = false;
-        this.cdr.detectChanges();
         return;
       }
 
@@ -161,13 +158,10 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
       const { data: rutinasCliente } = await this.rutinaService.obtenerRutinasDeCliente(this.clienteId);
       if (rutinasCliente && rutinasCliente.some((rc: any) => rc.dia_semana === this.diaSeleccionado)) {
         this.toastService.mostrarAdvertencia('El cliente ya tiene una rutina asignada en ese día');
-        this.mostrarSpinner = false;
-        this.asignando = false;
-        this.cdr.detectChanges();
         return;
       }
 
-      // Ejecutar la asignación sin esperas artificiales
+      // Ejecutar la asignación directamente
       const resultado = await this.rutinaService.asignarRutinaAClientes(
         this.rutinaSeleccionadaId!,
         [this.clienteId!],
@@ -177,7 +171,6 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
 
       if (resultado.success) {
         this.toastService.mostrarExito('Rutina asignada exitosamente');
-        // Navegar inmediatamente sin esperas
         this.router.navigate(['/ver-rutina-cliente', this.clienteId]);
       } else {
         const mensajeError = resultado.error?.message || resultado.error?.error_description || 'Error al asignar rutina';
@@ -187,9 +180,6 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
       console.error('Error al asignar rutina:', error);
       const mensajeError = error?.message || 'Error al asignar la rutina';
       this.toastService.mostrarError(mensajeError);
-    } finally {
-      // Asegurar detección de cambios; no mostramos spinner aquí
-      this.cdr.detectChanges();
     }
   }
 

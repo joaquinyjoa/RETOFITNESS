@@ -1,0 +1,20 @@
+<div class="confirm-modal-backdrop" (click)="cancel()">
+  <div class="confirm-modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ header }}</h2>
+    </div>
+    
+    <div class="modal-body">
+      <p>{{ message }}</p>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="cancel()">
+        {{ cancelText }}
+      </button>
+      <button class="btn-confirm" (click)="confirm()">
+        {{ confirmText }}
+      </button>
+    </div>
+  </div>
+</div>
