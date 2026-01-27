@@ -329,11 +329,11 @@
 
         <!-- Botones de acción -->
         <div style="display: flex; gap: 10px; margin-top: 15px;">
-          <ion-button expand="block" fill="outline" (click)="verDetalleRutina(rutina)" style="flex: 1;">
+          <ion-button expand="block" fill="outline" (click)="verDetalleConSpinner(rutina)" style="flex: 1;">
             <ion-icon name="eye-outline" slot="start" style="color: #2d73e3;"></ion-icon>
             Ver más
           </ion-button>
-          <ion-button expand="block" fill="solid" color="success" [routerLink]="['/asignar-rutina', rutina.id]" style="flex: 1;">
+          <ion-button expand="block" fill="solid" color="success" (click)="asignarConSpinner(rutina)" style="flex: 1;">
             <ion-icon name="person-add-outline" slot="start" style="color: #ffffff;"></ion-icon>
             Asignar
           </ion-button>

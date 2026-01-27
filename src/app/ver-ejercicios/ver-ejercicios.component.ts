@@ -304,6 +304,20 @@ export class VerEjerciciosComponent implements OnInit {
     }
   }
 
+  // Mostrar overlay spinner 1.5s y luego navegar a asignar rutina
+  async asignarConSpinner(rutina: Rutina | RutinaConDetalles) {
+    if (!rutina || !rutina.id) return;
+    this.mostrarSpinnerGlobal = true;
+    this.cdr.detectChanges();
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      await this.router.navigate(['/asignar-rutina', rutina.id]);
+    } finally {
+      this.mostrarSpinnerGlobal = false;
+      this.cdr.detectChanges();
+    }
+  }
+
   cerrarModal() {
     this.showModal = false;
     this.ejercicioActual = this.getEmptyForm();
@@ -1593,6 +1607,19 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
       this.showModalDetalle = true;
       this.cdr.detectChanges();
     });
+  }
+
+  // Mostrar overlay spinner 1.5s y luego abrir detalle
+  async verDetalleConSpinner(rutina: RutinaConDetalles) {
+    this.mostrarSpinnerGlobal = true;
+    this.cdr.detectChanges();
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      await this.verDetalleRutina(rutina);
+    } finally {
+      this.mostrarSpinnerGlobal = false;
+      this.cdr.detectChanges();
+    }
   }
 
   // Cerrar modal de detalle
