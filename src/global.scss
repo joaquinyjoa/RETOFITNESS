@@ -398,15 +398,60 @@ ion-button.secondary-button::part(native) {
 	/* Extra mobile button fixes */
 	.welcome-buttons {
 		padding: 0 20px !important;
-		max-width: 280px !important;
 	}
-	
-	ion-button.primary-button,
-	ion-button.secondary-button {
-		height: 50px !important;
-		font-size: 1rem !important;
-	}
+
 }
+
+/* Estilos para alerta de confirmación en neón verde */
+.neon-alert .alert-wrapper {
+	background: linear-gradient(180deg, rgba(10,10,10,0.95), rgba(20,20,20,0.95));
+    border: 2px solid rgba(0,255,136,0.28);
+    box-shadow: 0 12px 40px rgba(0,255,136,0.10), 0 0 30px rgba(0,255,136,0.12) inset;
+	color: #e9ffe9;
+	border-radius: 14px;
+	padding: 8px;
+}
+
+.neon-alert .alert-head {
+	color: var(--primary-green);
+	text-shadow: 0 0 8px rgba(0,255,136,0.45);
+	font-weight: 700;
+}
+
+.neon-alert .alert-message {
+	color: rgba(255,255,255,0.95);
+}
+
+.neon-alert .neon-cancel {
+	/* Botón cancelar: fondo blanco con texto oscuro */
+	--background: #ffffff;
+	--color: #000000;
+	border: 1px solid rgba(0,0,0,0.06);
+	border-radius: 10px;
+}
+
+.neon-alert .neon-confirm {
+	/* Botón confirmar: neón verde */
+	--background: linear-gradient(45deg, #00ff88 0%, #00cc6a 100%);
+	--color: #000000;
+	border: 1px solid rgba(0,255,136,0.45);
+	border-radius: 10px;
+	box-shadow: 0 8px 30px rgba(0,255,136,0.22), 0 0 18px rgba(0,255,136,0.12) inset;
+	font-weight: 700;
+	text-shadow: 0 0 6px rgba(0,255,136,0.25);
+	padding: 8px 12px;
+}
+
+/* Forzar color de texto verde neón en el botón Salir dentro del alert */
+.neon-alert .alert-button-group button.neon-confirm,
+.neon-alert .alert-button-group .neon-confirm {
+	color: var(--primary-green) !important;
+	--color: var(--primary-green) !important;
+	background: transparent !important;
+	border: 2px solid rgba(0,255,136,0.45) !important;
+	box-shadow: 0 8px 30px rgba(0,255,136,0.12) !important;
+}
+
 
 /* CSS Variables Protection - Prevents optimization from removing unused variables */
 .css-variables-protection {

@@ -4,6 +4,7 @@ import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService, UsuarioLogueado } from '../services/auth.service';
+import { ConfirmService } from '../services/confirm.service';
 import { ClienteService } from '../services/cliente.service';
 import { Cliente } from '../services/supabase.service';
 import { SpinnerComponent } from '../spinner/spinner.component';
@@ -25,6 +26,7 @@ export class PanelRecepcionComponent implements OnInit {
 
   private router = inject(Router);
   private authService = inject(AuthService);
+  private confirmService = inject(ConfirmService);
   private clienteService = inject(ClienteService);
   private cdr = inject(ChangeDetectorRef);
 
@@ -135,6 +137,9 @@ export class PanelRecepcionComponent implements OnInit {
   }
 
   async cerrarSesion() {
+    const ok = await this.confirmService.confirmExit('¿Estás seguro que deseas cerrar sesión?', 'Cerrar sesión');
+    if (!ok) return;
+
     await this.authService.cerrarSesion();
     await this.router.navigate(['/login']);
   }

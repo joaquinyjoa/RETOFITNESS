@@ -4,6 +4,7 @@ import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { RutinaService } from '../services/rutina.service';
+import { ConfirmService } from '../services/confirm.service';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -20,6 +21,7 @@ export class PanelClienteComponent implements OnInit {
   private router = inject(Router);
   private rutinaService = inject(RutinaService);
   private authService = inject(AuthService);
+  private confirmService = inject(ConfirmService);
   private toastService = inject(ToastService);
   private sanitizer = inject(DomSanitizer);
   private cdr = inject(ChangeDetectorRef);
@@ -324,7 +326,10 @@ export class PanelClienteComponent implements OnInit {
     this.pesosRegistrados[index] = parseFloat(valor) || 0;
   }
 
-  logout() {
+  async logout() {
+    const ok = await this.confirmService.confirmExit('¿Deseas cerrar sesión y salir de la cuenta?', 'Cerrar sesión');
+    if (!ok) return;
+
     this.authService.cerrarSesion();
     this.router.navigate(['/login']);
   }

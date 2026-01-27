@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IonicModule, ViewWillEnter, ViewWillLeave } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { AuthService, UsuarioLogueado } from '../services/auth.service';
+import { ConfirmService } from '../services/confirm.service';
 import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
@@ -19,6 +20,7 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
 
   private router = inject(Router);
   private authService = inject(AuthService);
+  private confirmService = inject(ConfirmService);
   private cdr = inject(ChangeDetectorRef);
 
   // Getter para obtener datos del entrenador con type safety
@@ -92,7 +94,10 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
   }
 
   // Cerrar sesión
-  cerrarSesion() {
+  async cerrarSesion() {
+    const ok = await this.confirmService.confirmExit('¿Estás seguro que deseas cerrar sesión?', 'Cerrar sesión');
+    if (!ok) return;
+
     this.authService.cerrarSesion();
     this.router.navigate(['/welcome']);
   }

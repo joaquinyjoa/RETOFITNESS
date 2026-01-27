@@ -142,16 +142,19 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
   // Validación de la contraseña
   validatePassword(showError: boolean = false): boolean {
     const hasMinLength = this.credenciales.password.length >= 6;
-    const isValid = hasMinLength;
-    
+    const hasUppercase = /[A-Z]/.test(this.credenciales.password);
+    const isValid = hasMinLength && hasUppercase;
+
     if (showError || this.fieldsTouched.password || this.intentoLogin) {
       if (!hasMinLength) {
         this.validationErrors.password = 'La contraseña debe tener mínimo 6 caracteres';
+      } else if (!hasUppercase) {
+        this.validationErrors.password = 'La contraseña debe contener al menos una letra mayúscula';
       } else {
         this.validationErrors.password = '';
       }
     }
-    
+
     return isValid;
   }
 
@@ -318,7 +321,7 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
   async accesoRapidoEntrenador() {
     // Establecer credenciales predefinidas
     this.credenciales.correo = 'gus@retofitness.com';
-    this.credenciales.password = 'gus1209';
+    this.credenciales.password = 'guS1209';
 
     // Proceder con el login automáticamente
     await this.onLogin();
