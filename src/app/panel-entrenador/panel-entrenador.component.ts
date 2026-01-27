@@ -81,16 +81,28 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
     this.mostrarSpinner = false;
   }
 
-  // Navegar a ver clientes
-  verClientes() {
+  // Navegar a ver clientes (mostrar spinner 1.5s antes de cambiar de ruta)
+  async verClientes() {
     this.mostrarSpinner = true;
-    setTimeout(() => this.router.navigate(['/ver-clientes']), 300);
+    this.cdr.detectChanges();
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Ocultar spinner antes de navegar para evitar superposición en el destino
+    this.mostrarSpinner = false;
+    this.cdr.detectChanges();
+    await new Promise(resolve => setTimeout(resolve, 50));
+    this.router.navigate(['/ver-clientes']);
   }
 
-  // Ver ejercicios
-  verEjercicios() {
+  // Ver ejercicios (mostrar spinner 1.5s antes de cambiar de ruta)
+  async verEjercicios() {
     this.mostrarSpinner = true;
-    setTimeout(() => this.router.navigate(['/ver-ejercicios']), 300);
+    this.cdr.detectChanges();
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Ocultar spinner antes de navegar para evitar superposición en el destino
+    this.mostrarSpinner = false;
+    this.cdr.detectChanges();
+    await new Promise(resolve => setTimeout(resolve, 50));
+    this.router.navigate(['/ver-ejercicios']);
   }
 
   // Cerrar sesión
