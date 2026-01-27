@@ -10,12 +10,6 @@
 </ion-header>
 
 <ion-content [fullscreen]="true" class="main-content">
-  
-  <!-- Loading -->
-  <div *ngIf="loading" class="loading-container">
-    <ion-spinner name="crescent"></ion-spinner>
-    <p>Cargando...</p>
-  </div>
 
   <div *ngIf="!loading" class="content-wrapper">
     
@@ -43,16 +37,18 @@
       </ion-button>
     </div>
 
-    <!-- Filtro por días -->
+    <!-- Filtro por días (diseño igual a cliente) -->
     <div *ngIf="rutinasAsignadas.length > 0" style="margin-bottom: 20px;">
-      <ion-segment [value]="diaSeleccionado.toString()" (ionChange)="cambiarDia($event)" scrollable="true" mode="md">
-        <ion-segment-button value="0">
-          <ion-label>Todos</ion-label>
-        </ion-segment-button>
-        <ion-segment-button *ngFor="let dia of diasDisponibles" [value]="dia.toString()">
-          <ion-label>{{ diasSemana[dia] || 'Día ' + dia }}</ion-label>
-        </ion-segment-button>
-      </ion-segment>
+      <ion-toolbar color="dark" class="segment-toolbar">
+        <ion-segment [(ngModel)]="diaSeleccionado" (ionChange)="cambiarDia($event)" scrollable="true" mode="md">
+          <ion-segment-button [value]="0">
+            <ion-label>Todos</ion-label>
+          </ion-segment-button>
+          <ion-segment-button *ngFor="let dia of diasDisponibles" [value]="dia">
+            <ion-label>{{ diasSemana[dia] || 'Día ' + dia }}</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+      </ion-toolbar>
     </div>
 
     <!-- Botón para asignar nueva rutina -->

@@ -73,7 +73,7 @@ export class VerRutinaClienteComponent implements OnInit {
   clienteId: number | null = null;
   cliente: any = null;
   rutinasAsignadas: any[] = [];
-  rutinasFiltradasPorDia: any = null; // La rutina del día seleccionado
+  rutinasFiltradasPorDia: any[] = []; // Rutinas filtradas por el día seleccionado
   loading = true;
   mostrarSpinner = false;
   diaSeleccionado: number = 0; // 0 = todos, 1-6 = días específicos
@@ -145,11 +145,9 @@ export class VerRutinaClienteComponent implements OnInit {
           // Obtener días disponibles
           this.diasDisponibles = [...new Set(this.rutinasAsignadas.map(r => r.dia_semana))].sort();
           
-          // Si hay rutinas, seleccionar el primer día por defecto
-          if (this.diasDisponibles.length > 0) {
-            this.diaSeleccionado = this.diasDisponibles[0];
-            this.filtrarPorDia();
-          }
+          // Por defecto mostrar "Todos"
+          this.diaSeleccionado = 0;
+          this.filtrarPorDia();
           
         } else {
           this.rutinasAsignadas = [];
@@ -490,16 +488,16 @@ export class VerRutinaClienteComponent implements OnInit {
   filtrarPorDia() {
     if (this.diaSeleccionado === 0) {
       // Mostrar todos los días
-      this.rutinasFiltradasPorDia = null;
+      this.rutinasFiltradasPorDia = [...this.rutinasAsignadas];
     } else {
-      // Filtrar por día específico
-      this.rutinasFiltradasPorDia = this.rutinasAsignadas.find(r => r.dia_semana === this.diaSeleccionado);
+      // Filtrar por día específico (puede haber más de una asignación por día)
+      this.rutinasFiltradasPorDia = this.rutinasAsignadas.filter(r => r.dia_semana === this.diaSeleccionado);
     }
     this.cdr.detectChanges();
   }
 
   get rutinasAMostrar() {
-    return this.diaSeleccionado === 0 ? this.rutinasAsignadas : (this.rutinasFiltradasPorDia ? [this.rutinasFiltradasPorDia] : []);
+    return this.rutinasFiltradasPorDia || [];
   }
 
   // Métodos del carrusel
