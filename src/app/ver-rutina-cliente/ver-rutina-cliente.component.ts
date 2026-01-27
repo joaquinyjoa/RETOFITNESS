@@ -493,6 +493,16 @@ export class VerRutinaClienteComponent implements OnInit {
       // Filtrar por día específico (puede haber más de una asignación por día)
       this.rutinasFiltradasPorDia = this.rutinasAsignadas.filter(r => r.dia_semana === this.diaSeleccionado);
     }
+
+    // Evitar duplicados por id (defensa ante datos duplicados desde el backend)
+    const map = new Map<number, any>();
+    for (const r of this.rutinasFiltradasPorDia) {
+      if (r && r.id != null && !map.has(r.id)) {
+        map.set(r.id, r);
+      }
+    }
+    this.rutinasFiltradasPorDia = Array.from(map.values());
+
     this.cdr.detectChanges();
   }
 

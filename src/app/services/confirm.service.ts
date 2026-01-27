@@ -25,4 +25,25 @@ export class ConfirmService {
     const { role } = await alert.onDidDismiss();
     return role === 'confirm';
   }
+
+  /**
+   * Método genérico para confirmar acciones con estilo neón.
+   * `confirmLabel` permite personalizar el texto del botón de confirmación.
+   */
+  async confirm(message: string, header: string = 'Confirmar', confirmLabel: string = 'Aceptar'): Promise<boolean> {
+    const alert = await this.alertCtrl.create({
+      header,
+      message,
+      cssClass: 'neon-alert',
+      backdropDismiss: false,
+      buttons: [
+        { text: 'Cancelar', role: 'cancel', cssClass: 'neon-cancel' },
+        { text: confirmLabel, role: 'confirm', cssClass: 'neon-confirm' }
+      ]
+    });
+
+    await alert.present();
+    const { role } = await alert.onDidDismiss();
+    return role === 'confirm';
+  }
 }

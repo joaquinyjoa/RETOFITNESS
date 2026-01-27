@@ -2,7 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { IonicModule, AlertController } from '@ionic/angular';
+import { IonicModule } from '@ionic/angular';
+import { ConfirmService } from '../services/confirm.service';
 import { RutinaService, Rutina } from '../services/rutina.service';
 import { ClienteService } from '../services/cliente.service';
 import { ToastService } from '../services/toast.service';
@@ -22,7 +23,7 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
   private rutinaService = inject(RutinaService);
   private clienteService = inject(ClienteService);
   private toastService = inject(ToastService);
-  private alertController = inject(AlertController);
+  private confirmService = inject(ConfirmService);
   private cdr = inject(ChangeDetectorRef);
 
   clienteId: number | null = null;
@@ -124,28 +125,13 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
 
   // Asignar rutina al cliente
   async asignarRutina() {
-    if (!this.validarFormulario()) {
-      return;
+    if (!this.validarFormulario()) return;
+
+    const mensaje = `¿Está seguro de asignar esta rutina a ${this.cliente?.nombre} ${this.cliente?.apellido}?`;
+    const confirmado = await this.confirmService.confirm(mensaje, 'Confirmar asignación', 'Asignar');
+    if (confirmado) {
+      await this.confirmarAsignacion();
     }
-
-    const alert = await this.alertController.create({
-      header: 'Confirmar asignación',
-      message: `¿Está seguro de asignar esta rutina a ${this.cliente?.nombre} ${this.cliente?.apellido}?`,
-      buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel'
-        },
-        {
-          text: 'Asignar',
-          handler: async () => {
-            await this.confirmarAsignacion();
-          }
-        }
-      ]
-    });
-
-    await alert.present();
   }
 
   async confirmarAsignacion() {
@@ -166,6 +152,15 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
 
       if (verificacion.existe) {
         this.toastService.mostrarAdvertencia('Rutina existente en el mismo día');
+        this.mostrarSpinner = false;
+        this.cdr.detectChanges();
+        return;
+      }
+
+      // Verificar si el cliente ya tiene cualquier otra rutina asignada en ese día
+      const { data: rutinasCliente } = await this.rutinaService.obtenerRutinasDeCliente(this.clienteId);
+      if (rutinasCliente && rutinasCliente.some((rc: any) => rc.dia_semana === this.diaSeleccionado)) {
+        this.toastService.mostrarAdvertencia('El cliente ya tiene una rutina asignada en ese día');
         this.mostrarSpinner = false;
         this.cdr.detectChanges();
         return;

@@ -37,18 +37,16 @@
       </ion-button>
     </div>
 
-    <!-- Filtro por días (diseño igual a cliente) -->
+    <!-- Filtro por días -->
     <div *ngIf="rutinasAsignadas.length > 0" style="margin-bottom: 20px;">
-      <ion-toolbar color="dark" class="segment-toolbar">
-        <ion-segment [(ngModel)]="diaSeleccionado" (ionChange)="cambiarDia($event)" scrollable="true" mode="md">
-          <ion-segment-button [value]="0">
-            <ion-label>Todos</ion-label>
-          </ion-segment-button>
-          <ion-segment-button *ngFor="let dia of diasDisponibles" [value]="dia">
-            <ion-label>{{ diasSemana[dia] || 'Día ' + dia }}</ion-label>
-          </ion-segment-button>
-        </ion-segment>
-      </ion-toolbar>
+      <ion-segment [value]="diaSeleccionado.toString()" (ionChange)="cambiarDia($event)" scrollable="true" mode="md">
+        <ion-segment-button value="0">
+          <ion-label>Todos</ion-label>
+        </ion-segment-button>
+        <ion-segment-button *ngFor="let dia of diasDisponibles" [value]="dia.toString()">
+          <ion-label>{{ diasSemana[dia] || 'Día ' + dia }}</ion-label>
+        </ion-segment-button>
+      </ion-segment>
     </div>
 
     <!-- Botón para asignar nueva rutina -->
