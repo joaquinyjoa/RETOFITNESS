@@ -1,4 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { ViewWillEnter } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
@@ -7,7 +8,7 @@ import { RutinaService } from '../services/rutina.service';
 import { ConfirmService } from '../services/confirm.service';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+// removed DomSanitizer/SafeResourceUrl Google Drive helpers per request
 import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
@@ -17,13 +18,13 @@ import { SpinnerComponent } from '../spinner/spinner.component';
   standalone: true,
   imports: [CommonModule, IonicModule, FormsModule, SpinnerComponent]
 })
-export class PanelClienteComponent implements OnInit {
+export class PanelClienteComponent implements OnInit, ViewWillEnter {
   private router = inject(Router);
   private rutinaService = inject(RutinaService);
   private authService = inject(AuthService);
   private confirmService = inject(ConfirmService);
   private toastService = inject(ToastService);
-  private sanitizer = inject(DomSanitizer);
+  // sanitizer and Drive helpers removed
   private cdr = inject(ChangeDetectorRef);
 
   clienteId: number | null = null;
@@ -33,6 +34,7 @@ export class PanelClienteComponent implements OnInit {
   diaSeleccionado: number = 1;
   rutinaAsignada: any = null;
   loading = false;
+  mostrarSpinner = false; // controla el overlay animado durante recargas
 
   // Map para índices de mini carrusel de videos (0 = principal, 1 = alternativo)
   private videoCarouselIndices = new Map<number, number>();
@@ -67,53 +69,79 @@ export class PanelClienteComponent implements OnInit {
   }
 
   async cargarRutinaAsignada() {
-
     try {
       if (!this.clienteId) {
         console.error('❌ No hay cliente ID');
         return;
       }
-      const tiempoInicio = performance.now();
 
-      // Limpiar caché y datos antiguos
-      this.rutinasPorDia.clear();
-      this.rutinasAsignadas = [];
+      // Mostrar spinner y mantener datos actuales hasta que la carga termine
+      this.mostrarSpinner = true;
+      this.cdr.detectChanges();
 
-      const { data, error } = await this.rutinaService.obtenerRutinasDeCliente(this.clienteId);
+      const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-      const tiempoFin = performance.now();
+      // Ejecutar carga y garantizar mínimo 1.5s de spinner visible
+      const cargaPromise = (async () => {
+        const { data, error } = await this.rutinaService.obtenerRutinasDeCliente(this.clienteId!);
 
-      if (error) {
-        console.error('❌ Error al cargar rutinas:', error);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        this.rutinasAsignadas = data;
-        
-        // Organizar rutinas por día
-        this.rutinasPorDia.clear();
-        for (const rutina of data) {
-          const dia = rutina.dia_semana || 1; // Default día 1 si no tiene
-          if (!this.rutinasPorDia.has(dia)) {
-            // Obtener detalles completos de la rutina
-            const { data: rutinaDetalle } = await this.rutinaService.obtenerRutinaPorId(rutina.rutina_id);
-            this.rutinasPorDia.set(dia, {
-              ...rutina,
-              detalles: rutinaDetalle
-            });
-          }
+        if (error) {
+          console.error('❌ Error al cargar rutinas:', error);
+          this.toastService.mostrarError('Error al cargar rutinas');
+          return;
         }
 
-        // Seleccionar rutina del día 1 por defecto
-        this.seleccionarDia(1);
-      } else {
-        this.rutinaAsignada = null;
-      }
+        if (data && data.length > 0) {
+          // Preparar nuevos datos sin limpiar los existentes hasta terminar
+          const nuevoMap = new Map<number, any>();
+          const nuevasRutinas: any[] = data;
+
+          for (const rutina of data) {
+            const dia = rutina.dia_semana || 1;
+            if (!nuevoMap.has(dia)) {
+              const { data: rutinaDetalle } = await this.rutinaService.obtenerRutinaPorId(rutina.rutina_id);
+              nuevoMap.set(dia, {
+                ...rutina,
+                detalles: rutinaDetalle
+              });
+            }
+          }
+
+          // Reemplazar datos cuando todo esté listo
+          this.rutinasAsignadas = nuevasRutinas;
+          this.rutinasPorDia = nuevoMap;
+
+          // Mantener día seleccionado si existe, sino ir a día 1
+          if (!this.rutinasPorDia.has(this.diaSeleccionado)) {
+            this.seleccionarDia(1);
+          } else {
+            this.rutinaAsignada = this.rutinasPorDia.get(this.diaSeleccionado) || null;
+            if (this.rutinaAsignada) {
+              this.cargarPesosDesdeCache();
+            }
+          }
+        } else {
+          this.rutinaAsignada = null;
+          this.rutinasAsignadas = [];
+          this.rutinasPorDia.clear();
+        }
+      })();
+
+      await Promise.all([cargaPromise, delay(1500)]);
+      this.cdr.detectChanges();
     } catch (error) {
       console.error('❌ [PanelCliente] Error:', error);
       this.toastService.mostrarError('Error al cargar tu rutina');
+    } finally {
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
     }
+  }
+
+  // Recargar datos cuando la vista entra en foco (volver desde otra pantalla)
+  ionViewWillEnter(): void {
+    // No await here so Ionic lifecycle isn't blocked, but trigger reload
+    this.cargarRutinaAsignada().catch(err => console.error('[PanelCliente] ionViewWillEnter error', err));
   }
 
   seleccionarDia(dia: number) {
@@ -278,6 +306,11 @@ export class PanelClienteComponent implements OnInit {
     const maxSeries = this.ejercicioSeleccionado.series || 3;
     return this.pesosRegistrados.length < maxSeries;
   }
+
+  // TrackBy para evitar recreación de inputs al escribir
+  trackByIndex(index: number): number {
+    return index;
+  }
   // Obtener pesos del caché
   private obtenerPesosCache(): { [key: number]: { peso?: number, pesos?: number[], fecha: string } } {
     try {
@@ -320,11 +353,7 @@ export class PanelClienteComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // Actualizar peso de serie (usado en input de peso para evitar binding directo que causa freeze)
-  actualizarPesoSerie(index: number, event: any): void {
-    const valor = event.target?.value;
-    this.pesosRegistrados[index] = parseFloat(valor) || 0;
-  }
+  // actualizarPesoSerie removed - now using [(ngModel)] for better UX
 
   async logout() {
     const ok = await this.confirmService.confirmExit('¿Deseas cerrar sesión y salir de la cuenta?', 'Cerrar sesión');
@@ -342,146 +371,50 @@ export class PanelClienteComponent implements OnInit {
   getDirectImageUrl(url: string): string {
     if (!url) return '';
 
-    // Extraer el ID del archivo de Google Drive
-    let fileId = '';
+    const lower = url.toLowerCase();
 
-    // Patrón para URLs como: https://drive.google.com/file/d/FILE_ID/view
-    const patronId = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
-    if (patronId) {
-      fileId = patronId[1];
-
-      // Para GIFs, intentar diferentes URLs
-      if (url.toLowerCase().includes('.gif') || this.isLikelyGif(url)) {
-        // URL alternativa que podría funcionar mejor para GIFs
-        return `https://lh3.googleusercontent.com/d/${fileId}`;
-      }
-
-      // Para otras imágenes, usar la URL de vista
-      return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    // Si no es Google Drive, devolver la URL tal cual
+    if (!lower.includes('drive.google.com')) {
+      return url;
     }
 
-    // Patrón para URLs como: https://drive.google.com/open?id=FILE_ID
-    const patronOpen = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
-    if (patronOpen) {
-      fileId = patronOpen[1];
+    // Extraer fileId de Drive (https://drive.google.com/file/d/FILE_ID/... o ?id=FILE_ID)
+    const m1 = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    const fileId = m1 ? m1[1] : (m2 ? m2[1] : null);
 
-      if (url.toLowerCase().includes('.gif') || this.isLikelyGif(url)) {
-        return `https://lh3.googleusercontent.com/d/${fileId}`;
-      }
-      return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    if (!fileId) return url; // fallback
+
+    // Si parece GIF (extensión o palabra gif en la url), usar lh3 endpoint que sirve GIFs
+    if (lower.includes('.gif') || !/\.[a-z0-9]{2,5}(\?|$)/.test(lower)) {
+      return `https://lh3.googleusercontent.com/d/${fileId}`;
     }
 
-    // Si no se puede extraer el ID, devolver la URL original
-    return url;
+    // Para imágenes normales, usar la URL de visualización
+    return `https://drive.google.com/uc?export=view&id=${fileId}`;
+  }
+
+  // Determina si la URL parece apuntar a una imagen (extensiones comunes)
+  isImageUrl(url: string | undefined | null): boolean {
+    if (!url) return false;
+    const path = url.split('?')[0].toLowerCase();
+    if (/\.(gif|png|jpe?g|webp|bmp|svg)$/.test(path)) return true;
+    // Consider Google Drive links without extension as images (helps GIFs stored in Drive)
+    if (path.includes('drive.google.com')) return true;
+    return false;
   }
 
   // Función auxiliar para detectar si es probable que sea un GIF
   private isLikelyGif(url: string): boolean {
-    const lower = url.toLowerCase();
-    // Si contiene 'gif' en cualquier parte de la URL
-    if (lower.includes('gif')) return true;
-    // Si es de Google Drive y no tiene extensión clara de imagen/video
-    if (lower.includes('drive.google.com') && !/\.(png|jpe?g|webp|mp4|mov|avi)/.test(lower)) return true;
-    return false;
+    return url ? url.toLowerCase().includes('gif') : false;
   }
 
   // Obtener URL para video desde Google Drive (usando embed)
   getDirectVideoUrl(url: string): string {
-    if (!url) return '';
-
-    // Extraer el ID del archivo de Google Drive
-    let fileId = '';
-
-    // Patrón para URLs como: https://drive.google.com/file/d/FILE_ID/view
-    const patronId = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
-    if (patronId) {
-      fileId = patronId[1];
-      // Para videos, usar la URL de embed que permite reproducción
-      return `https://drive.google.com/file/d/${fileId}/preview`;
-    }
-
-    // Patrón para URLs como: https://drive.google.com/open?id=FILE_ID
-    const patronOpen = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
-    if (patronOpen) {
-      fileId = patronOpen[1];
-      return `https://drive.google.com/file/d/${fileId}/preview`;
-    }
-
-    // Si no se puede extraer el ID, devolver la URL original
-    return url;
+    // Google Drive handling removed; return raw URL
+    return url || '';
   }
 
-  // Alias para usar en el HTML de rutinas
-  getSafeUrl(url: string): SafeResourceUrl {
-    return this.getVideoEmbedUrl(url);
-  }
-
-  isImageUrl(url: string): boolean {
-    if (!url) return false;
-    const lower = url.toLowerCase();
-
-    // Extensiones de imagen/GIF
-    if (/\.(gif|png|jpe?g|webp)$/.test(lower)) {
-      return true;
-    }
-
-    // URLs ya procesadas de Drive
-    if (lower.includes('uc?export=view') || lower.includes('export=download') || lower.includes('thumbnail')) {
-      return true;
-    }
-
-    // Para Google Drive: si NO es claramente un video, asumir que es imagen/GIF
-    if (lower.includes('drive.google.com') && !this.isVideoFile(url)) {
-      return true;
-    }
-
-    return false;
-  }
-
-  isVideoUrl(url: string): boolean {
-    if (!url) return false;
-    const lower = url.toLowerCase();
-
-    // Extensiones de video
-    if (/\.(mp4|mov|avi|webm|m4v|flv|wmv|mkv)$/.test(lower)) {
-      return true;
-    }
-
-    // URLs de embed de Google Drive (que son para videos)
-    if (lower.includes('drive.google.com') && lower.includes('/preview')) {
-      return true;
-    }
-
-    // Para Google Drive: si NO es imagen, asumir que es video
-    if (lower.includes('drive.google.com') && !this.isImageFile(url)) {
-      return true;
-    }
-
-    return false;
-  }
-
-  // Función auxiliar para determinar si es archivo de imagen
-  private isImageFile(url: string): boolean {
-    const lower = url.toLowerCase();
-    return /\.(gif|png|jpe?g|webp|bmp|tiff?|svg)$/.test(lower) ||
-           lower.includes('uc?export=view') ||
-           lower.includes('thumbnail');
-  }
-
-  // Función auxiliar para determinar si es archivo de video
-  private isVideoFile(url: string): boolean {
-    const lower = url.toLowerCase();
-    return /\.(mp4|mov|avi|webm|m4v|flv|wmv|mkv)$/.test(lower) ||
-           (lower.includes('drive.google.com') && lower.includes('/preview'));
-  }
-
-  // Obtener URL de embed para video
-  getVideoEmbedUrl(url: string): SafeResourceUrl {
-    if (!url) return this.sanitizer.bypassSecurityTrustResourceUrl('');
-
-    const embedUrl = this.getDirectVideoUrl(url);
-
-    return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
-  }
+  // Google Drive helpers removed to simplify URL handling; templates use raw enlace_video
 }
 

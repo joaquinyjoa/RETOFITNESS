@@ -48,18 +48,20 @@
         <ion-card-header>
           <ion-card-title>{{ rutinaAsignada.detalles?.nombre }}</ion-card-title>
           <ion-card-subtitle>
-            <ion-badge [color]="rutinaAsignada.estado === 'en_progreso' ? 'success' : 'medium'">
-              {{ rutinaAsignada.estado === 'en_progreso' ? 'En Progreso' : rutinaAsignada.estado }}
-            </ion-badge>
-            <ion-badge color="primary" style="margin-left: 8px;">
-              {{ getNivelLabel(rutinaAsignada.detalles?.nivel_dificultad) }}
+            <ion-badge class="neon-badge">
+              dificultad: {{ getNivelLabel(rutinaAsignada.detalles?.nivel_dificultad) }}
             </ion-badge>
           </ion-card-subtitle>
         </ion-card-header>
 
         <ion-card-content>
+          <strong>Descripción:</strong>
           <div class="rutina-descripcion">
             {{ rutinaAsignada.detalles?.descripcion || 'Sin descripción' }}
+          </div>
+          <strong>Objetivo:</strong>    
+          <div *ngIf="rutinaAsignada.detalles?.objetivo" class="rutina-objetivo">
+             {{ rutinaAsignada.detalles?.objetivo }}
           </div>
           
           <div class="info-grid">
@@ -259,7 +261,7 @@
 
         <!-- Lista de series -->
         <div class="series-list" *ngIf="pesosRegistrados.length > 0">
-          <div class="serie-item" *ngFor="let peso of pesosRegistrados; let i = index">
+          <div class="serie-item" *ngFor="let peso of pesosRegistrados; let i = index; trackBy: trackByIndex">
             <div class="serie-header">
               <span class="serie-numero">Serie {{ i + 1 }}</span>
               <ion-button fill="clear" size="small" color="danger" (click)="eliminarSeriePeso(i)">
@@ -270,8 +272,7 @@
               <ion-label position="stacked">Peso (kg)</ion-label>
               <ion-input
                 type="number"
-                [value]="pesosRegistrados[i]"
-                (ionInput)="actualizarPesoSerie(i, $event)"
+                [(ngModel)]="pesosRegistrados[i]"
                 placeholder="Ej: 20"
                 min="0"
                 step="0.5">
@@ -308,7 +309,7 @@
 <!-- Modal para ver detalles del ejercicio -->
 <ion-modal [isOpen]="showModalDetalleEjercicio" (didDismiss)="cerrarModalDetalleEjercicio()">
   <ng-template>
-    <ion-header>
+    <ion-header class="custom-header">
       <ion-toolbar>
         <ion-title>Detalles del Ejercicio</ion-title>
         <ion-buttons slot="end">

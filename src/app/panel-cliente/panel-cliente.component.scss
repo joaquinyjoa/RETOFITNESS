@@ -45,6 +45,7 @@
 .panel-content {
   --background: var(--black-bg);
   --color: white;
+  position: relative; /* para que el overlay absoluto se posicione correctamente */
 
   p {
     color: white;
@@ -74,6 +75,17 @@
   max-width: 900px;
   margin: 0 auto;
   padding: 20px;
+}
+
+/* Overlay global para spinner animado */
+.global-spinner-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 99999;
 }
 
 // Sección de bienvenida
@@ -198,6 +210,20 @@
   }
 }
 
+/* Neon badge para dificultad */
+.neon-badge {
+  background: var(--primary-green) !important;
+  color: var(--black-bg) !important;
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 12px;
+  box-shadow: 0 0 14px rgba(0, 255, 136, 0.6);
+  border: 1px solid rgba(0, 255, 136, 0.85);
+  display: inline-block;
+  margin-left: 8px;
+}
+
 .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -262,14 +288,59 @@
 // Descripción de la rutina - GRANDE Y BLANCA
 .rutina-descripcion {
   color: white !important;
-  font-size: 1.15rem;
-  line-height: 1.6;
-  margin-bottom: 20px;
-  padding: 16px;
+  font-size: 1rem; /* ligeramente más pequeño */
+  line-height: 1.5;
+  margin-bottom: 18px; /* más separación respecto al objetivo */
+  padding: 12px;
   background: rgba(0, 255, 136, 0.05);
   border-radius: 10px;
   border-left: 4px solid var(--primary-green);
   font-weight: 400;
+  max-height: 120px; /* limitar alto */
+  overflow-y: auto; /* permitir scroll interno */
+  -webkit-overflow-scrolling: touch;
+
+  /* Estilo de scrollbar para webkit */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.08);
+    border-radius: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0,255,136,0.35);
+    border-radius: 6px;
+  }
+}
+
+/* Objetivo de la rutina (visible en la tarjeta) */
+.rutina-objetivo {
+  /* Match descripcion box styles */
+  color: white;
+  background: rgba(0, 255, 136, 0.05);
+  border-left: 4px solid var(--primary-green);
+  padding: 12px;
+  margin-top: 14px; /* separación desde la descripción */
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 400;
+  max-height: 120px; /* same as descripcion */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.03);
+
+  &::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0,255,136,0.25);
+    border-radius: 6px;
+  }
 }
 
 // Lista de ejercicios

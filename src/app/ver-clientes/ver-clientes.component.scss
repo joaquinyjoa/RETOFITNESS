@@ -28,8 +28,19 @@
 // Header personalizado
 .custom-header {
   ion-toolbar {
-    --background: var(--dark-bg);
-    --border-color: var(--border-color);
+    --background: linear-gradient(90deg, #001a0f 0%, rgba(0,255,136,0.06) 50%, #002214 100%);
+    --color: #000000;
+    border-bottom: 1px solid rgba(0,255,136,0.12);
+    box-shadow: 0 8px 30px rgba(0,255,136,0.12), inset 0 0 40px rgba(0,255,136,0.03);
+    position: relative;
+    z-index: 50;
+    animation: neon-pulse 2.8s ease-in-out infinite;
+  }
+
+  ion-toolbar::part(native) {
+    background: linear-gradient(90deg, #001a0f 0%, rgba(0,255,136,0.06) 50%, #002214 100%) !important;
+    color: #000000 !important;
+    box-shadow: 0 8px 30px rgba(0,255,136,0.12) !important;
   }
 }
 
@@ -64,6 +75,18 @@
   filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.4));
   vertical-align: -7px;
   margin-bottom: -1px;
+}
+
+ion-title {
+  color: var(--primary-green);
+  text-shadow: 0 0 10px rgba(0,255,136,0.45);
+  font-weight: 800;
+}
+
+@keyframes neon-pulse {
+  0% { box-shadow: 0 6px 18px rgba(0,255,136,0.08), inset 0 0 20px rgba(0,255,136,0.02); }
+  50% { box-shadow: 0 12px 40px rgba(0,255,136,0.18), inset 0 0 40px rgba(0,255,136,0.06); }
+  100% { box-shadow: 0 6px 18px rgba(0,255,136,0.08), inset 0 0 20px rgba(0,255,136,0.02); }
 }
 
 // Contenido

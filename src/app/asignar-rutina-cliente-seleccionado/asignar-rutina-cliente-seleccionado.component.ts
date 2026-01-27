@@ -136,6 +136,13 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
     );
 
     if (!confirmado) return;
+    
+    console.log('[AsignarRutina] Mostrando spinner...');
+    this.mostrarSpinner = true;
+    this.cdr.detectChanges();
+    
+    // Pequeño delay para asegurar que el DOM se actualice
+    await new Promise(resolve => setTimeout(resolve, 50));
 
     try {
       if (!this.clienteId || !this.rutinaSeleccionadaId) {
@@ -150,6 +157,8 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
       );
 
       if (verificacion.existe) {
+        this.mostrarSpinner = false;
+        this.cdr.detectChanges();
         this.toastService.mostrarAdvertencia('Rutina existente en el mismo día');
         return;
       }
@@ -157,29 +166,46 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
       // Verificar si el cliente ya tiene cualquier otra rutina asignada en ese día
       const { data: rutinasCliente } = await this.rutinaService.obtenerRutinasDeCliente(this.clienteId);
       if (rutinasCliente && rutinasCliente.some((rc: any) => rc.dia_semana === this.diaSeleccionado)) {
+        this.mostrarSpinner = false;
+        this.cdr.detectChanges();
         this.toastService.mostrarAdvertencia('El cliente ya tiene una rutina asignada en ese día');
         return;
       }
 
       // Ejecutar la asignación directamente
-      const resultado = await this.rutinaService.asignarRutinaAClientes(
-        this.rutinaSeleccionadaId!,
-        [this.clienteId!],
-        this.diaSeleccionado,
-        this.notasEntrenador
-      );
+        // Ejecutar la asignación y asegurar un mínimo de 1.5s mostrando el spinner
+        const [resultado] = await Promise.all([
+          this.rutinaService.asignarRutinaAClientes(
+            this.rutinaSeleccionadaId!,
+            [this.clienteId!],
+            this.diaSeleccionado,
+            this.notasEntrenador
+          ),
+          new Promise(resolve => setTimeout(resolve, 1500))
+        ]);
 
       if (resultado.success) {
         this.toastService.mostrarExito('Rutina asignada exitosamente');
+        this.mostrarSpinner = false;
+        this.cdr.detectChanges();
         this.router.navigate(['/ver-rutina-cliente', this.clienteId]);
       } else {
+        this.mostrarSpinner = false;
+        this.cdr.detectChanges();
         const mensajeError = resultado.error?.message || resultado.error?.error_description || 'Error al asignar rutina';
         this.toastService.mostrarError(mensajeError);
       }
     } catch (error: any) {
       console.error('Error al asignar rutina:', error);
       const mensajeError = error?.message || 'Error al asignar la rutina';
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
       this.toastService.mostrarError(mensajeError);
+    }
+    finally {
+      // Asegurar que el spinner se oculta si quedó visible
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
     }
   }
 

@@ -45,6 +45,9 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
   async ngOnInit() {
     // Cargar sin bloquear - mostrar UI inmediatamente
     this.loadClientes();
+    // Asegurar que el spinner no quede visible por estados previos
+    this.mostrarSpinner = false;
+    this.cdr.detectChanges();
   }
 
   ionViewWillEnter() {
@@ -175,8 +178,11 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
     this.cdr.detectChanges();
     
     // Dar tiempo para que se muestre el spinner antes de navegar
-    setTimeout(() => {
-      this.router.navigate(['/ver-rutina-cliente', cliente.id]);
+    setTimeout(async () => {
+      await this.router.navigate(['/ver-rutina-cliente', cliente.id]);
+      // ocultar spinner si por alguna razón quedó visible
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
     }, 1500);
   }
 
@@ -185,8 +191,11 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
     this.cdr.detectChanges();
     
     // Dar tiempo para que se muestre el spinner antes de navegar
-    setTimeout(() => {
-      this.router.navigate(['/editar-cliente', cliente.id]);
+    setTimeout(async () => {
+      await this.router.navigate(['/editar-cliente', cliente.id]);
+      // ocultar spinner si por alguna razón quedó visible
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
     }, 1500);
   }
 
