@@ -430,8 +430,8 @@ export class RegisterComponent implements OnInit {
     }
 
     // Validar contraseña con letras y números
-    if (!this.validatePassword()) {
-      this.toastService.mostrarError('La contraseña debe contener al menos una letra y un número');
+      if (!this.validatePassword()) {
+        this.toastService.mostrarError('La contraseña debe contener al menos una letra mayúscula y un número');
       this.currentStep = 1;
       return false;
     }
@@ -441,9 +441,9 @@ export class RegisterComponent implements OnInit {
 
   // Validar que la contraseña tenga letras y números
   validatePassword(): boolean {
-    const hasLetter = /[a-zA-Z]/.test(this.cliente.password);
+    const hasUppercase = /[A-Z]/.test(this.cliente.password);
     const hasNumber = /\d/.test(this.cliente.password);
-    return hasLetter && hasNumber;
+    return hasUppercase && hasNumber;
   }
 
   // Convertir DataURL a Blob para subir archivo
@@ -649,9 +649,9 @@ export class RegisterComponent implements OnInit {
     
     if (showError || this.fieldsTouched.password || this.attemptedNextStep) {
       if (!hasMinLength) {
-        this.validationErrors.password = 'La contraseña debe tener mínimo 6 caracteres';
+        this.validationErrors.password = 'La contraseña debe tener mínimo 6 caracteres y una letra mayúscula';
       } else if (!hasLetterAndNumber) {
-        this.validationErrors.password = 'La contraseña debe tener al menos una letra y un número';
+        this.validationErrors.password = 'La contraseña debe tener al menos una letra en mayúscula y un número';
       } else {
         this.validationErrors.password = '';
       }

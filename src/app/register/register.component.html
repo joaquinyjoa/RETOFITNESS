@@ -138,7 +138,8 @@
               (change)="onInputChange('genero', $event)"
               (blur)="onInputBlur('genero')"
               required>
-              <option value="">Seleccionar género</option>
+              <!-- Placeholder guía: no debe ser seleccionable -->
+              <option value="" disabled selected>Seleccionar género</option>
               <option value="Hombre">Hombre</option>
               <option value="Mujer">Mujer</option>
               <option value="Otro">Otro</option>
