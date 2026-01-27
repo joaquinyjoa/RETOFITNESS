@@ -105,7 +105,8 @@ import {
   swapHorizontalOutline,
   speedometerOutline,
   bulbOutline,
-  swapHorizontal
+  swapHorizontal,
+  cloudUploadOutline
 } from 'ionicons/icons';
 
 import { routes } from './app/app.routes';
@@ -113,6 +114,7 @@ import { AppComponent } from './app/app.component';
 
 // Registrar iconos (todos los necesarios para el proyecto)
 addIcons({
+  "cloud-upload-outline": cloudUploadOutline,
   "swap-horizontal": swapHorizontal,
   "chevron-forward-outline": chevronForward,
   "bulb-outline": bulbOutline,

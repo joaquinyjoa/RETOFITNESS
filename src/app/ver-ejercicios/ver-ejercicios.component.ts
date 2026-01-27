@@ -29,9 +29,6 @@ export class VerEjerciciosComponent implements OnInit {
   loading = false;
   eliminandoEjercicio = false;
   
-  // Validación de URL
-  urlValida = false;
-  
   // Variables para manejo de archivos
   archivoSeleccionado: File | null = null;
   previewUrl: string | null = null;
@@ -127,6 +124,11 @@ export class VerEjerciciosComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private alertController = inject(AlertController);
 
+  // Índice del ejercicio cuyo botón editar está mostrando spinner
+  isEditingIndex: number | null = null;
+  // Índice de la rutina cuyo botón editar está mostrando spinner
+  isEditingRutinaIndex: number | null = null;
+
   // Caché simple para evitar recargas innecesarias
   private cacheEjercicios: Ejercicio[] | null = null;
   private cacheRutinas: RutinaConDetalles[] | null = null;
@@ -207,11 +209,13 @@ export class VerEjerciciosComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  abrirModal(ejercicio?: Ejercicio) {
+  async abrirModal(ejercicio?: Ejercicio, suppressSpinner: boolean = false) {
     this.editMode = !!ejercicio;
-    if (ejercicio) {
+
+    // Si se solicita suprimir spinner, abrir modal inmediatamente con los datos
+    if (ejercicio && suppressSpinner) {
       this.ejercicioActual = {
-        id: ejercicio.id, // ✅ Incluir el ID para modo edición
+        id: ejercicio.id,
         nombre: ejercicio.nombre,
         descripcion: ejercicio.descripcion || '',
         categoria: ejercicio.categoria,
@@ -223,10 +227,81 @@ export class VerEjerciciosComponent implements OnInit {
         instrucciones: ejercicio.instrucciones || '',
         consejos: ejercicio.consejos || ''
       };
-    } else {
-      this.ejercicioActual = this.getEmptyForm();
+      this.showModal = true;
+      return;
     }
+
+    // Comportamiento por defecto: si hay ejercicio, mostrar spinner global 1.5s, luego abrir modal
+    if (ejercicio) {
+      this.mostrarSpinnerGlobal = true;
+      this.cdr.detectChanges();
+
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      this.ejercicioActual = {
+        id: ejercicio.id,
+        nombre: ejercicio.nombre,
+        descripcion: ejercicio.descripcion || '',
+        categoria: ejercicio.categoria,
+        musculo_principal: ejercicio.musculo_principal,
+        musculos_secundarios: ejercicio.musculos_secundarios || [],
+        nivel_dificultad: ejercicio.nivel_dificultad,
+        enlace_video: ejercicio.enlace_video,
+        equipamiento: ejercicio.equipamiento || [],
+        instrucciones: ejercicio.instrucciones || '',
+        consejos: ejercicio.consejos || ''
+      };
+
+      this.showModal = true;
+      this.mostrarSpinnerGlobal = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    // Nuevo ejercicio: abrir modal sin spinner
+    this.ejercicioActual = this.getEmptyForm();
     this.showModal = true;
+  }
+
+  // Mostrar spinner en el propio botón de editar durante 1.5s y abrir modal sin spinner global
+  async editarConSpinner(ejercicio: Ejercicio, index: number) {
+    this.isEditingIndex = index;
+    // Mostrar overlay spinner global
+    this.mostrarSpinnerGlobal = true;
+    this.cdr.detectChanges();
+
+    try {
+      // Mantener spinner 1.5s
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Abrir modal sin spinner global adicional
+      await this.abrirModal(ejercicio, true);
+    } finally {
+      // Ocultar overlay y limpiar estado siempre
+      this.mostrarSpinnerGlobal = false;
+      this.isEditingIndex = null;
+      this.cdr.detectChanges();
+    }
+  }
+
+  // Similar para rutinas: mostrar spinner en botón editar y abrir modal
+  async editarRutinaConSpinner(rutina: Rutina | RutinaConDetalles, index: number) {
+    this.isEditingRutinaIndex = index;
+    // Mostrar overlay spinner global
+    this.mostrarSpinnerGlobal = true;
+    this.cdr.detectChanges();
+
+    try {
+      // Mantener spinner 1.5s
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      await this.abrirModalRutina(rutina);
+    } finally {
+      // Ocultar overlay y limpiar estado siempre
+      this.mostrarSpinnerGlobal = false;
+      this.isEditingRutinaIndex = null;
+      this.cdr.detectChanges();
+    }
   }
 
   cerrarModal() {
@@ -234,7 +309,6 @@ export class VerEjerciciosComponent implements OnInit {
     this.ejercicioActual = this.getEmptyForm();
     this.archivoSeleccionado = null;
     this.previewUrl = null;
-    this.urlValida = false;
   }
 
   // Manejar selección de archivo
@@ -242,14 +316,14 @@ export class VerEjerciciosComponent implements OnInit {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Validar que sea GIF o video
-    const validTypes = ['image/gif', 'video/mp4', 'video/quicktime', 'video/webm'];
+    // Validar que sea solo GIF
+    const validTypes = ['image/gif'];
     if (!validTypes.includes(file.type)) {
-      await this.toastService.mostrarError('Solo se permiten archivos GIF o videos');
+      await this.toastService.mostrarError('Solo se permiten archivos GIF');
       return;
     }
 
-    // Validar tamaño (máximo 10MB)
+    // Validar tamaño (máximo 10MB para GIFs)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       await this.toastService.mostrarError('El archivo no debe superar los 10MB');
@@ -265,73 +339,111 @@ export class VerEjerciciosComponent implements OnInit {
       this.cdr.detectChanges();
     };
     reader.readAsDataURL(file);
-    
-    // Limpiar URL si había una
-    this.ejercicioActual.enlace_video = '';
-    this.urlValida = false;
   }
 
-  // Subir archivo a Supabase Storage usando API REST directa
+  // Subir archivo a Supabase Storage con reintentos automáticos
   async subirArchivoAStorage(file: File): Promise<{ success: boolean; url?: string; error?: string }> {
-    try {
-      const { getSupabaseClient } = await import('../services/supabase-client');
-      const supabase = getSupabaseClient();
-      
-      // Obtener session token
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        return { success: false, error: 'No hay sesión activa' };
+    const maxReintentos = 3;
+    let intento = 0;
+
+    while (intento < maxReintentos) {
+      try {
+        intento++;
+        console.log(`📤 Intento ${intento}/${maxReintentos} de subir archivo: ${file.name}`);
+
+        const { getSupabaseClient } = await import('../services/supabase-client');
+        const supabase = getSupabaseClient();
+        
+        // Obtener session token
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          return { success: false, error: 'No hay sesión activa' };
+        }
+
+        // Generar nombre único para el archivo
+        const timestamp = Date.now();
+        const fileName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+        const filePath = `${fileName}`;
+
+        // Determinar el Content-Type correcto
+        const extension = file.name.toLowerCase().split('.').pop();
+        const mimeTypes: { [key: string]: string } = {
+          'gif': 'image/gif',
+          'png': 'image/png',
+          'jpg': 'image/jpeg',
+          'jpeg': 'image/jpeg',
+          'webp': 'image/webp',
+          'mp4': 'video/mp4',
+          'webm': 'video/webm',
+          'mov': 'video/quicktime'
+        };
+        
+        const contentType = mimeTypes[extension || ''] || file.type || 'application/octet-stream';
+        console.log(`📝 Content-Type detectado: ${contentType}`);
+
+        // Convertir archivo a ArrayBuffer para mejor compatibilidad
+        const arrayBuffer = await file.arrayBuffer();
+        console.log(`📦 Archivo convertido a ArrayBuffer: ${arrayBuffer.byteLength} bytes`);
+
+        // Obtener la URL base del proyecto
+        const supabaseUrl = 'https://tylyzyivlvibfyvetchr.supabase.co';
+        const uploadUrl = `${supabaseUrl}/storage/v1/object/ejercicios/${filePath}`;
+
+        // Subir usando fetch con ArrayBuffer
+        const response = await fetch(uploadUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': contentType,
+            'x-upsert': 'false',
+            'cache-control': 'max-age=3600'
+          },
+          body: arrayBuffer
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { message: errorText };
+          }
+          console.error(`❌ Error al subir archivo (intento ${intento}):`, errorData);
+          
+          // Si es el último intento, retornar error
+          if (intento >= maxReintentos) {
+            return { success: false, error: `Error al subir: ${errorData.message || response.statusText}` };
+          }
+          
+          // Esperar antes del próximo intento (backoff exponencial)
+          const delay = Math.min(1000 * Math.pow(2, intento - 1), 5000);
+          console.log(`⏳ Esperando ${delay}ms antes del próximo intento...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+
+        // Construir URL pública
+        const publicUrl = `${supabaseUrl}/storage/v1/object/public/ejercicios/${filePath}`;
+        console.log(`✅ Archivo subido exitosamente: ${publicUrl}`);
+        return { success: true, url: publicUrl };
+
+      } catch (error: any) {
+        console.error(`❌ Error en subirArchivoAStorage (intento ${intento}):`, error);
+        
+        // Si es el último intento, retornar error
+        if (intento >= maxReintentos) {
+          return { success: false, error: error.message || 'Error al subir el archivo' };
+        }
+        
+        // Esperar antes del próximo intento
+        const delay = Math.min(1000 * Math.pow(2, intento - 1), 5000);
+        console.log(`⏳ Esperando ${delay}ms antes del próximo intento...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-
-      // Generar nombre único para el archivo
-      const timestamp = Date.now();
-      const fileName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-      const filePath = `${fileName}`;
-
-      // Determinar el Content-Type correcto
-      const extension = file.name.toLowerCase().split('.').pop();
-      const mimeTypes: { [key: string]: string } = {
-        'gif': 'image/gif',
-        'png': 'image/png',
-        'jpg': 'image/jpeg',
-        'jpeg': 'image/jpeg',
-        'webp': 'image/webp',
-        'mp4': 'video/mp4',
-        'webm': 'video/webm',
-        'mov': 'video/quicktime'
-      };
-      
-      const contentType = mimeTypes[extension || ''] || file.type || 'application/octet-stream';
-
-      // Obtener la URL base del proyecto
-      const supabaseUrl = 'https://tylyzyivlvibfyvetchr.supabase.co';
-      const uploadUrl = `${supabaseUrl}/storage/v1/object/ejercicios/${filePath}`;
-
-      // Subir usando fetch con FormData NO - usar el archivo directamente como body
-      const response = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': contentType,
-          'x-upsert': 'false'
-        },
-        body: file
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('❌ Error al subir archivo:', errorData);
-        return { success: false, error: `Error al subir: ${errorData.message || response.statusText}` };
-      }
-
-      // Construir URL pública
-      const publicUrl = `${supabaseUrl}/storage/v1/object/public/ejercicios/${filePath}`;
-      return { success: true, url: publicUrl };
-
-    } catch (error: any) {
-      console.error('❌ Error en subirArchivoAStorage:', error);
-      return { success: false, error: error.message };
     }
+
+    return { success: false, error: 'No se pudo subir el archivo después de varios intentos' };
   }
 
   async guardarEjercicio() {
@@ -342,25 +454,10 @@ export class VerEjerciciosComponent implements OnInit {
         return;
       }
 
-      // Validar que haya archivo o URL
-      if (!this.archivoSeleccionado && !this.ejercicioActual.enlace_video.trim()) {
-        await this.toastService.mostrarError('Debes subir un archivo o proporcionar una URL');
+      // Validar que haya archivo GIF
+      if (!this.archivoSeleccionado) {
+        await this.toastService.mostrarError('Debes subir un archivo GIF');
         return;
-      }
-
-      // Si proporcionó una URL (sin archivo), validar formato de Google Drive
-      if (!this.archivoSeleccionado && this.ejercicioActual.enlace_video.trim()) {
-        const url = this.ejercicioActual.enlace_video.trim();
-        const patronesValidos = [
-          /^https:\/\/drive\.google\.com\/file\/d\/[a-zA-Z0-9-_]+\/view/,
-          /^https:\/\/drive\.google\.com\/file\/d\/[a-zA-Z0-9-_]+\/preview/,
-          /^https:\/\/drive\.google\.com\/open\?id=[a-zA-Z0-9-_]+/
-        ];
-        const urlValida = patronesValidos.some(patron => patron.test(url));
-        if (!urlValida) {
-          await this.toastService.mostrarError('URL de Google Drive no válida. Formato: drive.google.com/file/d/ID/view');
-          return;
-        }
       }
       // Mostrar spinner global
       this.mostrarSpinnerGlobal = true;
@@ -414,15 +511,15 @@ export class VerEjerciciosComponent implements OnInit {
         // Mantener spinner visible por un momento
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        // Cerrar modal primero
-        this.cerrarModal();
-
-        // Ocultar spinner después de cerrar modal
+        // Ocultar spinner antes de cerrar modal
         this.mostrarSpinnerGlobal = false;
         this.cdr.detectChanges();
 
         // Pequeña pausa
         await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Cerrar modal
+        this.cerrarModal();
 
         // Mostrar toast de éxito
         await this.toastService.mostrarExito(
@@ -450,63 +547,10 @@ export class VerEjerciciosComponent implements OnInit {
       await new Promise(resolve => setTimeout(resolve, 100));
       await this.toastService.mostrarError('Error inesperado al guardar');
     } finally {
-      // Asegurar que el spinner esté oculto al final
-      if (this.mostrarSpinnerGlobal) {
-        this.mostrarSpinnerGlobal = false;
-        this.cdr.detectChanges();
-      }
+      // Asegurar que el spinner esté oculto al final siempre
+      this.mostrarSpinnerGlobal = false;
+      this.cdr.detectChanges();
     }
-  }
-
-  // Validar URL de Google Drive
-  validarUrlDrive() {
-    const url = this.ejercicioActual.enlace_video.trim();
-    
-    if (!url) {
-      this.urlValida = false;
-      return;
-    }
-
-    // Patrones válidos para URLs de Google Drive
-    const patronesValidos = [
-      /^https:\/\/drive\.google\.com\/file\/d\/[a-zA-Z0-9-_]+\/view/,
-      /^https:\/\/drive\.google\.com\/file\/d\/[a-zA-Z0-9-_]+\/preview/,
-      /^https:\/\/drive\.google\.com\/open\?id=[a-zA-Z0-9-_]+/
-    ];
-
-    this.urlValida = patronesValidos.some(patron => patron.test(url));
-    
-    if (!this.urlValida) {
-      this.toastService.mostrarError('URL de Google Drive no válida. Formato: drive.google.com/file/d/ID/view');
-    }
-  }
-
-  // Vista previa del video
-  previsualizarVideo() {
-    if (this.urlValida && this.ejercicioActual.enlace_video) {
-      const url = this.convertirAPreview(this.ejercicioActual.enlace_video);
-      window.open(url, '_blank', 'width=800,height=600');
-    }
-  }
-
-  // Convertir URL a formato preview
-  private convertirAPreview(url: string): string {
-    // Extraer el ID del archivo
-    let fileId = '';
-    
-    const patronId = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
-    if (patronId) {
-      fileId = patronId[1];
-      return `https://drive.google.com/file/d/${fileId}/preview`;
-    }
-
-    const patronOpen = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
-    if (patronOpen) {
-      fileId = patronOpen[1];
-      return `https://drive.google.com/file/d/${fileId}/preview`;
-    }
-
-    return url; // Si no se puede convertir, devolver original
   }
 
 async eliminarEjercicio(ejercicio: Ejercicio) {
@@ -571,10 +615,11 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
 
   const alert = await this.alertController.create({
     header: 'Confirmar eliminación',
-    message: `¿Eliminar "${ejercicio.nombre}"?`,
+    message: `¿Estás seguro de que deseas eliminar "${ejercicio.nombre}"?`,
+    cssClass: 'neon-alert',
     buttons: [
-      { text: 'Cancelar', role: 'cancel' },
-      { text: 'Eliminar', role: 'confirm' }
+      { text: 'Cancelar', role: 'cancel', cssClass: 'neon-cancel' },
+      { text: 'Eliminar', role: 'confirm', cssClass: 'neon-confirm' }
     ]
   });
 
@@ -1216,15 +1261,17 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
     const alert = await this.alertController.create({
       header: 'Confirmar eliminación',
       message: `¿Estás seguro de que deseas eliminar la rutina "${rutina.nombre}"?`,
+      cssClass: 'neon-alert',
       buttons: [
         {
           text: 'Cancelar',
-          role: 'cancel'
+          role: 'cancel',
+          cssClass: 'neon-cancel'
         },
         {
           text: 'Eliminar',
           role: 'confirm',
-          cssClass: 'alert-button-confirm'
+          cssClass: 'neon-confirm'
         }
       ]
     });

@@ -100,7 +100,7 @@
         Aún no has agregado ejercicios
       </p>
       <ion-button fill="outline" (click)="abrirModal()">
-        Agregar primer ejercicio
+        Agregar ejercicio
       </ion-button>
     </div>
 
@@ -128,8 +128,9 @@
             </ion-card-subtitle>
           </div>
           <div class="actions">
-            <ion-button fill="clear" size="small" (click)="abrirModal(ejercicio)" class="action-btn edit-btn">
-              <ion-icon slot="icon-only" name="pencil" style="font-size: 24px;"></ion-icon>
+            <ion-button fill="clear" size="small" (click)="editarConSpinner(ejercicio, i)" class="action-btn edit-btn"
+                        [disabled]="isEditingIndex === i" style="--color: #00ff88;">
+              <img slot="icon-only" src="assets/icons/pencil.svg" alt="Editar" style="width:24px; height:24px;" />
             </ion-button>
             <ion-button fill="clear" size="small" (click)="eliminarEjercicio(ejercicio)" class="action-btn delete-btn" color="danger">
               <ion-icon slot="icon-only" name="trash" style="font-size: 24px;"></ion-icon>
@@ -151,7 +152,7 @@
           </div>
         </div>
 
-        <!-- Carrusel de Video/GIF embebido desde Google Drive -->
+        <!-- Carrusel de GIF -->
         <div *ngIf="getVideoUrls(ejercicio).length > 0" class="carousel-container">
           <!-- Indicadores de carrusel -->
           <div *ngIf="getVideoUrls(ejercicio).length > 1" class="carousel-indicators">
@@ -267,12 +268,6 @@
       </div>
     </div>
 
-    <!-- Lista de rutinas -->
-    <div *ngIf="loadingRutinas" style="text-align: center; padding: 40px;">
-      <ion-spinner name="crescent"></ion-spinner>
-      <p style="color: var(--ion-color-medium);">Cargando rutinas...</p>
-    </div>
-
     <div *ngIf="!loadingRutinas && rutinasFiltradas.length === 0" style="text-align: center; padding: 40px;">
       <ion-icon name="barbell-outline" style="font-size: 64px; color: var(--ion-color-medium);"></ion-icon>
       <p style="color: var(--ion-color-medium);">No hay rutinas creadas aún.</p>
@@ -280,7 +275,7 @@
     </div>
 
     <div class="rutinas-container" *ngIf="!loadingRutinas && rutinasFiltradas.length > 0">
-      <ion-card *ngFor="let rutina of rutinasFiltradas" class="rutina-card">
+      <ion-card *ngFor="let rutina of rutinasFiltradas; let i = index" class="rutina-card">
       <ion-card-header>
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
@@ -292,8 +287,8 @@
             </ion-card-subtitle>
           </div>
           <div class="rutina-actions">
-            <ion-button fill="clear" (click)="abrirModalRutina(rutina)">
-              <ion-icon name="create" slot="icon-only"></ion-icon>
+            <ion-button fill="clear" (click)="editarRutinaConSpinner(rutina, i)" [disabled]="isEditingRutinaIndex === i" style="--color: #00ff88;">
+              <img slot="icon-only" src="assets/icons/pencil.svg" alt="Editar" style="width:24px; height:24px;" />
             </ion-button>
             <ion-button fill="clear" color="danger" (click)="eliminarRutina(rutina)">
               <ion-icon name="trash" slot="icon-only"></ion-icon>
@@ -335,11 +330,11 @@
         <!-- Botones de acción -->
         <div style="display: flex; gap: 10px; margin-top: 15px;">
           <ion-button expand="block" fill="outline" (click)="verDetalleRutina(rutina)" style="flex: 1;">
-            <ion-icon name="eye-outline" slot="start"></ion-icon>
+            <ion-icon name="eye-outline" slot="start" style="color: #2d73e3;"></ion-icon>
             Ver más
           </ion-button>
           <ion-button expand="block" fill="solid" color="success" [routerLink]="['/asignar-rutina', rutina.id]" style="flex: 1;">
-            <ion-icon name="person-add-outline" slot="start"></ion-icon>
+            <ion-icon name="person-add-outline" slot="start" style="color: #ffffff;"></ion-icon>
             Asignar
           </ion-button>
         </div>
@@ -426,18 +421,21 @@
 
         <!-- Video del ejercicio -->
         <div class="form-section">
-          <h4>Media del ejercicio (GIF o Video)</h4>
+          <h4>Media del ejercicio</h4>
           
           <!-- Opción 1: Subir archivo -->
           <div class="upload-section" style="margin-bottom: 20px;">
-            <ion-button expand="block" fill="outline" (click)="fileInput.click()">
+            <ion-button 
+              expand="block" 
+              (click)="fileInput.click()"
+              style="--background: linear-gradient(45deg, #00ff88 0%, #00cc6a 100%); --color: #000000; --border-radius: 12px; --box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3); font-weight: 600;">
               <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
-              Subir GIF o Video
+              Subir GIF
             </ion-button>
             <input 
               #fileInput
               type="file" 
-              accept=".gif,video/mp4,video/quicktime,video/webm"
+              accept=".gif"
               (change)="onFileSelected($event)"
               style="display: none;">
           </div>
@@ -466,52 +464,7 @@
             </ion-card>
           </div>
 
-          <!-- Separador -->
-          <div *ngIf="!archivoSeleccionado" style="text-align: center; margin: 20px 0; position: relative;">
-            <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
-            <span style="position: relative; background: var(--ion-background-color); padding: 0 10px; color: rgba(255,255,255,0.6);">o</span>
-          </div>
 
-          <!-- Opción 2: URL de Google Drive (solo si no hay archivo) -->
-          <div *ngIf="!archivoSeleccionado">
-            <ion-item>
-              <ion-label position="stacked">URL de Google Drive</ion-label>
-              <ion-input 
-                [(ngModel)]="ejercicioActual.enlace_video" 
-                name="enlace_video"
-                placeholder="https://drive.google.com/file/d/..."
-                (ionBlur)="validarUrlDrive()">
-              </ion-input>
-            </ion-item>
-            
-            <div class="url-validation" *ngIf="ejercicioActual.enlace_video">
-              <ion-item *ngIf="urlValida" lines="none" class="validation-success">
-                <ion-icon name="checkmark-circle" slot="start" color="success"></ion-icon>
-                <ion-label color="success">URL válida de Google Drive</ion-label>
-              </ion-item>
-              
-              <ion-item *ngIf="!urlValida && ejercicioActual.enlace_video" lines="none" class="validation-error">
-                <ion-icon name="close-circle" slot="start" color="danger"></ion-icon>
-                <ion-label color="danger">URL no válida. Usa formato: drive.google.com/file/d/...</ion-label>
-              </ion-item>
-            </div>
-            
-            <ion-note>
-              <strong>Opción alternativa:</strong> Puedes usar una URL de Google Drive si prefieres no subir el archivo.
-            </ion-note>
-
-            <!-- Preview del video si la URL es válida -->
-            <div *ngIf="urlValida && ejercicioActual.enlace_video" class="video-preview">
-              <ion-button 
-                fill="outline" 
-                size="small" 
-                (click)="previsualizarVideo()"
-                class="preview-button">
-                <ion-icon name="play-circle" slot="start"></ion-icon>
-                Vista previa del video
-              </ion-button>
-            </div>
-          </div>
         </div>
 
         <!-- Detalles adicionales -->
