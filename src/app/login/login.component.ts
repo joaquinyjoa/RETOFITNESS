@@ -249,13 +249,22 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
         const sesionGuardada = this.authService.obtenerSesion();
       }
 
-      // Mostrar éxito en la parte superior
-      let tipoUsuario = 'usuario';
-      if (result.usuario?.tipo === 'cliente') tipoUsuario = 'cliente';
-      else if (result.usuario?.tipo === 'entrenador') tipoUsuario = 'entrenador';
-      else if (result.usuario?.tipo === 'recepcion') tipoUsuario = 'recepción';
+      // Mostrar éxito en la parte superior con nombre personalizado
+      let mensajeBienvenida = '¡Bienvenido usuario!';
       
-      await this.presentToast(`¡Bienvenido ${tipoUsuario}!`, 'top');
+      if (result.usuario?.tipo === 'cliente') {
+        const clienteData = result.usuario as any;
+        const nombreCompleto = [clienteData.nombre, clienteData.apellido]
+          .filter(Boolean)
+          .join(' ') || 'cliente';
+        mensajeBienvenida = `¡Bienvenido ${nombreCompleto}!`;
+      } else if (result.usuario?.tipo === 'entrenador') {
+        mensajeBienvenida = '¡Bienvenido entrenador!';
+      } else if (result.usuario?.tipo === 'recepcion') {
+        mensajeBienvenida = '¡Bienvenido recepción!';
+      }
+      
+      await this.presentToast(mensajeBienvenida, 'top');
       
       // Navegar según el tipo de usuario inmediatamente
       try {
