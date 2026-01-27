@@ -253,7 +253,7 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
       let mensajeBienvenida = '¡Bienvenido usuario!';
       
       if (result.usuario?.tipo === 'cliente') {
-        const clienteData = result.usuario as any;
+        const clienteData = result.usuario.data as any;
         const nombreCompleto = [clienteData.nombre, clienteData.apellido]
           .filter(Boolean)
           .join(' ') || 'cliente';
