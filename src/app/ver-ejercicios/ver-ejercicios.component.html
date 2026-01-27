@@ -920,15 +920,8 @@
   <ng-template>
     <ion-header>
       <ion-toolbar color="dark">
+        <ion-title>detalles de la rutina</ion-title>
         <ion-buttons slot="end">
-          <ion-button *ngIf="rutinaDetalle" (click)="abrirModalRutina(rutinaDetalle); cerrarModalDetalle()" fill="outline" style="--color: #00ff88; --border-color: #00ff88; margin-right: 8px;">
-            <ion-icon slot="start" name="create-outline"></ion-icon>
-            Editar
-          </ion-button>
-          <ion-button *ngIf="rutinaDetalle" [routerLink]="['/asignar-rutina', rutinaDetalle.id]" (click)="cerrarModalDetalle()" fill="solid" color="success" style="margin-right: 8px;">
-            <ion-icon slot="start" name="person-add-outline"></ion-icon>
-            Asignar
-          </ion-button>
           <ion-button (click)="cerrarModalDetalle()" style="color: #00ff88; font-weight: 600;">
             Volver
           </ion-button>
