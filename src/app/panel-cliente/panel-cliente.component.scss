@@ -817,12 +817,66 @@
 // ESTILOS PARA IMÁGENES Y VIDEOS
 // ============================================
 
+// Mini carrusel de videos (Principal / Alternativo)
+.video-carousel-mini {
+  position: relative;
+  width: 100%;
+  margin-top: 0;
+}
+
+.mini-indicators {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  justify-content: center;
+  
+  .mini-indicator {
+    padding: 4px 12px;
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    border-radius: 16px;
+    color: rgba(0, 255, 136, 0.7);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.7rem;
+    font-weight: 600;
+    
+    &:hover {
+      background: rgba(0, 255, 136, 0.2);
+      border-color: rgba(0, 255, 136, 0.5);
+    }
+    
+    &.active {
+      background: rgba(0, 255, 136, 0.2);
+      border-color: #00ff88;
+      color: #00ff88;
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+    }
+  }
+}
+
+.video-slide-mini {
+  animation: fadeInVideo 0.4s ease-in-out;
+}
+
+@keyframes fadeInVideo {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .media-container {
   margin: 16px 0;
   border-radius: 12px;
   overflow: hidden;
   background: var(--dark-gray);
-  border: 1px solid rgba(0, 255, 136, 0.2);
+  /* Eliminado borde verde para evitar marco en GIFs/imagenes */
+  border: none;
 }
 
 .image-container {
@@ -851,6 +905,14 @@
       image-rendering: crisp-edges;
     }
   }
+}
+
+/* Asegurar que imágenes y GIFs no tengan borde verde en este componente */
+.media-container img,
+.image-container img,
+.exercise-image {
+  border: none !important;
+  outline: none !important;
 }
 
 .video-container {

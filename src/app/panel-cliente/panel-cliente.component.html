@@ -64,13 +64,6 @@
           
           <div class="info-grid">
             <div class="info-item">
-              <ion-icon name="calendar-outline"></ion-icon>
-              <div>
-                <small>Duración</small>
-                <strong>{{ rutinaAsignada.detalles?.duracion_semanas || 0 }} semanas</strong>
-              </div>
-            </div>
-            <div class="info-item">
               <ion-icon name="barbell-outline"></ion-icon>
               <div>
                 <small>Ejercicios</small>
@@ -154,21 +147,6 @@
               </div>
             </div>
 
-            <!-- Ejercicio alternativo -->
-            <div *ngIf="ej.ejercicio_alternativo" class="alternativo-box">
-              <div class="alternativo-header">
-                <ion-icon name="swap-horizontal-outline"></ion-icon>
-                <strong>Alternativa disponible:</strong>
-              </div>
-              <div class="alternativo-content">
-                {{ ej.ejercicio_alternativo.nombre }}
-                <ion-badge color="warning">{{ ej.ejercicio_alternativo.musculo_principal }}</ion-badge>
-              </div>
-              <div class="alternativo-nota">
-                (Si el equipo está ocupado)
-              </div>
-            </div>
-
             <!-- Botones de acción -->
             <div class="ejercicio-actions">
               <ion-button expand="block" fill="outline" (click)="abrirModalRegistrarPeso(ej)">
@@ -182,18 +160,51 @@
               </ion-button>
             </div>
 
-            <!-- Video o Imagen del ejercicio -->
-            <div *ngIf="ej.ejercicio?.enlace_video" class="media-container">
-              <!-- Si es imagen/GIF -->
-              <div *ngIf="ej.ejercicio && isImageUrl(ej.ejercicio.enlace_video)" class="image-container">
-                <img
-                  [src]="getDirectImageUrl(ej.ejercicio.enlace_video)"
-                  alt="{{ ej.ejercicio.nombre }}"
-                  class="exercise-image"
-                  loading="lazy"
-                  (error)="$event.target.style.display='none'">
+            <!-- Mini carrusel de videos (Principal / Alternativo) -->
+            <div class="video-carousel-mini" style="margin-top: 10px;">
+              <!-- Botones indicadores si hay alternativo -->
+              <div *ngIf="ej.ejercicio_alternativo" class="mini-indicators">
+                <span 
+                  class="mini-indicator" 
+                  [class.active]="getVideoCarouselIndex(i) === 0"
+                  (click)="setVideoCarouselIndex(i, 0)">
+                  Principal
+                </span>
+                <span 
+                  class="mini-indicator" 
+                  [class.active]="getVideoCarouselIndex(i) === 1"
+                  (click)="setVideoCarouselIndex(i, 1)">
+                  Alternativo
+                </span>
               </div>
-              
+
+              <!-- Video Principal -->
+              <div *ngIf="getVideoCarouselIndex(i) === 0" class="video-slide-mini">
+                <div *ngIf="ej.ejercicio?.enlace_video" class="media-container">
+                  <div *ngIf="ej.ejercicio && isImageUrl(ej.ejercicio.enlace_video)" class="image-container">
+                    <img
+                      [src]="getDirectImageUrl(ej.ejercicio.enlace_video)"
+                      alt="{{ ej.ejercicio.nombre }}"
+                      class="exercise-image"
+                      loading="lazy"
+                      (error)="$event.target.style.display='none'">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Video Alternativo -->
+              <div *ngIf="ej.ejercicio_alternativo && getVideoCarouselIndex(i) === 1" class="video-slide-mini">
+                <div *ngIf="ej.ejercicio_alternativo.enlace_video" class="media-container">
+                  <div *ngIf="isImageUrl(ej.ejercicio_alternativo.enlace_video)" class="image-container">
+                    <img
+                      [src]="getDirectImageUrl(ej.ejercicio_alternativo.enlace_video)"
+                      alt="{{ ej.ejercicio_alternativo.nombre }}"
+                      class="exercise-image"
+                      loading="lazy"
+                      (error)="$event.target.style.display='none'">
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Notas del ejercicio -->
@@ -259,7 +270,8 @@
               <ion-label position="stacked">Peso (kg)</ion-label>
               <ion-input
                 type="number"
-                [(ngModel)]="pesosRegistrados[i]"
+                [value]="pesosRegistrados[i]"
+                (ionInput)="actualizarPesoSerie(i, $event)"
                 placeholder="Ej: 20"
                 min="0"
                 step="0.5">
@@ -309,8 +321,7 @@
 
     <ion-content class="modal-content">
       <div *ngIf="cargandoDetalle" class="loading-container">
-        <ion-spinner name="crescent"></ion-spinner>
-        <p>Cargando detalles...</p>
+        <app-spinner></app-spinner>
       </div>
 
       <div class="detalle-ejercicio-container" *ngIf="!cargandoDetalle && ejercicioDetalle">

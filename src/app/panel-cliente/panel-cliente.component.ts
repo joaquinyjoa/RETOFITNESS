@@ -7,13 +7,14 @@ import { RutinaService } from '../services/rutina.service';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
   selector: 'app-panel-cliente',
   templateUrl: './panel-cliente.component.html',
   styleUrls: ['./panel-cliente.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule]
+  imports: [CommonModule, IonicModule, FormsModule, SpinnerComponent]
 })
 export class PanelClienteComponent implements OnInit {
   private router = inject(Router);
@@ -30,6 +31,9 @@ export class PanelClienteComponent implements OnInit {
   diaSeleccionado: number = 1;
   rutinaAsignada: any = null;
   loading = false;
+
+  // Map para índices de mini carrusel de videos (0 = principal, 1 = alternativo)
+  private videoCarouselIndices = new Map<number, number>();
 
   // Para registrar pesos
   showModalRegistrarPeso = false;
@@ -107,14 +111,6 @@ export class PanelClienteComponent implements OnInit {
     } catch (error) {
       console.error('❌ [PanelCliente] Error:', error);
       this.toastService.mostrarError('Error al cargar tu rutina');
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-      
-      setTimeout(() => {
-        this.loading = false;
-        this.cdr.detectChanges();
-      }, 0);
     }
   }
 
@@ -167,11 +163,21 @@ export class PanelClienteComponent implements OnInit {
     this.cargandoDetalle = true;
     this.ejercicioDetalle = null;
 
+    // Allow modal to render so spinner is visible before starting the 1.5s wait
+    this.cdr.detectChanges();
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     try {
       if (ejercicio.ejercicio_id || ejercicio.ejercicio?.id) {
         const ejercicioId = ejercicio.ejercicio_id || ejercicio.ejercicio.id;
 
-        const { data, error } = await this.rutinaService.obtenerEjercicioPorId(ejercicioId);
+        // Ejecutar obtención de datos y delay en paralelo
+        const [resultado] = await Promise.all([
+          this.rutinaService.obtenerEjercicioPorId(ejercicioId),
+          new Promise(resolve => setTimeout(resolve, 1500))
+        ]);
+
+        const { data, error } = resultado;
 
         if (data && !error) {
           this.ejercicioDetalle = data;
@@ -294,6 +300,28 @@ export class PanelClienteComponent implements OnInit {
         ejercicio.peso_registrado = pesosCache[ejercicioId].peso;
       }
     });
+  }
+
+  // === MÉTODOS PARA MINI CARRUSEL DE VIDEOS (Principal/Alternativo) ===
+  /**
+   * Obtiene el índice actual del carrusel de videos para un ejercicio (0 = principal, 1 = alternativo)
+   */
+  getVideoCarouselIndex(ejercicioIndex: number): number {
+    return this.videoCarouselIndices.get(ejercicioIndex) || 0;
+  }
+
+  /**
+   * Establece el índice del carrusel de videos
+   */
+  setVideoCarouselIndex(ejercicioIndex: number, videoIndex: number): void {
+    this.videoCarouselIndices.set(ejercicioIndex, videoIndex);
+    this.cdr.detectChanges();
+  }
+
+  // Actualizar peso de serie (usado en input de peso para evitar binding directo que causa freeze)
+  actualizarPesoSerie(index: number, event: any): void {
+    const valor = event.target?.value;
+    this.pesosRegistrados[index] = parseFloat(valor) || 0;
   }
 
   logout() {

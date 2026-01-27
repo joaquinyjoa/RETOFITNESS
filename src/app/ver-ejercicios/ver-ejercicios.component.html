@@ -41,7 +41,7 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="main-content">
+<ion-content [fullscreen]="true" [scrollY]="true" class="main-content">
   
   <!-- ============================================ -->
   <!-- TAB DE EJERCICIOS -->
@@ -111,7 +111,7 @@
     </div>
 
     <!-- Tarjetas de ejercicios -->
-    <ion-card *ngFor="let ejercicio of ejerciciosFiltrados; trackBy: trackByIndex" class="exercise-card">
+    <ion-card *ngFor="let ejercicio of ejerciciosFiltrados; trackBy: trackByIndex; let i = index" class="exercise-card">
       
       <!-- Header de la tarjeta -->
       <ion-card-header>
@@ -157,37 +157,78 @@
           </div>
         </div>
 
-        <!-- Video/GIF embebido desde Google Drive -->
-        <div *ngIf="ejercicio.enlace_video" class="video-container">
-          <ng-container *ngIf="isImageUrl(ejercicio.enlace_video); else videoIframe">
-            <img 
-              [src]="getDirectImageUrl(ejercicio.enlace_video)" 
-              alt="Ejercicio" 
-              style="width:100%; height:auto; border-radius:8px; display:block;"
-              (error)="onImageError($event, ejercicio.enlace_video)"
-              (load)="onImageLoad(ejercicio.enlace_video)" />
-          </ng-container>
-          <ng-template #videoIframe>
-            <ng-container *ngIf="isVideoUrl(ejercicio.enlace_video); else iframeFallback">
-              <iframe [src]="getSafeUrl(getDirectVideoUrl(ejercicio.enlace_video))" 
-                      frameborder="0" 
-                      allowfullscreen
-                      allow="autoplay"
-                      loading="lazy"
-                      style="width:100%; height:250px; border-radius:8px; border:2px solid rgba(0,255,136,0.3);">
-              </iframe>
-            </ng-container>
-            <ng-template #iframeFallback>
-              <iframe 
-                [src]="getVideoEmbedUrl(ejercicio.enlace_video)" 
-                frameborder="0" 
-                allowfullscreen
-                allow="autoplay"
-                loading="lazy"
-                class="exercise-video">
-              </iframe>
-            </ng-template>
-          </ng-template>
+        <!-- Carrusel de Video/GIF embebido desde Google Drive -->
+        <div *ngIf="getVideoUrls(ejercicio).length > 0" class="carousel-container">
+          <!-- Indicadores de carrusel -->
+          <div *ngIf="getVideoUrls(ejercicio).length > 1" class="carousel-indicators">
+            <span 
+              *ngFor="let url of getVideoUrls(ejercicio); let idx = index" 
+              class="indicator" 
+              [class.active]="getCurrentCarouselIndex(i) === idx"
+              (click)="setCarouselIndex(i, idx)">
+            </span>
+          </div>
+
+          <!-- Video/GIF principal -->
+          <div class="video-wrapper"
+               (touchstart)="onTouchStart($event, i)"
+               (touchmove)="onTouchMove($event, i)"
+               (touchend)="onTouchEnd($event, i)">
+            <div class="video-container">
+              <ng-container *ngFor="let url of getVideoUrls(ejercicio); let idx = index">
+                <div *ngIf="getCurrentCarouselIndex(i) === idx" class="video-slide">
+                  <ng-container *ngIf="isImageUrl(url); else videoIframe">
+                    <img 
+                      [src]="getDirectImageUrl(url)" 
+                      alt="Ejercicio {{ idx + 1 }}" 
+                      class="exercise-image"
+                      (error)="onImageError($event, url)"
+                      (load)="onImageLoad(url)" />
+                  </ng-container>
+                  <ng-template #videoIframe>
+                    <ng-container *ngIf="isVideoUrl(url); else iframeFallback">
+                      <iframe [src]="getSafeUrl(getDirectVideoUrl(url))" 
+                              frameborder="0" 
+                              allowfullscreen
+                              allow="autoplay"
+                              loading="lazy"
+                              class="exercise-iframe">
+                      </iframe>
+                    </ng-container>
+                    <ng-template #iframeFallback>
+                      <iframe 
+                        [src]="getVideoEmbedUrl(url)" 
+                        frameborder="0" 
+                        allowfullscreen
+                        allow="autoplay"
+                        loading="lazy"
+                        class="exercise-video">
+                      </iframe>
+                    </ng-template>
+                  </ng-template>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+
+          <!-- Botones de navegación -->
+          <button 
+            *ngIf="getVideoUrls(ejercicio).length > 1" 
+            class="carousel-btn prev" 
+            (click)="prevSlide(i)">
+            <ion-icon name="chevron-back"></ion-icon>
+          </button>
+          <button 
+            *ngIf="getVideoUrls(ejercicio).length > 1" 
+            class="carousel-btn next" 
+            (click)="nextSlide(i)">
+            <ion-icon name="chevron-forward"></ion-icon>
+          </button>
+
+          <!-- Contador de slides -->
+          <div *ngIf="getVideoUrls(ejercicio).length > 1" class="slide-counter">
+            {{ getCurrentCarouselIndex(i) + 1 }} / {{ getVideoUrls(ejercicio).length }}
+          </div>
         </div>
 
         <div *ngIf="ejercicio.musculos_secundarios && ejercicio.musculos_secundarios.length > 0" class="secondary-muscles">
@@ -244,7 +285,8 @@
       <p style="color: var(--ion-color-medium);">Presiona el botón + para crear una.</p>
     </div>
 
-    <ion-card *ngFor="let rutina of rutinasFiltradas" class="rutina-card">
+    <div class="rutinas-container" *ngIf="!loadingRutinas && rutinasFiltradas.length > 0">
+      <ion-card *ngFor="let rutina of rutinasFiltradas" class="rutina-card">
       <ion-card-header>
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
@@ -253,7 +295,6 @@
               <ion-chip [color]="rutina.nivel_dificultad === 'principiante' ? 'success' : rutina.nivel_dificultad === 'intermedio' ? 'warning' : 'danger'">
                 <ion-label>{{ rutina.nivel_dificultad }}</ion-label>
               </ion-chip>
-              <span *ngIf="rutina.duracion_semanas">{{ rutina.duracion_semanas }} semanas</span>
             </ion-card-subtitle>
           </div>
           <div class="rutina-actions">
@@ -310,6 +351,7 @@
         </div>
       </ion-card-content>
     </ion-card>
+    </div>
   </div>
 
 </ion-content>
@@ -674,17 +716,6 @@
           </ion-item>
 
           <ion-item>
-            <ion-label position="stacked">Duración (semanas)</ion-label>
-            <ion-input 
-              [(ngModel)]="rutinaActual.duracion_semanas" 
-              name="duracion_semanas"
-              type="number"
-              min="1"
-              placeholder="4">
-            </ion-input>
-          </ion-item>
-
-          <ion-item>
             <ion-label position="stacked">Nivel de dificultad *</ion-label>
             <ion-select [(ngModel)]="rutinaActual.nivel_dificultad" name="nivel_dificultad" interface="popover">
               <ion-select-option *ngFor="let nivel of nivesDificultad" [value]="nivel.value">
@@ -857,29 +888,66 @@
                   <ion-note slot="helper">Porcentaje de fuerza requerido (0-100%)</ion-note>
                 </ion-item>
 
-                <ion-item lines="none">
-                  <ion-label position="stacked">
-                    <ion-icon name="swap-horizontal-outline" style="vertical-align: middle;"></ion-icon>
-                    Ejercicio Alternativo (opcional)
-                  </ion-label>
-                  <ion-select 
-                    [(ngModel)]="ejSel.ejercicio_alternativo_id" 
-                    [name]="'alt_' + i"
-                    placeholder="Si el equipo está ocupado"
-                    interface="popover"
-                    [interfaceOptions]="{cssClass: 'custom-select-popover'}">
-                    <ion-select-option [value]="null">Sin alternativa</ion-select-option>
-                    <ion-select-option 
-                      *ngFor="let ejDisp of ejerciciosDisponiblesFiltrados" 
-                      [value]="ejDisp.id">
-                      {{ ejDisp.nombre }} ({{ ejDisp.musculo_principal }})
-                    </ion-select-option>
-                  </ion-select>
-                  <ion-note slot="helper" style="color: #ffa500;">
-                    <ion-icon name="information-circle-outline" style="vertical-align: middle;"></ion-icon>
-                    El cliente puede hacer este ejercicio si el principal está ocupado
-                  </ion-note>
-                </ion-item>
+                <!-- Ejercicio Alternativo con diseño mejorado -->
+                <div class="alternativo-section">
+                  <div class="alternativo-header">
+                    <ion-icon name="swap-horizontal-outline"></ion-icon>
+                    <span>Ejercicio Alternativo</span>
+                    <ion-badge color="warning">Opcional</ion-badge>
+                  </div>
+                  
+                  <div class="alternativo-search-container">
+                    <ion-searchbar
+                      class="alternativo-searchbar"
+                      [value]="busquedaAlternativo.get(i) || ''"
+                      (ionInput)="busquedaAlternativo.set(i, $any($event).detail.value); filtrarEjerciciosAlternativos(i)"
+                      (ionFocus)="mostrarListaAlternativo.set(i, true)"
+                      placeholder="Buscar ejercicio alternativo..."
+                      [debounce]="300">
+                    </ion-searchbar>
+
+                    <!-- Mostrar ejercicio seleccionado -->
+                    <div *ngIf="ejSel.ejercicio_alternativo_id && !mostrarListaAlternativo.get(i)" class="alternativo-seleccionado">
+                      <div class="ej-seleccionado-item">
+                        <ion-icon name="checkmark-circle"></ion-icon>
+                        <div class="ej-info">
+                          <p class="ej-label">Seleccionado:</p>
+                          <p class="ej-nombre">{{ getNombreEjercicio(ejSel.ejercicio_alternativo_id) }}</p>
+                        </div>
+                        <ion-button fill="clear" size="small" color="danger" (click)="limpiarAlternativo(ejSel, i)">
+                          <ion-icon name="close-circle" slot="icon-only"></ion-icon>
+                        </ion-button>
+                      </div>
+                    </div>
+
+                    <!-- Lista de ejercicios filtrados -->
+                    <ion-list *ngIf="mostrarListaAlternativo.get(i)" class="alternativo-lista">
+                      <ion-item 
+                        button
+                        *ngFor="let ejDisp of getEjerciciosAlternativosFiltrados(i)"
+                        (click)="seleccionarAlternativo(ejSel, ejDisp, i)"
+                        [class.selected]="ejSel.ejercicio_alternativo_id === ejDisp.id">
+                        <ion-icon name="barbell-outline" slot="start"></ion-icon>
+                        <ion-label>
+                          <h3>{{ ejDisp.nombre }}</h3>
+                          <p>{{ ejDisp.musculo_principal }} • {{ ejDisp.categoria }}</p>
+                        </ion-label>
+                        <ion-icon *ngIf="ejSel.ejercicio_alternativo_id === ejDisp.id" name="checkmark" slot="end" color="success"></ion-icon>
+                      </ion-item>
+                      <ion-item 
+                        button
+                        (click)="seleccionarAlternativo(ejSel, null, i)">
+                        <ion-icon name="close-circle-outline" slot="start" color="medium"></ion-icon>
+                        <ion-label color="medium">Sin alternativa</ion-label>
+                      </ion-item>
+                    </ion-list>
+                  </div>
+                  
+                  <div class="alternativo-info">
+                    <ion-icon name="information-circle"></ion-icon>
+                    <span>El cliente podrá realizar este ejercicio si el equipo del principal está ocupado</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -921,7 +989,7 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content class="ion-padding" style="--background: #000000; background: #000000;">
+    <ion-content class="ion-padding">
       <div *ngIf="rutinaDetalle" class="detalle-rutina-container">
         <!-- Información general -->
         <div class="detalle-header">
@@ -931,11 +999,6 @@
             <ion-chip [color]="rutinaDetalle.nivel_dificultad === 'principiante' ? 'success' : rutinaDetalle.nivel_dificultad === 'intermedio' ? 'warning' : 'danger'" style="font-weight: 600;">
               <ion-icon name="fitness-outline"></ion-icon>
               <ion-label>{{ getNivelLabel(rutinaDetalle.nivel_dificultad) }}</ion-label>
-            </ion-chip>
-            
-            <ion-chip color="success" *ngIf="rutinaDetalle.duracion_semanas" style="font-weight: 600;">
-              <ion-icon name="calendar-outline"></ion-icon>
-              <ion-label>{{ rutinaDetalle.duracion_semanas }} semanas</ion-label>
             </ion-chip>
             
             <ion-chip color="success" *ngIf="rutinaDetalle.ejercicios?.length" style="font-weight: 600;">
@@ -983,115 +1046,169 @@
               
               <div class="carousel-track" [style.transform]="'translateX(-' + (currentIndexCarrusel * 100) + '%)'">
                 <div *ngFor="let ej of rutinaDetalle.ejercicios; let i = index" class="carousel-slide">
-                  <ion-card style="background: rgba(0, 255, 136, 0.1) !important; border: 2px solid rgba(0, 255, 136, 0.4); margin: 0 5px; height: 100%;">
-                    <ion-card-header style="border-bottom: 2px solid rgba(0, 255, 136, 0.3); padding: 16px;">
-                      <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="background: #00ff88; color: #000000; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.3rem; flex-shrink: 0;">
+                  <ion-card style="background: rgba(0, 255, 136, 0.1) !important; border: 2px solid rgba(0, 255, 136, 0.4); margin: 0; height: 100%;">
+                    <ion-card-header style="border-bottom: 2px solid rgba(0, 255, 136, 0.3); padding: 8px;">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="background: #00ff88; color: #000000; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; flex-shrink: 0;">
                           {{ i + 1 }}
                         </div>
                         <div style="flex: 1;">
-                          <ion-card-title style="color: #00ff88 !important; font-size: 1.2rem; margin: 0; font-weight: 700;">
+                          <ion-card-title style="color: #00ff88 !important; font-size: 0.9rem; margin: 0; font-weight: 700;">
                             {{ ej.ejercicio?.nombre || 'Ejercicio sin nombre' }}
                           </ion-card-title>
-                          <ion-card-subtitle style="color: #cccccc !important; margin-top: 5px; font-size: 0.9rem;">
-                            <ion-icon name="body-outline" style="vertical-align: middle;"></ion-icon>
+                          <ion-card-subtitle style="color: #cccccc !important; margin-top: 3px; font-size: 0.75rem;">
+                            <ion-icon name="body-outline" style="vertical-align: middle; font-size: 0.8rem;"></ion-icon>
                             {{ ej.ejercicio?.musculo_principal || 'N/A' }}
                           </ion-card-subtitle>
                         </div>
                       </div>
                     </ion-card-header>
 
-                    <ion-card-content style="padding: 20px; color: #ffffff !important;">
+                    <ion-card-content style="padding: 8px; color: #ffffff !important;">
                       <!-- Parámetros del ejercicio -->
-                      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
-                        <div style="display: flex; align-items: center; gap: 10px; padding: 14px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 10px;">
-                          <ion-icon name="repeat-outline" style="color: #00ff88; font-size: 32px;"></ion-icon>
+                      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 5px; padding: 6px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 6px;">
+                          <ion-icon name="repeat-outline" style="color: #00ff88; font-size: 18px;"></ion-icon>
                           <div>
-                            <div style="font-size: 0.75rem; color: #cccccc; margin-bottom: 3px;">Series</div>
-                            <div style="font-weight: bold; color: #00ff88; font-size: 1.1rem;">{{ ej.series || 'N/A' }}</div>
+                            <div style="font-size: 0.65rem; color: #cccccc; margin-bottom: 1px;">Series</div>
+                            <div style="font-weight: bold; color: #00ff88; font-size: 0.85rem;">{{ ej.series || 'N/A' }}</div>
                           </div>
                         </div>
                         
-                        <div style="display: flex; align-items: center; gap: 10px; padding: 14px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 10px;">
-                          <ion-icon name="fitness-outline" style="color: #00ff88; font-size: 32px;"></ion-icon>
+                        <div style="display: flex; align-items: center; gap: 5px; padding: 6px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 6px;">
+                          <ion-icon name="fitness-outline" style="color: #00ff88; font-size: 18px;"></ion-icon>
                           <div>
-                            <div style="font-size: 0.75rem; color: #cccccc; margin-bottom: 3px;">Repeticiones</div>
-                            <div style="font-weight: bold; color: #00ff88; font-size: 1.1rem;">{{ ej.repeticiones || 'N/A' }}</div>
+                            <div style="font-size: 0.65rem; color: #cccccc; margin-bottom: 1px;">Repeticiones</div>
+                            <div style="font-weight: bold; color: #00ff88; font-size: 0.85rem;">{{ ej.repeticiones || 'N/A' }}</div>
                           </div>
                         </div>
                         
-                        <div style="display: flex; align-items: center; gap: 10px; padding: 14px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 10px;">
-                          <ion-icon name="time-outline" style="color: #00ff88; font-size: 32px;"></ion-icon>
+                        <div style="display: flex; align-items: center; gap: 5px; padding: 6px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 6px;">
+                          <ion-icon name="time-outline" style="color: #00ff88; font-size: 18px;"></ion-icon>
                           <div>
-                            <div style="font-size: 0.75rem; color: #cccccc; margin-bottom: 3px;">Descanso</div>
-                            <div style="font-weight: bold; color: #00ff88; font-size: 1.1rem;">{{ ej.descanso_segundos || 60 }}s</div>
+                            <div style="font-size: 0.65rem; color: #cccccc; margin-bottom: 1px;">Descanso</div>
+                            <div style="font-weight: bold; color: #00ff88; font-size: 0.85rem;">{{ ej.descanso_segundos || 60 }}s</div>
                           </div>
                         </div>
 
-                        <div style="display: flex; align-items: center; gap: 10px; padding: 14px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 10px;">
-                          <ion-icon name="flash-outline" style="color: #00ff88; font-size: 32px;"></ion-icon>
+                        <div style="display: flex; align-items: center; gap: 5px; padding: 6px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 6px;">
+                          <ion-icon name="flash-outline" style="color: #00ff88; font-size: 18px;"></ion-icon>
                           <div>
-                            <div style="font-size: 0.75rem; color: #cccccc; margin-bottom: 3px;">Fuerza</div>
-                            <div style="font-weight: bold; color: #00ff88; font-size: 1.1rem;">{{ ej.porcentaje_fuerza || 100 }}%</div>
+                            <div style="font-size: 0.65rem; color: #cccccc; margin-bottom: 1px;">Fuerza</div>
+                            <div style="font-weight: bold; color: #00ff88; font-size: 0.85rem;">{{ ej.porcentaje_fuerza || 100 }}%</div>
                           </div>
-                        </div>
-                      </div>
-
-                      <!-- Ejercicio alternativo -->
-                      <div *ngIf="ej.ejercicio_alternativo" style="margin: 15px 0; padding: 14px; background: rgba(255, 165, 0, 0.1); border-left: 4px solid #ffa500; border-radius: 6px;">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                          <ion-icon name="swap-horizontal-outline" style="color: #ffa500; font-size: 1.3rem;"></ion-icon>
-                          <strong style="color: #ffa500;">Ejercicio Alternativo:</strong>
-                        </div>
-                        <div style="color: #ffffff; font-size: 0.95rem; margin-left: 28px;">
-                          {{ ej.ejercicio_alternativo.nombre }}
-                          <ion-badge style="background: rgba(255, 165, 0, 0.2); color: #ffa500; margin-left: 8px; font-size: 0.75rem;">
-                            {{ ej.ejercicio_alternativo.musculo_principal }}
-                          </ion-badge>
-                        </div>
-                        <div style="color: #cccccc; font-size: 0.8rem; margin-left: 28px; margin-top: 5px; font-style: italic;">
-                          (Si el equipo está ocupado)
                         </div>
                       </div>
 
                       <!-- Notas del ejercicio -->
-                      <div *ngIf="ej.notas" style="margin: 15px 0; padding: 14px; background: rgba(0, 255, 136, 0.08); border-left: 4px solid #00ff88; border-radius: 6px; color: #ffffff;">
-                        <ion-icon name="information-circle-outline" style="vertical-align: middle; color: #00ff88; font-size: 1.2rem;"></ion-icon>
+                      <div *ngIf="ej.notas" style="margin: 8px 0; padding: 8px; background: rgba(0, 255, 136, 0.08); border-left: 3px solid #00ff88; border-radius: 6px; color: #ffffff; font-size: 0.8rem;">
+                        <ion-icon name="information-circle-outline" style="vertical-align: middle; color: #00ff88; font-size: 1rem;"></ion-icon>
                         <strong style="color: #00ff88;"> Nota:</strong> {{ ej.notas }}
                       </div>
 
-                      <!-- Video del ejercicio -->
-                      <div *ngIf="ej.ejercicio?.enlace_video" style="margin-top: 20px;">
-                        <div style="background: #000000; border: 2px solid rgba(0, 255, 136, 0.3); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 255, 136, 0.2);">
-                          <ng-container *ngIf="isImageUrl(ej.ejercicio.enlace_video); else mediaBlock">
-                            <img [src]="getDirectImageUrl(ej.ejercicio.enlace_video)" alt="Ejercicio" style="width:100%; height:auto; display:block;" />
-                          </ng-container>
-                          <ng-template #mediaBlock>
-                            <ng-container *ngIf="isVideoUrl(ej.ejercicio.enlace_video); else safeIframe">
-                              <iframe [src]="getSafeUrl(getDirectVideoUrl(ej.ejercicio.enlace_video))" 
-                                      frameborder="0" 
-                                      allowfullscreen
-                                      allow="autoplay"
-                                      loading="lazy"
-                                      style="width:100%; height:300px; display:block;">
-                              </iframe>
-                            </ng-container>
-                            <ng-template #safeIframe>
-                              <iframe
-                                [src]="getSafeUrl(ej.ejercicio.enlace_video)"
-                                frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowfullscreen
-                                style="width: 100%; height: 300px; display: block;">
-                              </iframe>
-                            </ng-template>
-                          </ng-template>
-                        </div>
-                      </div>
+                      <!-- Carrusel de Videos (Principal + Alternativo) -->
+                      <div style="margin-top: 8px;">
+                        <div class="video-carousel-mini" (click)="$event.stopPropagation()">
+                          <!-- Indicadores si hay alternativo -->
+                          <div *ngIf="ej.ejercicio_alternativo" class="mini-indicators">
+                            <span 
+                              class="mini-indicator" 
+                              [class.active]="getVideoCarouselIndex(i) === 0"
+                              (click)="$event.stopPropagation(); setVideoCarouselIndex(i, 0)"
+                              (touchstart)="$event.stopPropagation(); setVideoCarouselIndex(i, 0)">
+                              Principal
+                            </span>
+                            <span 
+                              class="mini-indicator" 
+                              [class.active]="getVideoCarouselIndex(i) === 1"
+                              (click)="$event.stopPropagation(); setVideoCarouselIndex(i, 1)"
+                              (touchstart)="$event.stopPropagation(); setVideoCarouselIndex(i, 1)">
+                              Alternativo
+                            </span>
+                          </div>
 
-                      <div *ngIf="!ej.ejercicio?.enlace_video" style="text-align: center; color: #999999; margin-top: 20px; padding: 30px; background: rgba(255, 255, 255, 0.03); border-radius: 10px; border: 1px dashed rgba(255, 255, 255, 0.2);">
-                        <ion-icon name="videocam-off-outline" style="font-size: 48px; display: block; margin-bottom: 10px; color: #666666;"></ion-icon>
-                        <div style="font-size: 0.9rem;">Sin video disponible</div>
+                          <!-- Video Principal -->
+                          <div *ngIf="getVideoCarouselIndex(i) === 0" class="video-slide-mini">
+                            <div class="video-media" [class.full]="!ej.ejercicio_alternativo">
+                              <ng-container *ngIf="ej.ejercicio?.enlace_video">
+                                <ng-container *ngIf="isImageUrl(ej.ejercicio.enlace_video); else mediaBlock">
+                                  <img [src]="getDirectImageUrl(ej.ejercicio.enlace_video)" alt="Ejercicio Principal" class="video-media-img" />
+                                </ng-container>
+                                <ng-template #mediaBlock>
+                                  <ng-container *ngIf="isVideoUrl(ej.ejercicio.enlace_video); else safeIframe">
+                                    <iframe [src]="getSafeUrl(getDirectVideoUrl(ej.ejercicio.enlace_video))" 
+                                            frameborder="0" 
+                                            allowfullscreen
+                                            allow="autoplay"
+                                            loading="lazy"
+                                            class="video-media-iframe">
+                                    </iframe>
+                                  </ng-container>
+                                  <ng-template #safeIframe>
+                                    <iframe
+                                      [src]="getSafeUrl(ej.ejercicio.enlace_video)"
+                                      frameborder="0"
+                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                      allowfullscreen
+                                      class="video-media-iframe">
+                                    </iframe>
+                                  </ng-template>
+                                </ng-template>
+                              </ng-container>
+                              <div *ngIf="!ej.ejercicio?.enlace_video" class="video-media-empty">
+                                <ion-icon name="videocam-off-outline" class="video-media-empty-icon"></ion-icon>
+                                <div class="video-media-empty-text">Sin video disponible</div>
+                              </div>
+                            </div>
+                            <div style="text-align: center; margin-top: 6px; color: #00ff88; font-weight: 600; font-size: 0.75rem;">
+                            </div>
+                          </div>
+
+                          <!-- Video Alternativo -->
+                          <div *ngIf="ej.ejercicio_alternativo && getVideoCarouselIndex(i) === 1" class="video-slide-mini">
+                            <div class="video-media alt">
+                              <ng-container *ngIf="ej.ejercicio_alternativo.enlace_video">
+                                <ng-container *ngIf="isImageUrl(ej.ejercicio_alternativo.enlace_video); else mediaBlockAlt">
+                                  <img [src]="getDirectImageUrl(ej.ejercicio_alternativo.enlace_video)" alt="Ejercicio Alternativo" class="video-media-img" />
+                                </ng-container>
+                                <ng-template #mediaBlockAlt>
+                                  <ng-container *ngIf="isVideoUrl(ej.ejercicio_alternativo.enlace_video); else safeIframeAlt">
+                                    <iframe [src]="getSafeUrl(getDirectVideoUrl(ej.ejercicio_alternativo.enlace_video))" 
+                                            frameborder="0" 
+                                            allowfullscreen
+                                            allow="autoplay"
+                                            loading="lazy"
+                                            class="video-media-iframe">
+                                    </iframe>
+                                  </ng-container>
+                                  <ng-template #safeIframeAlt>
+                                    <iframe
+                                      [src]="getSafeUrl(ej.ejercicio_alternativo.enlace_video)"
+                                      frameborder="0"
+                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                      allowfullscreen
+                                      class="video-media-iframe">
+                                    </iframe>
+                                  </ng-template>
+                                </ng-template>
+                              </ng-container>
+                              <div *ngIf="!ej.ejercicio_alternativo.enlace_video" class="video-media-empty">
+                                <ion-icon name="videocam-off-outline" class="video-media-empty-icon"></ion-icon>
+                                <div class="video-media-empty-text">Sin video disponible</div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Botones de navegación del mini carrusel -->
+                          <div *ngIf="ej.ejercicio_alternativo" class="mini-carousel-btns">
+                            <button class="mini-btn prev" (click)="$event.stopPropagation(); prevVideoSlide(i)" (touchstart)="$event.stopPropagation(); prevVideoSlide(i)">
+                              <ion-icon name="chevron-back"></ion-icon>
+                            </button>
+                            <button class="mini-btn next" (click)="$event.stopPropagation(); nextVideoSlide(i)" (touchstart)="$event.stopPropagation(); nextVideoSlide(i)">
+                              <ion-icon name="chevron-forward"></ion-icon>
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </ion-card-content>
                   </ion-card>
@@ -1118,10 +1235,6 @@
               </ion-button>
             </div>
 
-            <!-- Contador de ejercicios -->
-            <div style="text-align: center; margin-top: 15px; color: #00ff88; font-size: 0.9rem;">
-              Ejercicio {{ currentIndexCarrusel + 1 }} de {{ rutinaDetalle.ejercicios.length }}
-            </div>
           </div>
 
           <ion-note *ngIf="!rutinaDetalle.ejercicios || rutinaDetalle.ejercicios.length === 0" 

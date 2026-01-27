@@ -102,6 +102,10 @@ export class VerRutinaClienteComponent implements OnInit {
   // Índices de carrusel por rutina (para mantener el estado independiente)
   carouselIndices: Map<number, number> = new Map();
 
+  // Map para índices de mini carrusel de videos (0 = principal, 1 = alternativo)
+  // Key: "rutinaId-ejercicioIndex"
+  private videoCarouselIndices = new Map<string, number>();
+
   // Variables para gestos táctiles
   touchStartX: Map<number, number> = new Map();
   currentTranslateX: Map<number, number> = new Map();
@@ -532,6 +536,29 @@ export class VerRutinaClienteComponent implements OnInit {
 
   irAEjercicio(rutina: any, index: number) {
     this.carouselIndices.set(rutina.id, index);
+    this.cdr.detectChanges();
+  }
+
+  // === MÉTODOS PARA MINI CARRUSEL DE VIDEOS (Principal/Alternativo) ===
+  /**
+   * Genera key única para identificar ejercicio dentro de rutina
+   */
+  private getVideoKey(rutina: any, ejercicioIndex: number): string {
+    return `${rutina.id}-${ejercicioIndex}`;
+  }
+
+  /**
+   * Obtiene el índice actual del carrusel de videos para un ejercicio (0 = principal, 1 = alternativo)
+   */
+  getVideoCarouselIndex(rutina: any, ejercicioIndex: number): number {
+    return this.videoCarouselIndices.get(this.getVideoKey(rutina, ejercicioIndex)) || 0;
+  }
+
+  /**
+   * Establece el índice del carrusel de videos
+   */
+  setVideoCarouselIndex(rutina: any, ejercicioIndex: number, videoIndex: number): void {
+    this.videoCarouselIndices.set(this.getVideoKey(rutina, ejercicioIndex), videoIndex);
     this.cdr.detectChanges();
   }
 

@@ -35,9 +35,6 @@
           <ion-chip [color]="rutina.nivel_dificultad === 'principiante' ? 'success' : rutina.nivel_dificultad === 'intermedio' ? 'warning' : 'danger'">
             {{ rutina.nivel_dificultad }}
           </ion-chip>
-          <ion-chip *ngIf="rutina.duracion_semanas" color="primary">
-            {{ rutina.duracion_semanas }} semanas
-          </ion-chip>
         </ion-card-subtitle>
       </ion-card-header>
       <ion-card-content *ngIf="rutina.descripcion || rutina.objetivo">

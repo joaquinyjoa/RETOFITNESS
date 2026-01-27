@@ -6,7 +6,6 @@ export interface Rutina {
   nombre: string;
   descripcion?: string;
   objetivo?: string;
-  duracion_semanas?: number;
   nivel_dificultad: string;
   created_by?: number;
   created_at?: string;

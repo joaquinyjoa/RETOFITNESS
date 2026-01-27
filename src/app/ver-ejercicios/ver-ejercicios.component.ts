@@ -92,6 +92,11 @@ export class VerEjerciciosComponent implements OnInit {
   filtroEjercicioModal = '';
   ejerciciosDisponiblesFiltrados: Ejercicio[] = [];
 
+  // Búsqueda de ejercicio alternativo por ejercicio
+  busquedaAlternativo: Map<number, string> = new Map();
+  ejerciciosAlternativosFiltrados: Map<number, Ejercicio[]> = new Map();
+  mostrarListaAlternativo: Map<number, boolean> = new Map();
+
   // Opciones para los select
   categorias = [
     { value: 'cardio', label: 'Cardio' },
@@ -880,7 +885,6 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
       nombre: '',
       descripcion: '',
       objetivo: '',
-      duracion_semanas: 4,
       nivel_dificultad: 'principiante',
       activo: true
     };
@@ -985,7 +989,6 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
         nombre: rutina.nombre,
         descripcion: rutina.descripcion || '',
         objetivo: rutina.objetivo || '',
-        duracion_semanas: rutina.duracion_semanas || 4,
         nivel_dificultad: rutina.nivel_dificultad,
         activo: rutina.activo !== false
       };
@@ -1064,7 +1067,6 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
           nombre: this.rutinaActual.nombre,
           descripcion: this.rutinaActual.descripcion,
           objetivo: this.rutinaActual.objetivo,
-          duracion_semanas: this.rutinaActual.duracion_semanas,
           nivel_dificultad: this.rutinaActual.nivel_dificultad
         });
 
@@ -1080,7 +1082,6 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
           nombre: this.rutinaActual.nombre,
           descripcion: this.rutinaActual.descripcion,
           objetivo: this.rutinaActual.objetivo,
-          duracion_semanas: this.rutinaActual.duracion_semanas,
           nivel_dificultad: this.rutinaActual.nivel_dificultad,
           activo: true
         });
@@ -1539,7 +1540,12 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
     
     this.rutinaDetalle = rutina;
     this.currentIndexCarrusel = 0; // Reset carrusel index
-    this.showModalDetalle = true;
+    
+    // Usar requestAnimationFrame para mejor rendimiento
+    requestAnimationFrame(() => {
+      this.showModalDetalle = true;
+      this.cdr.detectChanges();
+    });
   }
 
   // Cerrar modal de detalle
@@ -1547,6 +1553,43 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
     this.showModalDetalle = false;
     this.rutinaDetalle = null;
     this.currentIndexCarrusel = 0;
+  }
+
+  // === MÉTODOS DE EJERCICIO ALTERNATIVO ===
+  filtrarEjerciciosAlternativos(index: number) {
+    const busqueda = this.busquedaAlternativo.get(index) || '';
+    if (busqueda.trim() === '') {
+      this.ejerciciosAlternativosFiltrados.set(index, this.ejerciciosDisponibles);
+    } else {
+      const filtrados = this.ejerciciosDisponibles.filter(ej => 
+        ej.nombre.toLowerCase().includes(busqueda.toLowerCase())
+      );
+      this.ejerciciosAlternativosFiltrados.set(index, filtrados);
+    }
+    this.mostrarListaAlternativo.set(index, true);
+  }
+
+  getEjerciciosAlternativosFiltrados(index: number): any[] {
+    return this.ejerciciosAlternativosFiltrados.get(index) || this.ejerciciosDisponibles;
+  }
+
+  seleccionarAlternativo(ejSel: any, ejercicio: any | null, index: number) {
+    ejSel.ejercicio_alternativo_id = ejercicio?.id ?? null;
+    this.busquedaAlternativo.set(index, '');
+    this.mostrarListaAlternativo.set(index, false);
+    this.ejerciciosAlternativosFiltrados.set(index, []);
+  }
+
+  limpiarAlternativo(ejSel: any, index: number) {
+    ejSel.ejercicio_alternativo_id = null;
+    this.busquedaAlternativo.set(index, '');
+    this.mostrarListaAlternativo.set(index, true);
+    this.ejerciciosAlternativosFiltrados.set(index, this.ejerciciosDisponibles);
+  }
+
+  getNombreEjercicio(id: number): string {
+    const ejercicio = this.ejerciciosDisponibles.find(ej => ej.id === id);
+    return ejercicio ? ejercicio.nombre : '';
   }
 
   // === MÉTODOS DE CARRUSEL ===
@@ -1577,11 +1620,13 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
 
     this.touchStartXCarrusel = 0;
     this.touchEndXCarrusel = 0;
+    this.cdr.detectChanges();
   }
 
   anteriorEjercicioCarrusel() {
     if (this.currentIndexCarrusel > 0) {
       this.currentIndexCarrusel--;
+      this.cdr.detectChanges();
     }
   }
 
@@ -1589,15 +1634,179 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
     const totalEjercicios = this.rutinaDetalle?.ejercicios?.length || 0;
     if (this.currentIndexCarrusel < totalEjercicios - 1) {
       this.currentIndexCarrusel++;
+      this.cdr.detectChanges();
     }
   }
 
   irAEjercicioCarrusel(index: number) {
     this.currentIndexCarrusel = index;
+    this.cdr.detectChanges();
   }
 
   // Método para manejar la carga de imágenes
   onImageLoad(videoUrl: string) {
     console.log('Imagen cargada para:', videoUrl);
+  }
+
+  // === MÉTODOS PARA CARRUSEL DE EJERCICIOS EN LISTADO ===
+  // Map para mantener el índice actual del carrusel de cada ejercicio
+  private carouselIndices = new Map<number, number>();
+
+  // Map para manejar touch events de cada ejercicio
+  private touchStartX = new Map<number, number>();
+  private touchEndX = new Map<number, number>();
+  private isDragging = new Map<number, boolean>();
+
+  /**
+   * Obtiene las URLs de videos/imágenes para un ejercicio
+   * Por ahora, si el ejercicio tiene enlace_video, retorna un array con ese enlace
+   * En el futuro, se puede modificar para soportar múltiples enlaces
+   */
+  getVideoUrls(ejercicio: Ejercicio): string[] {
+    const urls: string[] = [];
+    
+    // Agregar enlace principal si existe
+    if (ejercicio.enlace_video && ejercicio.enlace_video.trim()) {
+      urls.push(ejercicio.enlace_video);
+    }
+
+    // NOTA: Aquí se pueden agregar enlaces adicionales en el futuro
+    // Por ejemplo, si agregamos un campo "enlaces_alternativos" al modelo:
+    // if (ejercicio.enlaces_alternativos && ejercicio.enlaces_alternativos.length > 0) {
+    //   urls.push(...ejercicio.enlaces_alternativos);
+    // }
+
+    return urls;
+  }
+
+  /**
+   * Obtiene el índice actual del carrusel para un ejercicio específico
+   */
+  getCurrentCarouselIndex(ejercicioIndex: number): number {
+    return this.carouselIndices.get(ejercicioIndex) || 0;
+  }
+
+  /**
+   * Establece el índice del carrusel para un ejercicio específico
+   */
+  setCarouselIndex(ejercicioIndex: number, slideIndex: number): void {
+    this.carouselIndices.set(ejercicioIndex, slideIndex);
+  }
+
+  /**
+   * Avanza al siguiente slide
+   */
+  nextSlide(ejercicioIndex: number): void {
+    const ejercicio = this.ejerciciosFiltrados[ejercicioIndex];
+    if (!ejercicio) return;
+
+    const urls = this.getVideoUrls(ejercicio);
+    const currentIndex = this.getCurrentCarouselIndex(ejercicioIndex);
+    
+    if (currentIndex < urls.length - 1) {
+      this.setCarouselIndex(ejercicioIndex, currentIndex + 1);
+    } else {
+      // Volver al inicio (loop)
+      this.setCarouselIndex(ejercicioIndex, 0);
+    }
+  }
+
+  /**
+   * Retrocede al slide anterior
+   */
+  prevSlide(ejercicioIndex: number): void {
+    const ejercicio = this.ejerciciosFiltrados[ejercicioIndex];
+    if (!ejercicio) return;
+
+    const urls = this.getVideoUrls(ejercicio);
+    const currentIndex = this.getCurrentCarouselIndex(ejercicioIndex);
+    
+    if (currentIndex > 0) {
+      this.setCarouselIndex(ejercicioIndex, currentIndex - 1);
+    } else {
+      // Ir al final (loop)
+      this.setCarouselIndex(ejercicioIndex, urls.length - 1);
+    }
+  }
+
+  /**
+   * Maneja el inicio del touch event
+   */
+  onTouchStart(event: TouchEvent, ejercicioIndex: number): void {
+    this.touchStartX.set(ejercicioIndex, event.touches[0].clientX);
+    this.isDragging.set(ejercicioIndex, true);
+  }
+
+  /**
+   * Maneja el movimiento del touch event
+   */
+  onTouchMove(event: TouchEvent, ejercicioIndex: number): void {
+    if (!this.isDragging.get(ejercicioIndex)) return;
+    this.touchEndX.set(ejercicioIndex, event.touches[0].clientX);
+  }
+
+  /**
+   * Maneja el final del touch event y determina si hacer swipe
+   */
+  onTouchEnd(event: TouchEvent, ejercicioIndex: number): void {
+    if (!this.isDragging.get(ejercicioIndex)) return;
+    this.isDragging.set(ejercicioIndex, false);
+
+    const startX = this.touchStartX.get(ejercicioIndex) || 0;
+    const endX = this.touchEndX.get(ejercicioIndex) || 0;
+    const diff = startX - endX;
+    const threshold = 50; // Umbral mínimo para considerar un swipe
+
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0) {
+        // Swipe left - siguiente
+        this.nextSlide(ejercicioIndex);
+      } else {
+        // Swipe right - anterior
+        this.prevSlide(ejercicioIndex);
+      }
+    }
+
+    // Limpiar valores
+    this.touchStartX.delete(ejercicioIndex);
+    this.touchEndX.delete(ejercicioIndex);
+  }
+
+  // === MÉTODOS PARA MINI CARRUSEL DE VIDEOS EN MODAL DE DETALLE ===
+  // Map para mantener el índice del video actual (0 = principal, 1 = alternativo) por ejercicio
+  private videoCarouselIndices = new Map<number, number>();
+
+  /**
+   * Obtiene el índice actual del carrusel de videos para un ejercicio
+   */
+  getVideoCarouselIndex(ejercicioIndex: number): number {
+    return this.videoCarouselIndices.get(ejercicioIndex) || 0;
+  }
+
+  /**
+   * Establece el índice del carrusel de videos
+   */
+  setVideoCarouselIndex(ejercicioIndex: number, videoIndex: number): void {
+    this.videoCarouselIndices.set(ejercicioIndex, videoIndex);
+  }
+
+  /**
+   * Avanza al siguiente video (alternativo)
+   */
+  nextVideoSlide(ejercicioIndex: number): void {
+    const currentIndex = this.getVideoCarouselIndex(ejercicioIndex);
+    if (currentIndex === 0) {
+      this.setVideoCarouselIndex(ejercicioIndex, 1);
+    }
+  }
+
+  /**
+   * Retrocede al video anterior (principal)
+   */
+  prevVideoSlide(ejercicioIndex: number): void {
+    const currentIndex = this.getVideoCarouselIndex(ejercicioIndex);
+    if (currentIndex === 1) {
+      this.setVideoCarouselIndex(ejercicioIndex, 0);
+    }
   }
 }

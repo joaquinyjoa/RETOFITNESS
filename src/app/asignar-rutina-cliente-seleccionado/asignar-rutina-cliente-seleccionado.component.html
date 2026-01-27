@@ -67,10 +67,6 @@
                 <ion-chip class="nivel-chip" [color]="rutina.nivel_dificultad === 'Principiante' ? 'success' : rutina.nivel_dificultad === 'Intermedio' ? 'warning' : 'danger'">
                   <ion-label>{{ rutina.nivel_dificultad }}</ion-label>
                 </ion-chip>
-                <span class="duracion" *ngIf="rutina.duracion_semanas">
-                  <ion-icon name="time-outline"></ion-icon>
-                  {{ rutina.duracion_semanas }} semanas
-                </span>
               </div>
             </div>
             <div class="rutina-check">

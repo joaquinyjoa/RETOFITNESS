@@ -32,9 +32,11 @@ export class PanelRecepcionComponent implements OnInit {
     this.cargarClientes();
   }
 
-  async cargarClientes() {
-    this.mostrarSpinner = true;
-    this.cdr.detectChanges();
+  async cargarClientes(mostrarSpinner: boolean = true) {
+    if (mostrarSpinner) {
+      this.mostrarSpinner = true;
+      this.cdr.detectChanges();
+    }
 
     try {
 
@@ -55,10 +57,12 @@ export class PanelRecepcionComponent implements OnInit {
     } catch (error) {
       console.error('Error al cargar clientes:', error);
     } finally {
-      setTimeout(() => {
-        this.mostrarSpinner = false;
-        this.cdr.detectChanges();
-      }, 0);
+      if (mostrarSpinner) {
+        setTimeout(() => {
+          this.mostrarSpinner = false;
+          this.cdr.detectChanges();
+        }, 0);
+      }
     }
   }
 
@@ -84,17 +88,44 @@ export class PanelRecepcionComponent implements OnInit {
 
     const nuevoEstado = !cliente.Estado;
 
-    const exito = await this.clienteService.aprobarCliente(cliente.id, nuevoEstado);
+    // Mostrar spinner solo si se está aprobando (nuevoEstado = true)
+    if (nuevoEstado) {
+      this.mostrarSpinner = true;
+      this.cdr.detectChanges();
+    }
 
-    if (exito) {
-      // Actualizar el estado local
-      cliente.Estado = nuevoEstado;
-      
-      // Recargar la lista para reflejar cambios
-      await this.cargarClientes();
-    } else {
-      console.error('Error al cambiar estado');
-      alert('Error al actualizar el estado del cliente');
+    try {
+      // Si se aprueba, esperar al menos 1.5s antes de ocultar spinner
+      if (nuevoEstado) {
+        const [exito] = await Promise.all([
+          this.clienteService.aprobarCliente(cliente.id, nuevoEstado),
+          new Promise(resolve => setTimeout(resolve, 1500))
+        ]);
+
+        if (exito) {
+          cliente.Estado = nuevoEstado;
+          await this.cargarClientes(false); // No mostrar spinner adicional
+        } else {
+          console.error('Error al cambiar estado');
+          alert('Error al actualizar el estado del cliente');
+        }
+      } else {
+        // Si se desaprueba, no mostrar spinner
+        const exito = await this.clienteService.aprobarCliente(cliente.id, nuevoEstado);
+
+        if (exito) {
+          cliente.Estado = nuevoEstado;
+          await this.cargarClientes(false); // No mostrar spinner
+        } else {
+          console.error('Error al cambiar estado');
+          alert('Error al actualizar el estado del cliente');
+        }
+      }
+    } finally {
+      if (nuevoEstado) {
+        this.mostrarSpinner = false;
+        this.cdr.detectChanges();
+      }
     }
   }
 

@@ -86,6 +86,30 @@
 	}
 }
 
+/* Override específico global para asegurar que el botón de contraseña no muestre borde verde */
+ion-button.password-button,
+ion-button.password-button::part(native),
+ion-button.password-button::part(native) .button-native,
+ion-button.password-button .button-native {
+	border: none !important;
+	outline: none !important;
+	box-shadow: none !important;
+	--box-shadow: none !important;
+}
+
+/* Ocultar ripple para este botón si el efecto causa un contorno visible */
+ion-button.password-button ion-ripple-effect {
+	display: none !important;
+	opacity: 0 !important;
+}
+
+/* Forzar color de fondo/texto para evitar bordes por contraste */
+ion-button.password-button {
+	background: var(--primary-green) !important;
+	color: #000 !important;
+}
+
+
 /* Welcome component shared styles (moved from component to respect build budgets) */
 :root {
 	/* Fuente global de la app */

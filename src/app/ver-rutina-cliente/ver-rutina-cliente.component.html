@@ -124,12 +124,6 @@
                 {{ rutinaAsignada.fecha_asignacion ? (rutinaAsignada.fecha_asignacion | date: 'dd/MM/yyyy') : 'No especificada' }}
               </div>
             </div>
-            <div style="background: rgba(0, 255, 136, 0.1); padding: 10px; border-radius: 8px;">
-              <small style="color: var(--ion-color-medium);">Duración</small>
-              <div style="color: var(--primary-green); font-weight: bold;">
-                {{ rutinaAsignada.rutina?.duracion_semanas || 0 }} semanas
-              </div>
-            </div>
           </div>
 
           <!-- Notas -->
@@ -198,45 +192,81 @@
                         </div>
                       </div>
 
-                      <!-- Ejercicio alternativo -->
-                      <div *ngIf="ej.ejercicio_alternativo" class="alternativo-box">
-                        <div class="alternativo-header">
-                          <ion-icon name="swap-horizontal-outline"></ion-icon>
-                          <strong>Alternativa disponible:</strong>
+                      <!-- Mini carrusel de videos (Principal / Alternativo) -->
+                      <div class="video-carousel-mini" style="margin-top: 10px;">
+                        <!-- Botones indicadores si hay alternativo -->
+                        <div *ngIf="ej.ejercicio_alternativo" class="mini-indicators">
+                          <span 
+                            class="mini-indicator" 
+                            [class.active]="getVideoCarouselIndex(rutinaAsignada, i) === 0"
+                            (click)="setVideoCarouselIndex(rutinaAsignada, i, 0)">
+                            Principal
+                          </span>
+                          <span 
+                            class="mini-indicator" 
+                            [class.active]="getVideoCarouselIndex(rutinaAsignada, i) === 1"
+                            (click)="setVideoCarouselIndex(rutinaAsignada, i, 1)">
+                            Alternativo
+                          </span>
                         </div>
-                        <div class="alternativo-content">
-                          {{ ej.ejercicio_alternativo.nombre }}
-                          <ion-badge color="warning">{{ ej.ejercicio_alternativo.musculo_principal }}</ion-badge>
-                        </div>
-                        <div class="alternativo-nota">
-                          (Si el equipo está ocupado)
-                        </div>
-                      </div>
 
-                      <!-- Media centrado -->
-                      <div *ngIf="ej.ejercicio?.enlace_video" class="media-wrapper">
-                        <ng-container *ngIf="isImageUrl(ej.ejercicio.enlace_video); else iframeBlock">
-                          <img [src]="getDirectImageUrl(ej.ejercicio.enlace_video)" alt="Ejercicio" class="media-content" />
-                        </ng-container>
-                        <ng-template #iframeBlock>
-                          <ng-container *ngIf="isVideoUrl(ej.ejercicio.enlace_video); else legacyIframe">
-                            <iframe [src]="getSafeUrl(getDirectVideoUrl(ej.ejercicio.enlace_video))" 
-                                    frameborder="0" 
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowfullscreen
-                                    class="media-content">
-                            </iframe>
-                          </ng-container>
-                          <ng-template #legacyIframe>
-                            <iframe
-                              [src]="getSafeUrl(ej.ejercicio.enlace_video)"
-                              frameborder="0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowfullscreen
-                              class="media-content">
-                            </iframe>
-                          </ng-template>
-                        </ng-template>
+                        <!-- Video Principal -->
+                        <div *ngIf="getVideoCarouselIndex(rutinaAsignada, i) === 0" class="video-slide-mini">
+                          <div class="media-wrapper" *ngIf="ej.ejercicio?.enlace_video">
+                            <ng-container *ngIf="isImageUrl(ej.ejercicio.enlace_video); else iframeBlockPrincipal">
+                              <img [src]="getDirectImageUrl(ej.ejercicio.enlace_video)" alt="Ejercicio Principal" class="media-content" />
+                            </ng-container>
+                            <ng-template #iframeBlockPrincipal>
+                              <ng-container *ngIf="isVideoUrl(ej.ejercicio.enlace_video); else legacyIframePrincipal">
+                                <iframe [src]="getSafeUrl(getDirectVideoUrl(ej.ejercicio.enlace_video))" 
+                                        frameborder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowfullscreen
+                                        class="media-content">
+                                </iframe>
+                              </ng-container>
+                              <ng-template #legacyIframePrincipal>
+                                <iframe
+                                  [src]="getSafeUrl(ej.ejercicio.enlace_video)"
+                                  frameborder="0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowfullscreen
+                                  class="media-content">
+                                </iframe>
+                              </ng-template>
+                            </ng-template>
+                          </div>
+                        </div>
+
+                        <!-- Video Alternativo -->
+                        <div *ngIf="ej.ejercicio_alternativo && getVideoCarouselIndex(rutinaAsignada, i) === 1" class="video-slide-mini">
+                          <div class="media-wrapper" *ngIf="ej.ejercicio_alternativo.enlace_video">
+                            <ng-container *ngIf="isImageUrl(ej.ejercicio_alternativo.enlace_video); else iframeBlockAlt">
+                              <img [src]="getDirectImageUrl(ej.ejercicio_alternativo.enlace_video)" alt="Ejercicio Alternativo" class="media-content" />
+                            </ng-container>
+                            <ng-template #iframeBlockAlt>
+                              <ng-container *ngIf="isVideoUrl(ej.ejercicio_alternativo.enlace_video); else legacyIframeAlt">
+                                <iframe [src]="getSafeUrl(getDirectVideoUrl(ej.ejercicio_alternativo.enlace_video))" 
+                                        frameborder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowfullscreen
+                                        class="media-content">
+                                </iframe>
+                              </ng-container>
+                              <ng-template #legacyIframeAlt>
+                                <iframe
+                                  [src]="getSafeUrl(ej.ejercicio_alternativo.enlace_video)"
+                                  frameborder="0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowfullscreen
+                                  class="media-content">
+                                </iframe>
+                              </ng-template>
+                            </ng-template>
+                          </div>
+                          
+                          <!-- Info del ejercicio alternativo eliminado por solicitud del usuario -->
+                        </div>
                       </div>
 
                       <!-- Notas -->

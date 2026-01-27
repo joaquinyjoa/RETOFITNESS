@@ -35,29 +35,56 @@
   }
 }
 
+// Contenedor de rutinas con grid
+.rutinas-container {
+  padding: 16px;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  max-width: 1400px;
+  margin: 0 auto;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 12px;
+  }
+  
+  @media (min-width: 769px) and (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 // Tarjetas de rutinas
 .rutina-card {
   --background: var(--dark-gray);
   border: 1px solid var(--medium-gray);
-  border-radius: 16px;
-  margin: 16px;
-  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.1);
-  transition: all 0.3s ease; 
+  border-radius: 20px;
+  margin: 0;
+  box-shadow: 0 4px 16px rgba(0, 255, 136, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   
   &:hover {
     border-color: var(--primary-green);
-    box-shadow: 0 6px 20px rgba(0, 255, 136, 0.2);
-    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 255, 136, 0.2);
+    transform: translateY(-4px);
   }
   
   ion-card-header {
+    padding: 16px;
     padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0, 255, 136, 0.1);
   }
   
   ion-card-title {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    line-height: 1.3;
   }
   
   ion-card-subtitle {
@@ -65,11 +92,121 @@
     align-items: center;
     gap: 10px;
     color: var(--light-gray);
+    flex-wrap: wrap;
+    
+    ion-chip {
+      font-size: 0.8rem;
+      height: 26px;
+      padding: 0 10px;
+      font-weight: 600;
+      
+      ion-label {
+        margin: 0;
+        text-transform: capitalize;
+      }
+      
+      &[color="success"] {
+        --background: rgba(0, 255, 136, 0.15);
+        --color: var(--primary-green);
+        border: 1px solid var(--primary-green);
+      }
+      
+      &[color="warning"] {
+        --background: rgba(255, 215, 0, 0.15);
+        --color: #ffd700;
+        border: 1px solid #ffd700;
+      }
+      
+      &[color="danger"] {
+        --background: rgba(255, 71, 87, 0.15);
+        --color: #ff4757;
+        border: 1px solid #ff4757;
+      }
+    }
+    
+    span {
+      color: var(--light-gray);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+  }
+  
+  ion-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    
+    p {
+      line-height: 1.5;
+      margin-bottom: 10px;
+      
+      &:last-of-type {
+        margin-bottom: 0;
+      }
+    }
+    
+    ion-list {
+      background: transparent;
+      padding: 0;
+      margin-top: 12px;
+      
+      ion-item {
+        --padding-start: 0;
+        --inner-padding-end: 0;
+        --min-height: auto;
+        margin-bottom: 8px;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+        
+        ion-label {
+          h3 {
+            margin: 4px 0;
+            line-height: 1.4;
+          }
+          
+          p {
+            margin: 2px 0;
+            line-height: 1.3;
+          }
+        }
+      }
+      
+      ion-note {
+        color: var(--secondary-green);
+        font-style: italic;
+      }
+    }
+    
+    > div:last-child {
+      margin-top: auto;
+      padding-top: 12px;
+      
+      ion-button {
+        font-weight: 600;
+        height: 40px;
+        border-radius: 10px;
+        text-transform: none;
+        letter-spacing: 0.3px;
+        
+        &[fill="outline"] {
+          --border-width: 2px;
+        }
+      }
+    }
   }
   
   .rutina-actions {
     display: flex;
-    gap: 4px;
+    gap: 6px;
+    
+    ion-button {
+      height: 40px;
+      min-width: 40px;
+      border-radius: 10px;
+    }
   }
 }
 

@@ -12,41 +12,78 @@
 
 // Header personalizado
 .custom-header {
-  ion-toolbar {
-    --background: var(--dark-bg);
-    --border-color: var(--border-color);
+  --background: var(--primary-green);
+  --background-hover: var(--secondary-green);
+  --background-activated: var(--secondary-green);
+  --color: #000000;
+  --border-radius: 12px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: none;
+  letter-spacing: 0.3px;
+  transition: all 0.15s ease;
+
+  /* Agregar borde al botón */
+  border: 2px solid rgba(0, 0, 0, 0.3) !important;
+  outline: none !important;
+  box-shadow: none !important;
+
+  &:hover:not([disabled]) {
+    transform: translateY(-1px);
+    border-color: rgba(0, 0, 0, 0.5) !important;
   }
-}
 
-.custom-toolbar {
-  --background: var(--dark-bg);
-  border-bottom: 1px solid var(--border-color);
-}
+  &[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
-.custom-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  font-size: 1.3rem;
-  color: var(--text-primary);
-  letter-spacing: 0.5px;
-}
-
-.title-icon {
-  color: var(--primary-green);
-  font-size: 1.8rem;
-  filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.4));
-}
-
-.logout-button {
-  --color: var(--primary-green);
-  --background-hover: rgba(0, 255, 136, 0.1);
-  font-size: 1.5rem;
-  
   ion-icon {
-    font-size: 1.8rem;
+    font-size: 1.1rem;
+    margin-right: 4px;
   }
+
+  span {
+    font-weight: 600;
+  }
+
+  &:focus,
+  &:active {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  }
+
+/* Asegurar que no haya borde proveniente del shadow DOM de ion-button */
+ion-button.password-button,
+.password-button {
+  --box-shadow: none !important;
+  --border-radius: 12px;
+  --border: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Part selector para afectar el botón nativo dentro del shadow DOM de ion-button */
+ion-button.password-button::part(native),
+ion-button.password-button::part(native) .button-native,
+.password-button::part(native) {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* También cubrir el caso del elemento nativo dentro del template */
+.password-button .button-native,
+.password-button button.button-native {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 // Contenido
@@ -343,6 +380,7 @@
   letter-spacing: 0.3px;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
+  border: none !important; // Eliminar cualquier borde
 
   &:hover:not([disabled]) {
     box-shadow: 0 4px 12px rgba(0, 255, 136, 0.5);
