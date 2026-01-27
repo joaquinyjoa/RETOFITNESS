@@ -41,18 +41,20 @@ export class PanelRecepcionComponent implements OnInit {
     }
 
     try {
-
+      // OPTIMIZACIÓN: Cargar en paralelo y con límite razonable (max 500 registros)
       if (this.filtro === 'pendientes') {
         this.clientes = await this.clienteService.listarClientesPendientes();
       } else if (this.filtro === 'aprobados') {
         this.clientes = await this.clienteService.listarClientes();
       } else {
-        // Obtener todos (pendientes + aprobados)
-        const pendientes = await this.clienteService.listarClientesPendientes();
-        const aprobados = await this.clienteService.listarClientes();
-        this.clientes = [...pendientes, ...aprobados].sort((a, b) => 
-          (a.nombre || '').localeCompare(b.nombre || '')
-        );
+        // Obtener todos en paralelo en lugar de secuencial
+        const [pendientes, aprobados] = await Promise.all([
+          this.clienteService.listarClientesPendientes(),
+          this.clienteService.listarClientes()
+        ]);
+        this.clientes = [...pendientes, ...aprobados]
+          .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''))
+          .slice(0, 500); // Límite de 500 registros para evitar sobrecarga
       }
 
       this.aplicarFiltroCorreo();

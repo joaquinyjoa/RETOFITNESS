@@ -86,71 +86,45 @@ export class AuthService {
 
       const userId = authData.user.id;
 
-      // Intentar obtener datos como cliente
-      const { data: cliente, error: clienteError } = await supabase
-        .from('clientes')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
+      // OPTIMIZACIÓN: Buscar en paralelo en las 3 tablas en lugar de secuencial
+      const [clienteResult, entrenadorResult, recepcionResult] = await Promise.all([
+        supabase.from('clientes').select('*').eq('user_id', userId).maybeSingle(),
+        supabase.from('entrenadores').select('*').eq('user_id', userId).maybeSingle(),
+        supabase.from('recepcion').select('*').eq('user_id', userId).maybeSingle()
+      ]);
 
-      if (clienteError) {
-        console.error('AuthService: Error al buscar cliente:', clienteError);
-        console.error('AuthService: Status:', clienteError.code, clienteError.message);
-      }
-
-      if (cliente) {
-        // Validar que el cliente esté habilitado (campo Estado con mayúscula)
-        if (cliente.Estado === false) {
+      // Verificar cliente
+      if (clienteResult.data) {
+        // Validar que el cliente esté habilitado
+        if (clienteResult.data.Estado === false) {
           return {
             success: false,
             error: 'Tu cuenta no ha sido habilitada por recepción. Por favor contacta con el gimnasio.'
           };
         }
-        
         return {
           success: true,
-          usuario: {
-            tipo: 'cliente',
-            data: cliente
-          }
+          usuario: { tipo: 'cliente', data: clienteResult.data }
         };
       }
 
-      // Si no es cliente, intentar como entrenador
-      const { data: entrenador, error: entrenadorError } = await supabase
-        .from('entrenadores')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (entrenador) {
+      // Verificar entrenador
+      if (entrenadorResult.data) {
         return {
           success: true,
-          usuario: {
-            tipo: 'entrenador',
-            data: entrenador
-          }
+          usuario: { tipo: 'entrenador', data: entrenadorResult.data }
         };
       }
 
-      // Si no es entrenador, intentar como recepción
-      const { data: recepcion, error: recepcionError } = await supabase
-        .from('recepcion')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (recepcion) {
+      // Verificar recepción
+      if (recepcionResult.data) {
         return {
           success: true,
-          usuario: {
-            tipo: 'recepcion',
-            data: recepcion
-          }
+          usuario: { tipo: 'recepcion', data: recepcionResult.data }
         };
       }
 
-      // Si no es ni cliente ni entrenador ni recepción, cerrar sesión
+      // Si no se encontró en ninguna tabla, cerrar sesión
       await supabase.auth.signOut();
       return { 
         success: false, 

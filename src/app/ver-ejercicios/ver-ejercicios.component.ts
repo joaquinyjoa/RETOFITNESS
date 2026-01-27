@@ -47,6 +47,9 @@ export class VerEjerciciosComponent implements OnInit {
   // Spinner global para operaciones de creación
   mostrarSpinnerGlobal = false;
 
+  // Debounce para búsqueda
+  private searchTimeout: any;
+
   // === RUTINAS ===
   rutinas: RutinaConDetalles[] = [];
   rutinasFiltradas: RutinaConDetalles[] = [];
@@ -190,16 +193,25 @@ export class VerEjerciciosComponent implements OnInit {
   }
 
   aplicarFiltros() {
-    this.ejerciciosFiltrados = this.ejercicios.filter(ejercicio => {
-      const coincideTexto = !this.filtroTexto || 
-        ejercicio.nombre.toLowerCase().includes(this.filtroTexto.toLowerCase()) ||
-        ejercicio.descripcion?.toLowerCase().includes(this.filtroTexto.toLowerCase());
-      
-      const coincideCategoria = !this.filtroCategoria || ejercicio.categoria === this.filtroCategoria;
-      const coincideMusculo = !this.filtroMusculo || ejercicio.musculo_principal === this.filtroMusculo;
+    // Cancelar búsqueda anterior si existe
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+
+    // Debounce de 300ms
+    this.searchTimeout = setTimeout(() => {
+      this.ejerciciosFiltrados = this.ejercicios.filter(ejercicio => {
+        const coincideTexto = !this.filtroTexto || 
+          ejercicio.nombre.toLowerCase().includes(this.filtroTexto.toLowerCase()) ||
+          ejercicio.descripcion?.toLowerCase().includes(this.filtroTexto.toLowerCase());
+        
+        const coincideCategoria = !this.filtroCategoria || ejercicio.categoria === this.filtroCategoria;
+        const coincideMusculo = !this.filtroMusculo || ejercicio.musculo_principal === this.filtroMusculo;
 
       return coincideTexto && coincideCategoria && coincideMusculo;
     });
+      this.cdr.detectChanges();
+    }, 300);
   }
 
   limpiarFiltros() {

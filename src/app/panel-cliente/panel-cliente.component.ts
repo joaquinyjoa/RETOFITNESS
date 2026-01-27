@@ -92,17 +92,22 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
         }
 
         if (data && data.length > 0) {
-          // Preparar nuevos datos sin limpiar los existentes hasta terminar
+          // OPTIMIZACIÓN: Cargar todas las rutinas en batch en lugar de N+1 queries
           const nuevoMap = new Map<number, any>();
           const nuevasRutinas: any[] = data;
+          const rutinaIds = [...new Set(data.map(r => r.rutina_id))];
+
+          // Cargar todos los detalles en paralelo
+          const detallesPromises = rutinaIds.map(id => this.rutinaService.obtenerRutinaPorId(id));
+          const detallesResults = await Promise.all(detallesPromises);
+          const detallesMap = new Map(rutinaIds.map((id, idx) => [id, detallesResults[idx].data]));
 
           for (const rutina of data) {
             const dia = rutina.dia_semana || 1;
             if (!nuevoMap.has(dia)) {
-              const { data: rutinaDetalle } = await this.rutinaService.obtenerRutinaPorId(rutina.rutina_id);
               nuevoMap.set(dia, {
                 ...rutina,
-                detalles: rutinaDetalle
+                detalles: detallesMap.get(rutina.rutina_id)
               });
             }
           }

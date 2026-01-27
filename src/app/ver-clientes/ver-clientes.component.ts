@@ -25,6 +25,9 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
   private ultimaCarga = 0;
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutos
   
+  // Debouncing para búsqueda
+  private searchTimeout: any;
+  
   // Modal de detalle
   isModalOpen = false;
   clienteSeleccionado: any = null;
@@ -115,23 +118,33 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
   }
 
   applyFilter() {
-    const term = (this.q || '').trim().toLowerCase();
-    if (!term) {
-      this.filteredClientes = [...this.clientes];
-      return;
+    // Cancelar búsqueda anterior si existe
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
     }
 
-    this.filteredClientes = this.clientes.filter(c => {
-      const fullName = ((c.nombre || '') + ' ' + (c.apellido || '')).toLowerCase();
-      const nombre = (c.nombre || '').toLowerCase();
-      const apellido = (c.apellido || '').toLowerCase();
-      const correo = (c.correo || '').toLowerCase();
-      
-      return fullName.includes(term) || 
-             nombre.includes(term) || 
-             apellido.includes(term) || 
-             correo.includes(term);
-    });
+    // Debounce de 300ms
+    this.searchTimeout = setTimeout(() => {
+      const term = (this.q || '').trim().toLowerCase();
+      if (!term) {
+        this.filteredClientes = [...this.clientes];
+        this.cdr.detectChanges();
+        return;
+      }
+
+      this.filteredClientes = this.clientes.filter(c => {
+        const fullName = ((c.nombre || '') + ' ' + (c.apellido || '')).toLowerCase();
+        const nombre = (c.nombre || '').toLowerCase();
+        const apellido = (c.apellido || '').toLowerCase();
+        const correo = (c.correo || '').toLowerCase();
+        
+        return fullName.includes(term) || 
+               nombre.includes(term) || 
+               apellido.includes(term) || 
+               correo.includes(term);
+      });
+      this.cdr.detectChanges();
+    }, 300);
   }
 
   verMas(cliente: any) {

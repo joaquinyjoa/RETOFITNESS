@@ -15,12 +15,10 @@ import {
   IonCardTitle,
   IonCardSubtitle,
   IonCardContent,
-  IonSpinner,
   IonChip,
   IonLabel,
   IonSegment,
   IonSegmentButton,
-  IonBadge,
   AlertController
 } from '@ionic/angular/standalone';
 import { RutinaService } from '../services/rutina.service';
@@ -51,12 +49,10 @@ import { SpinnerComponent } from '../spinner/spinner.component';
     IonCardTitle,
     IonCardSubtitle,
     IonCardContent,
-    IonSpinner,
     IonChip,
     IonLabel,
     IonSegment,
     IonSegmentButton,
-    IonBadge,
     SpinnerComponent
   ]
 })

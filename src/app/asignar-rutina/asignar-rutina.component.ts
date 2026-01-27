@@ -122,24 +122,24 @@ export class AsignarRutinaComponent implements OnInit {
     }, 10000);
     
     try {
-      // Cargar rutina
-      if (this.rutinaId) {
-        const resultado = await this.rutinaService.obtenerRutinaPorId(this.rutinaId);
-        
-        if (resultado.error) {
-          console.error('❌ Error al cargar rutina:', resultado.error);
-          clearTimeout(timeoutId);
-          this.loading = false;
-          await this.mostrarToast('Error al cargar la rutina', 'danger');
-          return;
-        }
-        
-        this.rutina = resultado.data;
-      }
-
-      // Cargar clientes
-      const clientes = await this.clienteService.listarClientesResumido();
+      // Cargar rutina y clientes en PARALELO
+      const [resultadoRutina, clientes] = await Promise.all([
+        this.rutinaId ? this.rutinaService.obtenerRutinaPorId(this.rutinaId) : Promise.resolve({ data: null, error: null }),
+        this.clienteService.listarClientesResumido()
+      ]);
       
+      // Procesar rutina
+      if (this.rutinaId && resultadoRutina.error) {
+        console.error('❌ Error al cargar rutina:', resultadoRutina.error);
+        clearTimeout(timeoutId);
+        this.loading = false;
+        await this.mostrarToast('Error al cargar la rutina', 'danger');
+        return;
+      }
+      
+      this.rutina = resultadoRutina.data;
+
+      // Procesar clientes
       this.clientes = clientes || [];
       this.clientesFiltrados = [...this.clientes];
     } catch (error) {

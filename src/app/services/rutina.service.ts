@@ -56,7 +56,34 @@ export interface RutinaConDetalles extends Rutina {
 })
 export class RutinaService {
   
+  // OPTIMIZACIÓN: Caché simple con TTL de 2 minutos para reducir queries repetidas
+  private cache = new Map<string, { data: any; timestamp: number }>();
+  private readonly CACHE_TTL = 2 * 60 * 1000; // 2 minutos
+
   constructor(private supabaseService: SupabaseService) {}
+
+  private getCached<T>(key: string): T | null {
+    const cached = this.cache.get(key);
+    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+      return cached.data as T;
+    }
+    this.cache.delete(key);
+    return null;
+  }
+
+  private setCache(key: string, data: any): void {
+    this.cache.set(key, { data, timestamp: Date.now() });
+  }
+
+  invalidateCache(pattern?: string): void {
+    if (!pattern) {
+      this.cache.clear();
+    } else {
+      Array.from(this.cache.keys())
+        .filter(k => k.includes(pattern))
+        .forEach(k => this.cache.delete(k));
+    }
+  }
 
   // ============================================
   // MÉTODOS AUXILIARES
@@ -173,8 +200,15 @@ export class RutinaService {
 
   /**
    * Obtener una rutina por ID con sus ejercicios
+   * OPTIMIZADO: Usa caché con TTL de 2 minutos
    */
   async obtenerRutinaPorId(id: number): Promise<{ data: RutinaConDetalles | null; error: any }> {
+    const cacheKey = `rutina:${id}`;
+    const cached = this.getCached<RutinaConDetalles>(cacheKey);
+    if (cached) {
+      return { data: cached, error: null };
+    }
+
     try {
       const supabase = this.supabaseService['supabase'];
       
@@ -215,6 +249,7 @@ export class RutinaService {
         ejercicios: ejerciciosValidos
       };
 
+      this.setCache(cacheKey, rutinaCompleta);
       return { data: rutinaCompleta, error: null };
     } catch (error) {
       console.error('Error al obtener rutina por ID:', error);

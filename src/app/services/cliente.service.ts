@@ -6,9 +6,34 @@ import { SupabaseService, Cliente } from './supabase.service';
 })
 export class ClienteService {
 
+  // OPTIMIZACIÓN: Caché simple con TTL de 1 minuto para lista de clientes
+  private cache = new Map<string, { data: any; timestamp: number }>();
+  private readonly CACHE_TTL = 60 * 1000; // 1 minuto
+
   constructor(
     private supabaseService: SupabaseService
   ) {}
+
+  private getCached<T>(key: string): T | null {
+    const cached = this.cache.get(key);
+    if (!cached) return null;
+    
+    const now = Date.now();
+    if (now - cached.timestamp > this.CACHE_TTL) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    return cached.data as T;
+  }
+
+  private setCache(key: string, data: any): void {
+    this.cache.set(key, { data, timestamp: Date.now() });
+  }
+
+  invalidateCache(): void {
+    this.cache.clear();
+  }
   /**
    * Crear un nuevo cliente
    * @param clienteData - Datos del cliente
@@ -87,18 +112,27 @@ export class ClienteService {
    */
   async listarClientes(): Promise<any[]> {
     try {
+      // Verificar caché primero
+      const cached = this.getCached<any[]>('clientes_aprobados');
+      if (cached) {
+        return cached;
+      }
+
       // Reutilizamos supabaseService para consultar la tabla 'clientes'
       const { data, error } = await this.supabaseService['supabase']
         .from('clientes')
         .select('*')
-        .eq('Estado', true); // Solo clientes aprobados
+        .eq('Estado', true) // Solo clientes aprobados
+        .limit(500); // Límite para evitar sobrecarga
 
       if (error) {
         console.error('ClienteService.listarClientes error:', error);
         return [];
       }
 
-      return Array.isArray(data) ? data : [];
+      const result = Array.isArray(data) ? data : [];
+      this.setCache('clientes_aprobados', result);
+      return result;
     } catch (error: any) {
       console.error('Error en listarClientes:', error);
       return [];
@@ -110,18 +144,27 @@ export class ClienteService {
    */
   async listarClientesResumido(): Promise<any[]> {
     try {
+      // Verificar caché
+      const cached = this.getCached<any[]>('clientes_resumido');
+      if (cached) {
+        return cached;
+      }
+
       const { data, error } = await this.supabaseService['supabase']
         .from('clientes')
         .select('*')
         .eq('Estado', true) // Solo clientes aprobados
-        .order('nombre', { ascending: true });
+        .order('nombre', { ascending: true })
+        .limit(500); // Límite
 
       if (error) {
         console.error('❌ Error al listar clientes:', error.message);
         return [];
       }
 
-      return Array.isArray(data) ? data : [];
+      const result = Array.isArray(data) ? data : [];
+      this.setCache('clientes_resumido', result);
+      return result;
     } catch (error: any) {
       console.error('❌ Error en listarClientesResumido:', error.message);
       return [];
@@ -133,19 +176,28 @@ export class ClienteService {
    */
   async listarClientesPendientes(): Promise<Cliente[]> {
     try {
+      // Verificar caché
+      const cached = this.getCached<Cliente[]>('clientes_pendientes');
+      if (cached) {
+        return cached;
+      }
+
       const { data, error } = await this.supabaseService
         .getClient()
         .from('clientes')
         .select('*')
         .eq('Estado', false)
-        .order('nombre', { ascending: true });
+        .order('nombre', { ascending: true })
+        .limit(200); // Límite menor para pendientes
 
       if (error) {
         console.error('Error al listar clientes pendientes:', error);
         return [];
       }
 
-      return data || [];
+      const result = data || [];
+      this.setCache('clientes_pendientes', result);
+      return result;
     } catch (error) {
       console.error('Error al listar clientes pendientes:', error);
       return [];
@@ -168,6 +220,9 @@ export class ClienteService {
         return false;
       }
 
+      // Invalidar caché
+      this.invalidateCache();
+
       return true;
     } catch (error) {
       console.error('Error al actualizar estado del cliente:', error);
@@ -180,6 +235,12 @@ export class ClienteService {
    */
   async obtenerClientePorId(id: number): Promise<any> {
     try {
+      // Verificar caché
+      const cacheKey = `cliente_${id}`;
+      const cached = this.getCached(cacheKey);
+      if (cached) {
+        return cached;
+      }
       
       const { data, error } = await this.supabaseService['supabase']
         .from('clientes')
@@ -190,6 +251,11 @@ export class ClienteService {
       if (error) {
         console.error('❌ ClienteService.obtenerClientePorId error:', error);
         return null;
+      }
+
+      // Guardar en caché
+      if (data) {
+        this.setCache(cacheKey, data);
       }
       return data;
     } catch (error: any) {

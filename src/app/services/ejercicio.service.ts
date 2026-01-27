@@ -7,12 +7,52 @@ import { Ejercicio } from '../models/ejercicio/ejercicio.interface';
 })
 export class EjercicioService {
 
+  // Caché en memoria con TTL
+  private cache = new Map<string, { data: any; timestamp: number }>();
+  private readonly CACHE_TTL = 2 * 60 * 1000; // 2 minutos
+
   constructor(private supabaseService: SupabaseService) {}
+
+  /**
+   * Obtener datos del caché si no han expirado
+   */
+  private getCached(key: string): any | null {
+    const cached = this.cache.get(key);
+    if (!cached) return null;
+
+    const now = Date.now();
+    if (now - cached.timestamp > this.CACHE_TTL) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return cached.data;
+  }
+
+  /**
+   * Guardar datos en caché
+   */
+  private setCache(key: string, data: any): void {
+    this.cache.set(key, { data, timestamp: Date.now() });
+  }
+
+  /**
+   * Invalidar todo el caché (llamar al crear/actualizar/eliminar)
+   */
+  private invalidateCache(): void {
+    this.cache.clear();
+  }
 
   /**
    * Listar todos los ejercicios activos
    */
   async listarEjercicios(): Promise<Ejercicio[]> {
+    // Verificar caché primero
+    const cached = this.getCached('ejercicios_activos');
+    if (cached) {
+      return cached;
+    }
+
     const tiempoInicio = performance.now();
     
     try {
@@ -20,7 +60,8 @@ export class EjercicioService {
         .from('ejercicios')
         .select('*')
         .eq('activo', true)
-        .order('nombre', { ascending: true });
+        .order('nombre', { ascending: true })
+        .limit(500); // Límite para evitar sobrecarga
 
       if (error) {
         console.error('🔴 [EjercicioService] Error en consulta:', error);
@@ -30,7 +71,12 @@ export class EjercicioService {
       const tiempoFin = performance.now();
       const duracion = (tiempoFin - tiempoInicio).toFixed(2);
 
-      return Array.isArray(data) ? data : [];
+      const result = Array.isArray(data) ? data : [];
+      
+      // Guardar en caché
+      this.setCache('ejercicios_activos', result);
+      
+      return result;
     } catch (error: any) {
       const tiempoFin = performance.now();
       const duracion = (tiempoFin - tiempoInicio).toFixed(2);
@@ -74,6 +120,10 @@ export class EjercicioService {
         
         return { success: false, error: error.message };
       }
+      
+      // Invalidar caché tras crear
+      this.invalidateCache();
+      
       return { success: true, data };
     } catch (error: any) {
       console.error('Error en crearEjercicio:', error);
@@ -112,6 +162,9 @@ export class EjercicioService {
         return { success: false, error: error.message };
       }
 
+      // Invalidar caché tras actualizar
+      this.invalidateCache();
+
       return { success: true, data };
     } catch (error: any) {
       console.error('Error en actualizarEjercicio:', error);
@@ -136,6 +189,9 @@ export class EjercicioService {
         console.error('EjercicioService: Error al eliminar ejercicio:', error);
         return { success: false, error: error.message };
       }
+
+      // Invalidar caché tras eliminar
+      this.invalidateCache();
 
       return { success: true };
     } catch (error: any) {
