@@ -19,6 +19,10 @@
   --background: var(--gradient-bg);
   position: relative;
   overflow: hidden;
+  height: 100vh;
+  max-height: 100vh;
+  box-sizing: border-box;
+  overscroll-behavior: none;
 }
 
 .login-container {
@@ -473,12 +477,28 @@ ion-content {
   --background: var(--gradient-bg);
   position: relative;
   overflow: hidden;
+  height: 100vh;
+  max-height: 100vh;
+  overscroll-behavior: none;
+}
+
+/* Forzar ocultamiento del scroll interno que usa Ionic en mobile */
+ion-content .inner-scroll,
+ion-content .scroll-content,
+ion-content .ion-content-scroll,
+ion-content .ion-scroll,
+ion-content .ion-page {
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
 }
 
 .login-container {
   position: relative;
   z-index: 10;
   min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
