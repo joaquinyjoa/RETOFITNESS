@@ -177,9 +177,19 @@ export class EjercicioService {
    */
   async desactivarEjercicio(id: number): Promise<{ success: boolean; error?: string }> {
     try {
-      // Eliminar PERMANENTEMENTE el ejercicio de la base de datos
-      // La relación ON DELETE CASCADE en rutinas_ejercicios se encargará
-      // de eliminar automáticamente todas las referencias en las rutinas
+      // Obtener el registro para revisar si tiene media en Supabase Storage
+      const { data: ejercicio, error: selectError } = await this.supabaseService['supabase']
+        .from('ejercicios')
+        .select('enlace_video')
+        .eq('id', id)
+        .single();
+
+      if (selectError) {
+        console.error('EjercicioService: Error al obtener ejercicio antes de eliminar:', selectError);
+        return { success: false, error: selectError.message };
+      }
+
+      // Eliminar el registro de la base de datos
       const { error } = await this.supabaseService['supabase']
         .from('ejercicios')
         .delete()
@@ -188,6 +198,32 @@ export class EjercicioService {
       if (error) {
         console.error('EjercicioService: Error al eliminar ejercicio:', error);
         return { success: false, error: error.message };
+      }
+
+      // Si el ejercicio tenía un enlace a Supabase Storage, intentar eliminar el objeto
+      try {
+        const url: string | undefined = ejercicio?.enlace_video;
+        if (url) {
+          const supabasePattern = /\/storage\/v1\/object\/public\/([^\/]+)\/(.+)$/;
+          const match = url.match(supabasePattern);
+          if (match) {
+            const bucket = match[1];
+            const filePath = decodeURIComponent(match[2]);
+            const { error: storageError } = await this.supabaseService['supabase']
+              .storage
+              .from(bucket)
+              .remove([filePath]);
+
+            if (storageError) {
+              // No detener la operación principal por un error de storage, solo loguear
+              console.warn('EjercicioService: No se pudo eliminar el archivo en Storage:', storageError);
+            } else {
+              console.log('EjercicioService: Archivo eliminado del bucket:', bucket, filePath);
+            }
+          }
+        }
+      } catch (storageErr) {
+        console.warn('EjercicioService: Error al intentar eliminar archivo en storage:', storageErr);
       }
 
       // Invalidar caché tras eliminar
