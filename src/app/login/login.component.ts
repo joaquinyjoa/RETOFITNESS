@@ -44,6 +44,9 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
   // Control de visibilidad de contraseña
   mostrarPassword: boolean = false;
 
+  // Disponibilidad del botón acceso rápido
+  accesoRapidoDisponible: boolean = false;
+
   private router = inject(Router);
   private authService = inject(AuthService);
   private toastController = inject(ToastController);
@@ -52,6 +55,11 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
   ngOnInit() {
     // Resetear spinner por si volvemos al componente
     this.mostrarSpinner = false;
+    try {
+      this.accesoRapidoDisponible = this.authService.isQuickAccessEnabled();
+    } catch (e) {
+      this.accesoRapidoDisponible = false;
+    }
   }
 
   ionViewWillEnter() {
@@ -247,6 +255,16 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
         
         // Verificar que se guardó correctamente
         const sesionGuardada = this.authService.obtenerSesion();
+        // Habilitar acceso rápido para este usuario (se guarda sólo el correo)
+        try {
+          const correoUsuario = (result.usuario.data as any)?.correo;
+          if (correoUsuario) {
+            this.authService.enableQuickAccess(correoUsuario);
+            this.accesoRapidoDisponible = true;
+          }
+        } catch (e) {
+          console.warn('No se pudo habilitar acceso rápido automáticamente', e);
+        }
       }
 
       // Mostrar éxito en la parte superior con nombre personalizado
@@ -334,6 +352,33 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
 
     // Proceder con el login automáticamente
     await this.onLogin();
+  }
+
+  // Usar acceso rápido si hay sesión guardada, o prellenar correo si no
+  async usarAccesoRapido() {
+    const sesion = this.authService.obtenerSesion();
+    if (sesion) {
+      try {
+        if (sesion.tipo === 'cliente') {
+          await this.router.navigate(['/panel-cliente']);
+        } else if (sesion.tipo === 'entrenador') {
+          await this.router.navigate(['/panel-entrenador']);
+        } else if (sesion.tipo === 'recepcion') {
+          await this.router.navigate(['/panel-recepcion']);
+        }
+        return;
+      } catch (navErr) {
+        console.warn('Error navegando desde acceso rápido', navErr);
+      }
+    }
+
+    const correo = this.authService.getQuickAccessEmail();
+    if (correo) {
+      this.credenciales.correo = correo;
+      await this.presentToast('No hay sesión activa. Se prellenó el correo; ingresa la contraseña.', 'top');
+    } else {
+      await this.presentToast('No hay acceso rápido configurado. Inicia sesión normalmente.', 'top');
+    }
   }
 
   // Método para mostrar toast usando ToastController nativo

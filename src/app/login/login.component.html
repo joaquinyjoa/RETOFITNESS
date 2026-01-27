@@ -97,12 +97,13 @@
 
       <!-- Acceso Rápido -->
       <ion-button 
+        *ngIf="accesoRapidoDisponible"
         class="quick-access-btn" 
         expand="block"
         fill="clear"
-        (click)="accesoRapidoEntrenador()">
+        (click)="usarAccesoRapido()">
         <ion-icon name="flash-outline" slot="start"></ion-icon>
-        Acceso Rápido Entrenador
+        Acceso Rápido
       </ion-button>
 
       <!-- Separador -->

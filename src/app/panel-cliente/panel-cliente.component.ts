@@ -33,7 +33,7 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
   rutinasPorDia: Map<number, any> = new Map();
   diaSeleccionado: number = 1;
   rutinaAsignada: any = null;
-  loading = false;
+  loading = true; // true al inicio para mostrar estado de carga
   mostrarSpinner = false; // controla el overlay animado durante recargas
 
   // Map para índices de mini carrusel de videos (0 = principal, 1 = alternativo)
@@ -132,13 +132,14 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
         }
       })();
 
-      await Promise.all([cargaPromise, delay(1500)]);
+      await Promise.all([cargaPromise, delay(500)]);
       this.cdr.detectChanges();
     } catch (error) {
       console.error('❌ [PanelCliente] Error:', error);
       this.toastService.mostrarError('Error al cargar tu rutina');
     } finally {
       this.mostrarSpinner = false;
+      this.loading = false;
       this.cdr.detectChanges();
     }
   }

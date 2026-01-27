@@ -22,6 +22,15 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    // Forzar nombre de APK generado (ej: retoFitness-debug-1.0.apk)
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def appName = "retoFitness"
+            def versionName = variant.versionName ?: "v"
+            outputFileName = "${appName}-${versionName}.apk"
+        }
+    }
 }
 
 repositories {

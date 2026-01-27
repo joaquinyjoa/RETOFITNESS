@@ -174,6 +174,48 @@ export class AuthService {
     localStorage.removeItem('usuario_logueado');
   }
 
+  // ====================
+  // Acceso Rápido (cliente-side)
+  // ====================
+  enableQuickAccess(correo: string) {
+    try {
+      const payload = { enabled: true, correo };
+      localStorage.setItem('acceso_rapido', JSON.stringify(payload));
+    } catch (e) {
+      console.warn('AuthService: No se pudo habilitar acceso rápido:', e);
+    }
+  }
+
+  disableQuickAccess() {
+    try {
+      localStorage.removeItem('acceso_rapido');
+    } catch (e) {
+      console.warn('AuthService: No se pudo deshabilitar acceso rápido:', e);
+    }
+  }
+
+  isQuickAccessEnabled(): boolean {
+    try {
+      const raw = localStorage.getItem('acceso_rapido');
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      return !!parsed && !!parsed.enabled && !!parsed.correo;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  getQuickAccessEmail(): string | null {
+    try {
+      const raw = localStorage.getItem('acceso_rapido');
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed?.correo || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   /**
    * Cambiar contraseña de un cliente (solo para recepción)
    * Usa función RPC de Supabase que actualiza auth.users
