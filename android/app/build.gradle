@@ -28,7 +28,7 @@ android {
         variant.outputs.all { output ->
             def appName = "retoFitness"
             def versionName = variant.versionName ?: "v"
-            outputFileName = "${appName}-${versionName}.apk"
+            outputFileName = "${appName}-0.1.0v.apk"
         }
     }
 }
