@@ -25,28 +25,47 @@
   backdrop-filter: blur(4px);
 }
 
-// Header personalizado
+// Header personalizado (neon removed)
 .custom-header {
   ion-toolbar {
-    --background: linear-gradient(90deg, #001a0f 0%, rgba(0,255,136,0.06) 50%, #002214 100%);
-    --color: #000000;
-    border-bottom: 1px solid rgba(0,255,136,0.12);
-    box-shadow: 0 8px 30px rgba(0,255,136,0.12), inset 0 0 40px rgba(0,255,136,0.03);
+    /* Neutral background instead of neon gradient */
+    --background: var(--dark-bg);
+    --color: var(--text-primary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: none;
     position: relative;
     z-index: 50;
-    animation: neon-pulse 2.8s ease-in-out infinite;
+    animation: none;
   }
 
   ion-toolbar::part(native) {
-    background: linear-gradient(90deg, #001a0f 0%, rgba(0,255,136,0.06) 50%, #002214 100%) !important;
-    color: #000000 !important;
-    box-shadow: 0 8px 30px rgba(0,255,136,0.12) !important;
+    background: var(--dark-bg) !important;
+    color: var(--text-primary) !important;
+    box-shadow: none !important;
   }
+}
+
+/* Forzar color neutro en el título y el icono dentro de esta vista
+   para evitar que estilos globales apliquen el neón */
+ion-title.custom-title,
+ion-title.custom-title .title-icon,
+.custom-title {
+  color: var(--text-primary) !important;
+  text-shadow: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  background: none !important;
+}
+
+.custom-title .title-icon {
+  color: var(--text-primary) !important;
+  filter: none !important;
+  text-shadow: none !important;
 }
 
 .custom-toolbar {
   --background: var(--dark-bg);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .back-button {
@@ -70,16 +89,39 @@
 }
 
 .title-icon {
-  color: var(--primary-green);
+  color: var(--text-primary);
   font-size: 1.8rem;
-  filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.4));
+  filter: none;
   vertical-align: -7px;
   margin-bottom: -1px;
 }
 
 ion-title {
-  color: var(--primary-green);
-  text-shadow: 0 0 10px rgba(0,255,136,0.45);
+  color: var(--text-primary);
+  text-shadow: none;
+  font-weight: 800;
+}
+.custom-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.3rem;
+  letter-spacing: 0.5px;
+  /* Make title neon green */
+  color: var(--primary-green) !important;
+  text-shadow: 0 0 10px rgba(0,255,136,0.45) !important;
+}
+
+.custom-title .title-icon {
+  color: var(--primary-green) !important;
+  filter: drop-shadow(0 0 8px rgba(0,255,136,0.45)) !important;
+  font-size: 1.8rem;
+  vertical-align: -7px;
+  margin-bottom: -1px;
+}
+
+ion-title.custom-title {
   font-weight: 800;
 }
 
@@ -172,7 +214,17 @@ ion-title {
   margin: 0 0 6px 0;
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--text-primary);
+.back-button {
+  /* Ensure back button is neutral, not neon */
+  --color: var(--text-primary) !important;
+  --background-hover: rgba(255,255,255,0.02) !important;
+  font-size: 1.5rem;
+  ion-icon {
+    font-size: 1.8rem;
+    color: var(--text-primary) !important;
+    filter: none !important;
+  }
+}
   letter-spacing: 0.3px;
 }
 

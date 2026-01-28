@@ -1,0 +1,195 @@
+<ion-header class="custom-header">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="volver()">
+        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>
+      <ion-icon name="person-circle-outline" class="title-icon"></ion-icon>
+      Modificar Perfil
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="custom-content">
+  <div class="container">
+  
+
+    <!-- Formulario -->
+    <form *ngIf="cliente" (ngSubmit)="guardarCambios()">
+      
+      <!-- Datos Personales -->
+      <div class="section-card">
+        <h2 class="section-title">
+          <ion-icon name="person-outline"></ion-icon>
+          Datos Personales
+        </h2>
+        
+        <ion-item class="custom-item">
+          <ion-label position="stacked">Nombre *</ion-label>
+          <ion-input [(ngModel)]="cliente.nombre" name="nombre" type="text" required></ion-input>
+        </ion-item>
+
+        <ion-item class="custom-item">
+          <ion-label position="stacked">Apellido</ion-label>
+          <ion-input [(ngModel)]="cliente.apellido" name="apellido" type="text"></ion-input>
+        </ion-item>
+
+        <ion-item class="custom-item">
+          <ion-label position="stacked">Edad *</ion-label>
+          <ion-input [(ngModel)]="cliente.edad" name="edad" type="number" min="1" max="120" required></ion-input>
+        </ion-item>
+
+        <ion-item class="custom-item">
+          <ion-label position="stacked">Género</ion-label>
+          <ion-select [(ngModel)]="cliente.genero" name="genero" placeholder="Seleccionar">
+            <ion-select-option value="masculino">Masculino</ion-select-option>
+            <ion-select-option value="femenino">Femenino</ion-select-option>
+            <ion-select-option value="otro">Otro</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item class="custom-item">
+          <ion-label position="stacked">Peso (kg)</ion-label>
+          <ion-input [(ngModel)]="cliente.peso" name="peso" type="number" step="0.1" min="0"></ion-input>
+        </ion-item>
+
+        <ion-item class="custom-item">
+          <ion-label position="stacked">Altura (m)</ion-label>
+          <ion-input [(ngModel)]="cliente.altura" name="altura" type="number" step="0.01" min="0"></ion-input>
+        </ion-item>
+
+        <ion-item class="custom-item">
+          <ion-label position="stacked">Nivel de Actividad</ion-label>
+          <ion-select [(ngModel)]="cliente.nivelActividad" name="nivelActividad" placeholder="Seleccionar">
+            <ion-select-option value="sedentario">Sedentario</ion-select-option>
+            <ion-select-option value="ligero">Ligero</ion-select-option>
+            <ion-select-option value="moderado">Moderado</ion-select-option>
+            <ion-select-option value="activo">Activo</ion-select-option>
+            <ion-select-option value="muy_activo">Muy Activo</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item class="custom-item">
+          <ion-label position="stacked">Objetivo</ion-label>
+          <ion-textarea [(ngModel)]="cliente.objetivo" name="objetivo" rows="3" placeholder="¿Cuál es tu objetivo?"></ion-textarea>
+        </ion-item>
+      </div>
+
+      <!-- Salud y Condiciones Médicas -->
+      <div class="section-card">
+        <h2 class="section-title">
+          <ion-icon name="medical-outline"></ion-icon>
+          Salud y Condiciones Médicas
+        </h2>
+
+        <ion-item class="custom-item checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.enfermedadCronicoa" name="enfermedadCronicoa" slot="start"></ion-checkbox>
+          <ion-label>Enfermedad Crónica</ion-label>
+        </ion-item>
+        
+        <ion-item *ngIf="cliente.enfermedadCronicoa" class="custom-item indented">
+          <ion-label position="stacked">Descripción de Enfermedad</ion-label>
+          <ion-textarea [(ngModel)]="cliente.descripcionEnfermedad" name="descripcionEnfermedad" rows="2"></ion-textarea>
+        </ion-item>
+
+        <ion-item class="custom-item checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.diabetes" name="diabetes" slot="start"></ion-checkbox>
+          <ion-label>Diabetes</ion-label>
+        </ion-item>
+
+        <ion-item class="custom-item checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.hipotension" name="hipotension" slot="start"></ion-checkbox>
+          <ion-label>Hipotensión</ion-label>
+        </ion-item>
+
+        <ion-item class="custom-item checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.hipotiroide" name="hipotiroide" slot="start"></ion-checkbox>
+          <ion-label>Hipotiroide</ion-label>
+        </ion-item>
+
+        <ion-item class="custom-item checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.hipotiroidismo" name="hipotiroidismo" slot="start"></ion-checkbox>
+          <ion-label>Hipotiroidismo</ion-label>
+        </ion-item>
+      </div>
+
+      <!-- Medicación y Tratamientos -->
+      <div class="section-card">
+        <h2 class="section-title">
+          <ion-icon name="medkit-outline"></ion-icon>
+          Medicación y Tratamientos
+        </h2>
+
+        <ion-item class="custom-item checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.medicacionRegular" name="medicacionRegular" slot="start"></ion-checkbox>
+          <ion-label>Medicación Regular</ion-label>
+        </ion-item>
+
+        <ion-item *ngIf="cliente.medicacionRegular" class="custom-item indented">
+          <ion-label position="stacked">Descripción de Medicación</ion-label>
+          <ion-textarea [(ngModel)]="cliente.descripcionMedicacion" name="descripcionMedicacion" rows="2"></ion-textarea>
+        </ion-item>
+
+        <ion-item class="custom-item checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.cirugias" name="cirugias" slot="start"></ion-checkbox>
+          <ion-label>Cirugías Previas</ion-label>
+        </ion-item>
+
+        <ion-item *ngIf="cliente.cirugias" class="custom-item indented">
+          <ion-label position="stacked">Descripción de Cirugías</ion-label>
+          <ion-textarea [(ngModel)]="cliente.descripcionCirugias" name="descripcionCirugias" rows="2"></ion-textarea>
+        </ion-item>
+
+        <ion-item class="custom-item checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.lesiones" name="lesiones" slot="start"></ion-checkbox>
+          <ion-label>Lesiones</ion-label>
+        </ion-item>
+
+        <ion-item *ngIf="cliente.lesiones" class="custom-item indented">
+          <ion-label position="stacked">Descripción de Lesiones</ion-label>
+          <ion-textarea [(ngModel)]="cliente.descripcionLesiones" name="descripcionLesiones" rows="2"></ion-textarea>
+        </ion-item>
+      </div>
+
+      <!-- Estilo de Vida -->
+      <div class="section-card">
+        <h2 class="section-title">
+          <ion-icon name="heart-outline"></ion-icon>
+          Estilo de Vida
+        </h2>
+
+        <ion-item class="custom-item checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.fuma" name="fuma" slot="start"></ion-checkbox>
+          <ion-label>Fuma</ion-label>
+        </ion-item>
+
+        <ion-item class="custom-item checkbox-item">
+          <ion-checkbox [(ngModel)]="cliente.alcohol" name="alcohol" slot="start"></ion-checkbox>
+          <ion-label>Consume Alcohol</ion-label>
+        </ion-item>
+
+        <ion-item class="custom-item">
+          <ion-label position="stacked">Horas de Sueño (promedio)</ion-label>
+          <ion-input [(ngModel)]="cliente.horas_sueno" name="horas_sueno" type="text" placeholder="Ej: 7-8 horas"></ion-input>
+        </ion-item>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="action-buttons">
+        <ion-button expand="block" type="submit" class="save-button" [disabled]="guardando">
+          <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+          {{ guardando ? 'Guardando...' : 'Guardar Cambios' }}
+        </ion-button>
+
+        <ion-button expand="block" fill="outline" (click)="volver()" [disabled]="guardando">
+          <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+          Cancelar
+        </ion-button>
+      </div>
+
+    </form>
+
+  </div>
+</ion-content>

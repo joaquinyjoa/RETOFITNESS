@@ -1053,3 +1053,29 @@
     font-style: italic;
   }
 }
+
+/* Botón Ver Más - Verde Neón Elegante */
+.neon-button {
+  --background: var(--primary-green);
+  --color: var(--black-bg);
+  --border-radius: 8px;
+  font-weight: 600;
+  height: 44px;
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.5);
+  transition: all 0.25s ease;
+
+  ion-icon {
+    color: var(--black-bg);
+  }
+
+  &:hover {
+    --background: var(--secondary-green);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.8), 0 4px 12px rgba(0, 255, 136, 0.3);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+  }
+}

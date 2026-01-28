@@ -5,6 +5,9 @@
       Mi Entrenamiento
     </ion-title>
     <ion-buttons slot="end">
+      <ion-button (click)="irAModificarPerfil()">
+        <ion-icon name="person-circle-outline" slot="icon-only"></ion-icon>
+      </ion-button>
       <ion-button (click)="cargarRutinaAsignada()">
         <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
       </ion-button>
@@ -97,8 +100,8 @@
             <div class="ejercicio-header">
               <div class="ejercicio-numero">{{ i + 1 }}</div>
               <div class="ejercicio-info">
-                <ion-card-title>{{ ej.ejercicio?.nombre }}</ion-card-title>
-                <ion-card-subtitle>{{ ej.ejercicio?.musculo_principal }}</ion-card-subtitle>
+                <ion-card-title>{{ getVideoCarouselIndex(i) === 0 ? (ej.ejercicio?.nombre || 'Ejercicio sin nombre') : (ej.ejercicio_alternativo?.nombre || 'Ejercicio alternativo') }}</ion-card-title>
+                <ion-card-subtitle>{{ getVideoCarouselIndex(i) === 0 ? (ej.ejercicio?.musculo_principal || 'N/A') : (ej.ejercicio_alternativo?.musculo_principal || 'N/A') }}</ion-card-subtitle>
               </div>
             </div>
           </ion-card-header>
@@ -156,7 +159,7 @@
                 {{ ej.peso_registrado ? 'Peso: ' + ej.peso_registrado + ' kg' : 'Registrar Peso' }}
               </ion-button>
               
-              <ion-button expand="block" color="tertiary" (click)="abrirModalDetalleEjercicio(ej)">
+              <ion-button expand="block" class="neon-button" (click)="abrirModalDetalleEjercicio(ej, i)">
                 <ion-icon name="information-circle-outline" slot="start"></ion-icon>
                 Ver Más
               </ion-button>
@@ -355,7 +358,7 @@
         <div class="detalle-section" *ngIf="ejercicioDetalle.equipamiento && ejercicioDetalle.equipamiento.length > 0">
           <h3><ion-icon name="barbell-outline"></ion-icon> Equipamiento</h3>
           <div class="badges-row">
-            <ion-badge color="medium" *ngFor="let eq of ejercicioDetalle.equipamiento">{{ eq }}</ion-badge>
+            <ion-badge color="neon-badge" *ngFor="let eq of ejercicioDetalle.equipamiento">{{ eq }}</ion-badge>
           </div>
         </div>
 

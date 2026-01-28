@@ -154,10 +154,10 @@
                       <div class="card-header">
                         <div class="numero-badge">{{ i + 1 }}</div>
                         <div class="titulo-ejercicio">
-                          <h4>{{ ej.ejercicio?.nombre || 'Ejercicio sin nombre' }}</h4>
-                          <p><ion-icon name="body-outline"></ion-icon>{{ ej.ejercicio?.musculo_principal || 'N/A' }}</p>
+                          <h4>{{ getVideoCarouselIndex(rutinaAsignada, i) === 0 ? (ej.ejercicio?.nombre || 'Ejercicio sin nombre') : (ej.ejercicio_alternativo?.nombre || 'Ejercicio alternativo') }}</h4>
+                          <p><ion-icon name="body-outline"></ion-icon>{{ getVideoCarouselIndex(rutinaAsignada, i) === 0 ? (ej.ejercicio?.musculo_principal || 'N/A') : (ej.ejercicio_alternativo?.musculo_principal || 'N/A') }}</p>
                         </div>
-                        <ion-button fill="clear" size="small" (click)="cambiarEjercicio(rutinaAsignada, ej)" class="btn-swap">
+                        <ion-button fill="clear" size="small" (click)="abrirMenuCambiarEjercicio(rutinaAsignada, ej)" class="btn-swap">
                           <ion-icon name="swap-horizontal-outline"></ion-icon>
                         </ion-button>
                       </div>

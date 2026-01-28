@@ -18,6 +18,10 @@ export const routes: Routes = [
     loadComponent: () => import('./panel-cliente/panel-cliente.component').then((m) => m.PanelClienteComponent),
   },
   {
+    path: 'modificar-cliente',
+    loadComponent: () => import('./modificar-cliente/modificar-cliente.component').then((m) => m.ModificarClienteComponent),
+  },
+  {
     path: 'panel-entrenador',
     loadComponent: () => import('./panel-entrenador/panel-entrenador.component').then((m) => m.PanelEntrenadorComponent),
   },

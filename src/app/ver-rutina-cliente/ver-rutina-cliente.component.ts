@@ -369,6 +369,190 @@ export class VerRutinaClienteComponent implements OnInit {
     }
   }
 
+  /**
+   * Abre un menú para elegir si cambiar el ejercicio principal o alternativo
+   */
+  async abrirMenuCambiarEjercicio(rutinaCliente: any, ejercicioPersonalizado: any) {
+    const buttons: any[] = [
+      {
+        text: 'Cambiar ejercicio principal',
+        icon: 'swap-horizontal-outline',
+        handler: () => {
+          this.cambiarEjercicioPrincipal(rutinaCliente, ejercicioPersonalizado);
+        }
+      }
+    ];
+
+    // Si tiene alternativo o queremos agregar uno
+    if (ejercicioPersonalizado.ejercicio_alternativo_id) {
+      buttons.push({
+        text: 'Cambiar ejercicio alternativo',
+        icon: 'repeat-outline',
+        handler: () => {
+          this.cambiarEjercicioAlternativo(rutinaCliente, ejercicioPersonalizado);
+        }
+      });
+      buttons.push({
+        text: 'Eliminar ejercicio alternativo',
+        icon: 'trash-outline',
+        role: 'destructive',
+        handler: () => {
+          this.eliminarEjercicioAlternativo(rutinaCliente, ejercicioPersonalizado);
+        }
+      });
+    } else {
+      buttons.push({
+        text: 'Agregar ejercicio alternativo',
+        icon: 'add-circle-outline',
+        handler: () => {
+          this.cambiarEjercicioAlternativo(rutinaCliente, ejercicioPersonalizado);
+        }
+      });
+    }
+
+    buttons.push({
+      text: 'Cancelar',
+      icon: 'close',
+      role: 'cancel'
+    });
+
+    const actionSheet = await this.alertController.create({
+      header: 'Opciones de ejercicio',
+      buttons
+    });
+
+    await actionSheet.present();
+  }
+
+  /**
+   * Cambiar el ejercicio principal (redirige al configurador)
+   */
+  async cambiarEjercicioPrincipal(rutinaCliente: any, ejercicioPersonalizado: any) {
+    if (this.clienteId) {
+      this.router.navigate(['/configurar-ejercicio', ejercicioPersonalizado.id, this.clienteId]);
+    }
+  }
+
+  /**
+   * Cambiar o agregar ejercicio alternativo para este cliente específico
+   */
+  async cambiarEjercicioAlternativo(rutinaCliente: any, ejercicioPersonalizado: any) {
+    this.mostrarSpinner = true;
+    this.cdr.detectChanges();
+
+    try {
+      // Cargar todos los ejercicios disponibles
+      const ejercicios = await this.ejercicioService.listarEjercicios();
+      
+      // Filtrar el ejercicio principal actual
+      const ejerciciosFiltrados = ejercicios.filter(ej => ej.id !== ejercicioPersonalizado.ejercicio_id);
+
+      const alert = await this.alertController.create({
+        header: ejercicioPersonalizado.ejercicio_alternativo_id ? 'Cambiar alternativo' : 'Agregar alternativo',
+        message: 'Selecciona el nuevo ejercicio alternativo para este cliente:',
+        inputs: ejerciciosFiltrados.slice(0, 50).map(ej => ({
+          type: 'radio' as const,
+          label: `${ej.nombre} (${ej.musculo_principal})`,
+          value: ej.id,
+          checked: ej.id === ejercicioPersonalizado.ejercicio_alternativo_id
+        })),
+        buttons: [
+          {
+            text: 'Cancelar',
+            role: 'cancel'
+          },
+          {
+            text: 'Guardar',
+            handler: async (ejercicioIdSeleccionado: number) => {
+              if (!ejercicioIdSeleccionado) return;
+              await this.guardarEjercicioAlternativo(ejercicioPersonalizado, ejercicioIdSeleccionado, ejercicios);
+            }
+          }
+        ]
+      });
+
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
+      await alert.present();
+    } catch (error) {
+      console.error('Error al cargar ejercicios:', error);
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
+      await this.toastService.mostrarError('Error al cargar ejercicios');
+    }
+  }
+
+  /**
+   * Guarda el ejercicio alternativo en la DB
+   */
+  async guardarEjercicioAlternativo(ejercicioPersonalizado: any, nuevoEjercicioId: number, todosEjercicios: any[]) {
+    this.mostrarSpinner = true;
+    this.cdr.detectChanges();
+
+    try {
+      const { success, error } = await this.rutinaService.actualizarEjercicioAlternativoCliente(
+        ejercicioPersonalizado.id,
+        nuevoEjercicioId
+      );
+
+      if (success) {
+        // Actualizar localmente
+        ejercicioPersonalizado.ejercicio_alternativo_id = nuevoEjercicioId;
+        ejercicioPersonalizado.ejercicio_alternativo = todosEjercicios.find(e => e.id === nuevoEjercicioId);
+        
+        this.cdr.detectChanges();
+        await this.toastService.mostrarExito('Ejercicio alternativo actualizado');
+      } else {
+        console.error('Error al actualizar alternativo:', error);
+        await this.toastService.mostrarError(error || 'Error al actualizar');
+      }
+    } catch (error) {
+      console.error('Error inesperado:', error);
+      await this.toastService.mostrarError('Error inesperado');
+    } finally {
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  /**
+   * Eliminar el ejercicio alternativo
+   */
+  async eliminarEjercicioAlternativo(rutinaCliente: any, ejercicioPersonalizado: any) {
+    const confirmado = await this.confirmService.confirm(
+      '¿Estás seguro de eliminar el ejercicio alternativo para este cliente?',
+      '¿Eliminar alternativo?'
+    );
+
+    if (!confirmado) return;
+
+    this.mostrarSpinner = true;
+    this.cdr.detectChanges();
+
+    try {
+      const { success, error } = await this.rutinaService.actualizarEjercicioAlternativoCliente(
+        ejercicioPersonalizado.id,
+        null
+      );
+
+      if (success) {
+        ejercicioPersonalizado.ejercicio_alternativo_id = null;
+        ejercicioPersonalizado.ejercicio_alternativo = null;
+        this.cdr.detectChanges();
+        await this.toastService.mostrarExito('Ejercicio alternativo eliminado');
+      } else {
+        console.error('Error al eliminar alternativo:', error);
+        await this.toastService.mostrarError(error || 'Error al eliminar');
+      }
+    } catch (error) {
+      console.error('Error inesperado:', error);
+      await this.toastService.mostrarError('Error inesperado');
+    } finally {
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
+    }
+  }
+
   filtrarEjercicios() {
     const filtro = this.filtroEjercicio.toLowerCase().trim();
     

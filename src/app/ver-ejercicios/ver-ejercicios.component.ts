@@ -2,7 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, AlertController } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { EjercicioService } from '../services/ejercicio.service';
 import { ToastService } from '../services/toast.service';
@@ -16,7 +16,7 @@ import { SpinnerComponent } from '../spinner/spinner.component';
   templateUrl: './ver-ejercicios.component.html',
   styleUrls: ['./ver-ejercicios.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule, RouterLink, SpinnerComponent]
+  imports: [CommonModule, IonicModule, FormsModule, SpinnerComponent]
 })
 export class VerEjerciciosComponent implements OnInit {
 

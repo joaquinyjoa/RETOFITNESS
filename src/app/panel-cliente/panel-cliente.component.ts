@@ -83,7 +83,8 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
 
       // Ejecutar carga y garantizar mínimo 1.5s de spinner visible
       const cargaPromise = (async () => {
-        const { data, error } = await this.rutinaService.obtenerRutinasDeCliente(this.clienteId!);
+        // CAMBIO: Usar el método que carga ejercicios personalizados del cliente
+        const { data, error } = await this.rutinaService.obtenerRutinasClienteConEjercicios(this.clienteId!);
 
         if (error) {
           console.error('❌ Error al cargar rutinas:', error);
@@ -92,22 +93,20 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
         }
 
         if (data && data.length > 0) {
-          // OPTIMIZACIÓN: Cargar todas las rutinas en batch en lugar de N+1 queries
+          // Crear mapa por día con ejercicios personalizados ya incluidos
           const nuevoMap = new Map<number, any>();
           const nuevasRutinas: any[] = data;
-          const rutinaIds = [...new Set(data.map(r => r.rutina_id))];
-
-          // Cargar todos los detalles en paralelo
-          const detallesPromises = rutinaIds.map(id => this.rutinaService.obtenerRutinaPorId(id));
-          const detallesResults = await Promise.all(detallesPromises);
-          const detallesMap = new Map(rutinaIds.map((id, idx) => [id, detallesResults[idx].data]));
 
           for (const rutina of data) {
             const dia = rutina.dia_semana || 1;
             if (!nuevoMap.has(dia)) {
+              // Los ejercicios personalizados ya vienen en rutina.ejercicios
               nuevoMap.set(dia, {
                 ...rutina,
-                detalles: detallesMap.get(rutina.rutina_id)
+                detalles: {
+                  ...rutina.rutina,
+                  ejercicios: rutina.ejercicios // Ejercicios personalizados del cliente
+                }
               });
             }
           }
@@ -194,43 +193,59 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
     this.showModalRegistrarPeso = true;
   }
 
-  async abrirModalDetalleEjercicio(ejercicio: any) {
+  async abrirModalDetalleEjercicio(ejercicio: any, ejercicioIndex: number) {
     this.showModalDetalleEjercicio = true;
     this.cargandoDetalle = true;
     this.ejercicioDetalle = null;
-
-    // Allow modal to render so spinner is visible before starting the 1.5s wait
     this.cdr.detectChanges();
-    await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
-      if (ejercicio.ejercicio_id || ejercicio.ejercicio?.id) {
-        const ejercicioId = ejercicio.ejercicio_id || ejercicio.ejercicio.id;
-
-        // Ejecutar obtención de datos y delay en paralelo
-        const [resultado] = await Promise.all([
-          this.rutinaService.obtenerEjercicioPorId(ejercicioId),
-          new Promise(resolve => setTimeout(resolve, 1500))
-        ]);
-
-        const { data, error } = resultado;
-
-        if (data && !error) {
-          this.ejercicioDetalle = data;
-        } else {
-          console.error('❌ Error al obtener ejercicio:', error);
-          this.toastService.mostrarError('Error al cargar detalles del ejercicio');
-        }
+      // Determinar si debe cargar el ejercicio principal o alternativo
+      const videoIndex = this.getVideoCarouselIndex(ejercicioIndex);
+      const esAlternativo = videoIndex === 1 && ejercicio.ejercicio_alternativo;
+      
+      let ejercicioId: number | undefined;
+      
+      if (esAlternativo) {
+        // Cargar ejercicio alternativo
+        ejercicioId = ejercicio.ejercicio_alternativo_id || ejercicio.ejercicio_alternativo?.id;
+        console.log('📋 Cargando ejercicio alternativo ID:', ejercicioId);
       } else {
+        // Cargar ejercicio principal
+        ejercicioId = ejercicio.ejercicio_id || ejercicio.ejercicio?.id;
+        console.log('📋 Cargando ejercicio principal ID:', ejercicioId);
+      }
+
+      if (!ejercicioId) {
         console.warn('⚠️ No se pudo determinar el ID del ejercicio');
-        this.toastService.mostrarError('No se pudo cargar el ejercicio');
+        await this.toastService.mostrarError('No se pudo cargar el ejercicio');
+        this.cargandoDetalle = false;
+        this.cdr.detectChanges();
+        return;
+      }
+
+      // Ejecutar carga y delay de 1.5s en paralelo
+      const [resultado] = await Promise.all([
+        this.rutinaService.obtenerEjercicioPorId(ejercicioId),
+        new Promise(resolve => setTimeout(resolve, 1500))
+      ]);
+
+      const { data, error } = resultado;
+
+      if (data && !error) {
+        this.ejercicioDetalle = data;
+        console.log('✅ Ejercicio cargado:', data.nombre);
+      } else {
+        console.error('❌ Error al obtener ejercicio:', error);
+        await this.toastService.mostrarError('Error al cargar detalles del ejercicio');
       }
     } catch (error) {
-      console.error('💥 Error inesperado:', error);
-      this.toastService.mostrarError('Error inesperado al cargar ejercicio');
+      console.error('💥 Error inesperado en abrirModalDetalleEjercicio:', error);
+      await this.toastService.mostrarError('Error inesperado al cargar ejercicio');
     } finally {
       this.cargandoDetalle = false;
       this.cdr.detectChanges();
+      console.log('🔄 Spinner ocultado, cargandoDetalle:', this.cargandoDetalle);
     }
   }
 
@@ -360,6 +375,10 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
   }
 
   // actualizarPesoSerie removed - now using [(ngModel)] for better UX
+
+  irAModificarPerfil() {
+    this.router.navigate(['/modificar-cliente']);
+  }
 
   async logout() {
     const ok = await this.confirmService.confirmExit('¿Deseas cerrar sesión y salir de la cuenta?', 'Cerrar sesión');

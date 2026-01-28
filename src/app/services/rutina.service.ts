@@ -778,6 +778,33 @@ export class RutinaService {
   }
 
   /**
+   * Actualizar el ejercicio alternativo para un cliente específico
+   */
+  async actualizarEjercicioAlternativoCliente(
+    ejercicioPersonalizadoId: number,
+    ejercicioAlternativoId: number | null
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const supabase = this.supabaseService['supabase'];
+      
+      const { error } = await supabase
+        .from('rutinas_clientes_ejercicios')
+        .update({ ejercicio_alternativo_id: ejercicioAlternativoId })
+        .eq('id', ejercicioPersonalizadoId);
+
+      if (error) {
+        console.error('Error al actualizar ejercicio alternativo del cliente:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error inesperado al actualizar ejercicio alternativo del cliente:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Obtener un ejercicio personalizado específico
    */
   async obtenerEjercicioPersonalizado(ejercicioPersonalizadoId: number): Promise<{ data: any | null; error: any }> {

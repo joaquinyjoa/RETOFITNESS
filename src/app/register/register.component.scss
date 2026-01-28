@@ -130,7 +130,7 @@ ion-content {
 
 .toolbar-back {
   --color: var(--primary-green);
-  --background: rgba(0, 255, 136, 0.1);
+  --background: transparent;
   --border-radius: 12px;
   --padding-start: 12px;
   --padding-end: 12px;
@@ -201,18 +201,35 @@ ion-button {
 
 /* Icona de retroceso en toolbar: neón */
 .back-icon {
-  color: var(--primary-green) !important;
+  color: inherit !important;
   font-size: 22px;
+  text-shadow: none !important;
+  filter: none !important;
 }
 
-/* Ajuste para botón de retroceso transparente */
+/* Ajuste para botón de retroceso transparente: sin borde ni resplandor */
 .toolbar-back {
-  --background: transparent;
+  --background: transparent !important;
   width: 44px;
   height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background-color: transparent !important;
+}
+
+/* Asegurar que cualquier ion-button con esta clase no muestre fondo o ripple verde */
+ion-button.toolbar-back,
+ion-button.toolbar-back[fill="clear"] {
+  --background: transparent !important;
+  --background-hover: transparent !important;
+  --background-activated: transparent !important;
+  --ripple-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* ===== Animaciones de transición de pasos mejoradas ===== */
