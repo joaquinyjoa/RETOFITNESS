@@ -379,7 +379,16 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
 
   // actualizarPesoSerie removed - now using [(ngModel)] for better UX
 
-  irAModificarPerfil() {
+  async irAModificarPerfil() {
+    this.mostrarSpinner = true;
+    this.cdr.detectChanges();
+
+    // Esperar 1.5 segundos con spinner visible
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    this.mostrarSpinner = false;
+    this.cdr.detectChanges();
+    
     this.router.navigate(['/modificar-cliente']);
   }
 

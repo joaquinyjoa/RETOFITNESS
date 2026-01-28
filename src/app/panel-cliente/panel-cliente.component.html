@@ -20,6 +20,11 @@
 
 <ion-content class="panel-content">
   
+  <!-- Spinner animado global -->
+  <div *ngIf="mostrarSpinner" class="global-spinner-overlay">
+    <app-spinner></app-spinner>
+  </div>
+
   <!-- Contenido principal -->
   <div class="main-container">
     
