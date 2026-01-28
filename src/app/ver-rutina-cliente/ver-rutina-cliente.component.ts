@@ -536,10 +536,15 @@ export class VerRutinaClienteComponent implements OnInit {
       );
 
       if (success) {
+        // Actualizar el objeto en memoria
         ejercicioPersonalizado.ejercicio_alternativo_id = null;
         ejercicioPersonalizado.ejercicio_alternativo = null;
+        
+        // Forzar detección de cambios
         this.cdr.detectChanges();
-        await this.toastService.mostrarExito('Ejercicio alternativo eliminado');
+        
+        // Mostrar toast de éxito sin esperar
+        this.toastService.mostrarExito('Ejercicio alternativo eliminado');
       } else {
         console.error('Error al eliminar alternativo:', error);
         await this.toastService.mostrarError(error || 'Error al eliminar');

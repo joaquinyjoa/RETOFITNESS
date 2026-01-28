@@ -75,8 +75,11 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
         return;
       }
 
-      // Mostrar spinner y mantener datos actuales hasta que la carga termine
+      // Mostrar spinner y limpiar datos actuales para forzar recarga completa
       this.mostrarSpinner = true;
+      this.rutinasAsignadas = [];
+      this.rutinasPorDia.clear();
+      this.rutinaAsignada = null;
       this.cdr.detectChanges();
 
       const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
