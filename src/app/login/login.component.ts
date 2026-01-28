@@ -286,7 +286,9 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
       
       // Navegar según el tipo de usuario inmediatamente
       try {
-        
+        this.mostrarSpinner = false;
+        this.enviando = false;
+        this.cdr.detectChanges();
         if (result.usuario?.tipo === 'cliente') {
           await this.router.navigate(['/panel-cliente']);
         } else if (result.usuario?.tipo === 'entrenador') {
@@ -358,6 +360,9 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
   async usarAccesoRapido() {
     const sesion = this.authService.obtenerSesion();
     if (sesion) {
+      this.mostrarSpinner = false;
+      this.enviando = false;
+      this.cdr.detectChanges();
       try {
         if (sesion.tipo === 'cliente') {
           await this.router.navigate(['/panel-cliente']);
