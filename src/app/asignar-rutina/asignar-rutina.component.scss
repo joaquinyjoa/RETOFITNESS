@@ -6,6 +6,26 @@
   }
 }
 
+/* Título de la cabecera en verde neón */
+.custom-header ion-toolbar ion-title {
+  color: #00ff88;
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.65), 0 0 20px rgba(0, 255, 136, 0.12);
+  font-weight: 700;
+}
+
+.custom-header ion-toolbar ion-title ion-icon {
+  color: #00ff88;
+  filter: drop-shadow(0 0 6px rgba(0,255,136,0.45));
+}
+
+/* Icono de la cabecera (flecha atrás) */
+.custom-header ion-toolbar ion-buttons ion-icon,
+.custom-header ion-toolbar ion-button ion-icon,
+.custom-header ion-toolbar ion-buttons ion-button ion-icon {
+  color: #00ff88;
+  filter: drop-shadow(0 0 6px rgba(0,255,136,0.45));
+}
+
 .main-content {
   --background: #000000;
 }

@@ -329,13 +329,22 @@ export class RegisterComponent implements OnInit {
         // Validar que el correo no esté registrado en la base de datos
         this.showSpinner = true;
         this.cdr.detectChanges(); // Forzar actualización UI
-        
+
+        // Garantizar duración mínima del spinner
+        const spinnerStart = Date.now();
+        const minSpinnerDuration = 1500; // ms
+
         try {
           const emailExists = await this.clienteService.verificarEmailExistente(this.cliente.correo.trim());
-          
+
+          // Asegurar que el spinner esté visible al menos `minSpinnerDuration`
+          const elapsed = Date.now() - spinnerStart;
+          const remaining = Math.max(0, minSpinnerDuration - elapsed);
+          if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
+
           this.showSpinner = false;
           this.cdr.detectChanges(); // Forzar actualización UI
-          
+
           if (emailExists) {
             this.validationErrors.correo = 'Este correo ya está registrado. Por favor usa otro.';
             await this.toastService.mostrarError('El correo ya está en uso');
@@ -343,6 +352,11 @@ export class RegisterComponent implements OnInit {
           }
         } catch (error) {
           console.error('🔴 Error verificando correo:', error);
+
+          const elapsed = Date.now() - spinnerStart;
+          const remaining = Math.max(0, minSpinnerDuration - elapsed);
+          if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
+
           this.showSpinner = false;
           this.cdr.detectChanges(); // Forzar actualización UI
           await this.toastService.mostrarError('Error al verificar el correo. Intenta nuevamente.');

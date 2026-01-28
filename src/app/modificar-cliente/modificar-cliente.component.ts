@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
@@ -21,6 +21,7 @@ export class ModificarClienteComponent implements OnInit {
   private clienteService = inject(ClienteService);
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   cliente: any = null;
   clienteOriginal: any = null;
@@ -65,6 +66,7 @@ export class ModificarClienteComponent implements OnInit {
       this.toastService.mostrarError('Error al cargar los datos');
     } finally {
       this.cargando = false;
+      this.cdr?.detectChanges?.();
     }
   }
 
