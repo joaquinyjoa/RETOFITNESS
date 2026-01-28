@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
+import { SpinnerComponent } from '../spinner/spinner.component';
 import { Router } from '@angular/router';
 import { ClienteService } from '../services/cliente.service';
 import { AuthService } from '../services/auth.service';
@@ -13,7 +14,7 @@ import { getSupabaseClient } from '../services/supabase-client';
   templateUrl: './modificar-cliente.component.html',
   styleUrls: ['./modificar-cliente.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule]
+  imports: [CommonModule, IonicModule, FormsModule, SpinnerComponent]
 })
 export class ModificarClienteComponent implements OnInit {
   private router = inject(Router);
@@ -74,6 +75,7 @@ export class ModificarClienteComponent implements OnInit {
 
     try {
       this.guardando = true;
+      this.cdr?.detectChanges?.();
 
       // Preparar datos para actualizar (excluir campos no editables)
       const datosActualizar: any = {
@@ -81,8 +83,8 @@ export class ModificarClienteComponent implements OnInit {
         apellido: this.cliente.apellido || null,
         edad: this.cliente.edad,
         genero: this.cliente.genero || null,
-        peso: this.cliente.peso || null,
-        altura: this.cliente.altura || null,
+        peso: this.cliente.peso !== undefined && this.cliente.peso !== null && this.cliente.peso !== '' ? Number(this.cliente.peso) : null,
+        altura: this.cliente.altura !== undefined && this.cliente.altura !== null && this.cliente.altura !== '' ? Number(this.cliente.altura) : null,
         nivelActividad: this.cliente.nivelActividad || null,
         objetivo: this.cliente.objetivo || null,
         enfermedadCronicoa: this.cliente.enfermedadCronicoa || false,
@@ -102,12 +104,18 @@ export class ModificarClienteComponent implements OnInit {
         horas_sueno: this.cliente.horas_sueno || null
       };
 
-      // Actualizar en la base de datos
+      // Ejecutar actualización y esperar mínimo 1.5s mostrando spinner
       const supabase = getSupabaseClient();
-      const { error } = await supabase
+      const updatePromise = supabase
         .from('clientes')
         .update(datosActualizar)
         .eq('id', this.cliente.id);
+
+      const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+      const [updateResult] = await Promise.all([updatePromise, delay(1500)]);
+
+      const error = (updateResult as any)?.error;
 
       if (error) {
         console.error('Error al actualizar:', error);
