@@ -24,6 +24,7 @@ export class ModificarClienteComponent implements OnInit {
   cliente: any = null;
   clienteOriginal: any = null;
   guardando = false;
+  cargando = true;
 
   async ngOnInit() {
     await this.cargarDatosCliente();
@@ -31,6 +32,7 @@ export class ModificarClienteComponent implements OnInit {
 
   async cargarDatosCliente() {
     try {
+      this.cargando = true;
 
       const sesion = this.authService.obtenerSesion();
       
@@ -60,6 +62,8 @@ export class ModificarClienteComponent implements OnInit {
     } catch (error) {
       console.error('Error:', error);
       this.toastService.mostrarError('Error al cargar los datos');
+    } finally {
+      this.cargando = false;
     }
   }
 
