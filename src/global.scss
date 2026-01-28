@@ -560,3 +560,47 @@ ion-alert {
 	justify-content: center !important;
 }
 
+/* Neon action-sheet styling (applied via cssClass: 'neon-action-sheet') */
+.neon-action-sheet .alert-wrapper {
+	background: linear-gradient(180deg, rgba(8,8,8,0.98), rgba(18,18,18,0.98));
+	color: #ffffff;
+	border-radius: 14px;
+	overflow: visible;
+	box-shadow: 0 12px 40px rgba(0,255,136,0.06), 0 0 22px rgba(0,255,136,0.04) inset;
+	border-left: 6px solid var(--primary-green);
+	border-right: 6px solid var(--primary-green);
+}
+
+.neon-action-sheet .alert-head h2,
+.neon-action-sheet .alert-message {
+	color: #ffffff;
+}
+
+.neon-action-sheet .alert-button {
+	color: #ffffff;
+	font-weight: 600;
+	--padding-start: 16px;
+}
+
+.neon-action-sheet .alert-button[role="destructive"],
+.neon-action-sheet .alert-button.alert-button-role-destructive {
+	color: #ff6b6b;
+}
+
+.neon-action-sheet ion-icon {
+	color: var(--primary-green);
+}
+
+.neon-action-sheet .alert-button + .alert-button {
+	border-top: 1px solid rgba(255,255,255,0.03);
+}
+
+/* Destructive button style matching neon theme but red */
+.neon-alert .neon-destructive {
+	--background: transparent;
+	--color: #ff6b6b;
+	border: 1px solid rgba(255, 107, 107, 0.12);
+	box-shadow: 0 8px 30px rgba(255, 107, 107, 0.06);
+}
+
+

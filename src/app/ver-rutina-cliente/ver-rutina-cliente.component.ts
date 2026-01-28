@@ -396,6 +396,7 @@ export class VerRutinaClienteComponent implements OnInit {
         text: 'Eliminar ejercicio alternativo',
         icon: 'trash-outline',
         role: 'destructive',
+        cssClass: 'neon-destructive',
         handler: () => {
           this.eliminarEjercicioAlternativo(rutinaCliente, ejercicioPersonalizado);
         }
@@ -413,12 +414,14 @@ export class VerRutinaClienteComponent implements OnInit {
     buttons.push({
       text: 'Cancelar',
       icon: 'close',
-      role: 'cancel'
+      role: 'cancel',
+      cssClass: 'neon-cancel'
     });
 
     const actionSheet = await this.alertController.create({
       header: 'Opciones de ejercicio',
-      buttons
+      buttons,
+      cssClass: 'neon-alert'
     });
 
     await actionSheet.present();
@@ -459,16 +462,20 @@ export class VerRutinaClienteComponent implements OnInit {
         buttons: [
           {
             text: 'Cancelar',
-            role: 'cancel'
+            role: 'cancel',
+            cssClass: 'neon-cancel'
           },
           {
             text: 'Guardar',
+            role: 'confirm',
+            cssClass: 'neon-confirm',
             handler: async (ejercicioIdSeleccionado: number) => {
               if (!ejercicioIdSeleccionado) return;
               await this.guardarEjercicioAlternativo(ejercicioPersonalizado, ejercicioIdSeleccionado, ejercicios);
             }
           }
-        ]
+        ],
+        cssClass: 'neon-alert'
       });
 
       this.mostrarSpinner = false;
