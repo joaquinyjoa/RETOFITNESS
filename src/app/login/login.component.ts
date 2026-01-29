@@ -182,7 +182,9 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
   async onLogin() {
     this.intentoLogin = true;
     this.enviando = true;
+    // Iniciar spinner y registrar tiempo de inicio para asegurar 1.5s mínimo
     this.mostrarSpinner = true;
+    const _spinnerStart = Date.now();
     this.cdr.detectChanges();
     
     try {
@@ -194,15 +196,7 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
         this.validatePassword(true);
         
         this.enviando = false;
-        this.mostrarSpinner = false;
         this.cdr.detectChanges();
-        
-        // Asegurar que el spinner se detenga
-        setTimeout(() => {
-          this.mostrarSpinner = false;
-          this.cdr.detectChanges();
-        }, 0);
-        
         return;
       }
 
@@ -214,15 +208,7 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
       if (!correoLimpio || !passwordLimpio) {
         console.error('❌ Credenciales vacías después del trim');
         this.enviando = false;
-        this.mostrarSpinner = false;
         this.cdr.detectChanges();
-        
-        // Asegurar que el spinner se detenga
-        setTimeout(() => {
-          this.mostrarSpinner = false;
-          this.cdr.detectChanges();
-        }, 0);
-        
         await this.presentToast('Por favor ingresa correo y contraseña', 'top');
         return;
       }
@@ -232,20 +218,10 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
       
       if (!result.success) {
         this.enviando = false;
-        this.mostrarSpinner = false;
-        
-        // Forzar detección de cambios para ocultar spinner inmediatamente
+        // Forzar detección de cambios (no ocultar el spinner aquí)
         this.cdr.detectChanges();
-        
-        // Timeout adicional para asegurar que se actualice
-        setTimeout(() => {
-          this.mostrarSpinner = false;
-          this.cdr.detectChanges();
-        }, 0);
-        
         // Mostrar error con toast en la parte superior
         await this.presentToast(result.error || 'Error al iniciar sesión', 'top');
-        
         return;
       }
       
@@ -286,7 +262,7 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
       
       // Navegar según el tipo de usuario inmediatamente
       try {
-        this.mostrarSpinner = false;
+        // Mantener el spinner visible hasta cerrar el flujo (finally)
         this.enviando = false;
         this.cdr.detectChanges();
         if (result.usuario?.tipo === 'cliente') {
@@ -302,39 +278,26 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
 
       } catch (navError) {
         this.enviando = false;
-        this.mostrarSpinner = false;
         this.cdr.detectChanges();
-        
-        // Asegurar que el spinner se detenga
-        setTimeout(() => {
-          this.mostrarSpinner = false;
-          this.cdr.detectChanges();
-        }, 0);
-        
         await this.presentToast('Error al cargar el panel. Intenta de nuevo.', 'top');
         return;
       }
       
     } catch (error) {
       console.error('💥 ERROR INESPERADO:', error);
-      
       this.enviando = false;
-      this.mostrarSpinner = false;
-      
-      // Forzar detección de cambios para ocultar spinner inmediatamente
       this.cdr.detectChanges();
-      
-      // Timeout adicional para asegurar que se actualice
-      setTimeout(() => {
-        this.mostrarSpinner = false;
-        this.cdr.detectChanges();
-      }, 0);
-      
-      // Mostrar error
       await this.presentToast('Error inesperado durante el login', 'top');
-      
     } finally {
-      // Este finally se ejecuta siempre
+      // Garantizar que el spinner se muestre al menos 1.5s
+      try {
+        const elapsed = Date.now() - (_spinnerStart || Date.now());
+        if (elapsed < 1500) {
+          await new Promise(resolve => setTimeout(resolve, 1500 - elapsed));
+        }
+      } catch (e) {
+        // ignore
+      }
       this.enviando = false;
       this.mostrarSpinner = false;
       this.cdr.detectChanges();
@@ -358,11 +321,16 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
 
   // Usar acceso rápido si hay sesión guardada, o prellenar correo si no
   async usarAccesoRapido() {
+    // Mostrar spinner y marcar envío mientras se procesa el acceso rápido
+    this.mostrarSpinner = true;
+    this.enviando = true;
+    this.cdr.detectChanges();
+
+    // Mantener el spinner visible al menos 1.5 segundos
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
     const sesion = this.authService.obtenerSesion();
     if (sesion) {
-      this.mostrarSpinner = false;
-      this.enviando = false;
-      this.cdr.detectChanges();
       try {
         if (sesion.tipo === 'cliente') {
           await this.router.navigate(['/panel-cliente']);
@@ -371,9 +339,14 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
         } else if (sesion.tipo === 'recepcion') {
           await this.router.navigate(['/panel-recepcion']);
         }
+        // Si la navegación fue exitosa, fin
         return;
       } catch (navErr) {
         console.warn('Error navegando desde acceso rápido', navErr);
+        // Ocultar spinner si hay error de navegación
+        this.mostrarSpinner = false;
+        this.enviando = false;
+        this.cdr.detectChanges();
       }
     }
 
@@ -381,8 +354,16 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
     if (correo) {
       this.credenciales.correo = correo;
       await this.presentToast('No hay sesión activa. Se prellenó el correo; ingresa la contraseña.', 'top');
+      // Después de prellenar, ocultar spinner
+      this.mostrarSpinner = false;
+      this.enviando = false;
+      this.cdr.detectChanges();
     } else {
       await this.presentToast('No hay acceso rápido configurado. Inicia sesión normalmente.', 'top');
+      // Ocultar spinner cuando no hay acceso rápido
+      this.mostrarSpinner = false;
+      this.enviando = false;
+      this.cdr.detectChanges();
     }
   }
 

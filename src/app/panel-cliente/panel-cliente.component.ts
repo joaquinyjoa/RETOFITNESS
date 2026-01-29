@@ -29,6 +29,7 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
 
   clienteId: number | null = null;
   nombreCliente: string = '';
+  correoCliente: string = '';
   rutinasAsignadas: any[] = [];
   rutinasPorDia: Map<number, any> = new Map();
   diaSeleccionado: number = 1;
@@ -60,6 +61,8 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
       const clienteData = sesion.data as any;
       this.clienteId = clienteData.id;
       this.nombreCliente = clienteData.nombre || 'Cliente';
+      // Asignar correo si está disponible (soporta `correo` o `email`)
+      this.correoCliente = (clienteData.correo || clienteData.email || '') as string;
       
       await this.cargarRutinaAsignada();
     } else {

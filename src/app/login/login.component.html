@@ -84,14 +84,12 @@
 
       <!-- Botón de Iniciar Sesión -->
       <ion-button 
+        type="button"
         class="login-button" 
         expand="block"
-        (click)="onLogin()" 
-        [disabled]="enviando">
-        <ion-icon *ngIf="!enviando" name="log-in-outline" slot="start"></ion-icon>
-        <ion-spinner *ngIf="enviando" name="crescent" slot="start"></ion-spinner>
-        <span *ngIf="!enviando">Iniciar Sesión</span>
-        <span *ngIf="enviando">Verificando...</span>
+        (click)="onLogin()" >
+        <ion-icon name="log-in-outline" slot="start"></ion-icon>
+        <span>Iniciar Sesión</span>
       </ion-button>
 
       <!-- Acceso Rápido -->

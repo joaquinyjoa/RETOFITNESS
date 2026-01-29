@@ -114,6 +114,7 @@ import { AppComponent } from './app/app.component';
 
 // Registrar iconos (todos los necesarios para el proyecto)
 addIcons({
+  "medkit-outline": medicalOutline,
   "cloud-upload-outline": cloudUploadOutline,
   "swap-horizontal": swapHorizontal,
   "chevron-forward-outline": chevronForward,

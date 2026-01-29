@@ -18,7 +18,7 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="panel-content">
+<ion-content class="panel-content" [class.no-scroll]="mostrarSpinner">
   
   <!-- Spinner animado global -->
   <div *ngIf="mostrarSpinner" class="global-spinner-overlay">
@@ -31,6 +31,7 @@
     <!-- Saludo -->
     <div class="welcome-section">
       <h1>¡Hola, {{ nombreCliente }}!</h1>
+      <p class="user-email" *ngIf="correoCliente">{{ correoCliente }}</p>
       <p>Es hora de entrenar</p>
     </div>
 
