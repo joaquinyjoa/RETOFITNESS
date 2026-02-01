@@ -1,38 +1,27 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService, Cliente } from './supabase.service';
+import { CacheService } from './cache.service';
+import { StateService } from './state.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ClienteService {
 
-  // OPTIMIZACIÓN: Caché simple con TTL de 1 minuto para lista de clientes
-  private cache = new Map<string, { data: any; timestamp: number }>();
-  private readonly CACHE_TTL = 60 * 1000; // 1 minuto
+  // TTL aumentado a 15 minutos (antes: 1 minuto)
+  private readonly CACHE_TTL = 15 * 60 * 1000; // 15 minutos
 
   constructor(
-    private supabaseService: SupabaseService
+    private supabaseService: SupabaseService,
+    private cacheService: CacheService,
+    private stateService: StateService
   ) {}
 
-  private getCached<T>(key: string): T | null {
-    const cached = this.cache.get(key);
-    if (!cached) return null;
-    
-    const now = Date.now();
-    if (now - cached.timestamp > this.CACHE_TTL) {
-      this.cache.delete(key);
-      return null;
-    }
-    
-    return cached.data as T;
-  }
-
-  private setCache(key: string, data: any): void {
-    this.cache.set(key, { data, timestamp: Date.now() });
-  }
-
-  invalidateCache(): void {
-    this.cache.clear();
+  /**
+   * Invalidar caché de clientes
+   */
+  async invalidateCache(): Promise<void> {
+    await this.cacheService.invalidatePattern('clientes:');
   }
   /**
    * Crear un nuevo cliente
@@ -107,33 +96,52 @@ export class ClienteService {
   }
 
   /**
-   * Listar todos los clientes.
-   * Retorna un arreglo vacío en caso de error.
+   * Listar todos los clientes aprobados.
+   * ✅ Usa caché persistente con IndexedDB (TTL: 15 min)
    */
-  async listarClientes(): Promise<any[]> {
+  async listarClientes(signal?: AbortSignal): Promise<any[]> {
     try {
-      // Verificar caché primero
-      const cached = this.getCached<any[]>('clientes_aprobados');
+      const CACHE_KEY = 'clientes:aprobados';
+      
+      // Verificar caché primero (IndexedDB)
+      const cached = await this.cacheService.get<any[]>(CACHE_KEY, this.CACHE_TTL);
       if (cached) {
+        console.log('✅ Clientes aprobados cargados desde caché');
         return cached;
       }
 
-      // Reutilizamos supabaseService para consultar la tabla 'clientes'
-      const { data, error } = await this.supabaseService['supabase']
+      // Cargar desde Supabase
+      const query = this.supabaseService['supabase']
         .from('clientes')
         .select('*')
-        .eq('Estado', true) // Solo clientes aprobados
-        .limit(500); // Límite para evitar sobrecarga
+        .eq('Estado', true)
+        .limit(500);
+
+      // Agregar signal si está disponible (para cancelar requests)
+      if (signal) {
+        (query as any).abortSignal(signal);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
+        if (error.name === 'AbortError') throw error;
         console.error('ClienteService.listarClientes error:', error);
         return [];
       }
 
       const result = Array.isArray(data) ? data : [];
-      this.setCache('clientes_aprobados', result);
+      
+      // Guardar en caché persistente
+      await this.cacheService.set(CACHE_KEY, result);
+      console.log(`✅ ${result.length} clientes aprobados cargados y guardados en caché`);
+      
       return result;
     } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('⚠️ Request de clientes cancelado');
+        throw error;
+      }
       console.error('Error en listarClientes:', error);
       return [];
     }
@@ -141,71 +149,97 @@ export class ClienteService {
 
   /**
    * Listar clientes con solo los campos necesarios para la vista de lista (optimizado)
+   * ✅ Usa caché persistente
    */
-  async listarClientesResumido(): Promise<any[]> {
+  async listarClientesResumido(signal?: AbortSignal): Promise<any[]> {
     try {
+      const CACHE_KEY = 'clientes:resumido';
+      
       // Verificar caché
-      const cached = this.getCached<any[]>('clientes_resumido');
+      const cached = await this.cacheService.get<any[]>(CACHE_KEY, this.CACHE_TTL);
       if (cached) {
+        console.log('✅ Clientes resumidos cargados desde caché');
         return cached;
       }
 
-      const { data, error } = await this.supabaseService['supabase']
+      const query = this.supabaseService['supabase']
         .from('clientes')
-        .select('*')
-        .eq('Estado', true) // Solo clientes aprobados
+        .select('id, nombre, apellido, correo, Estado, genero')
+        .eq('Estado', true)
         .order('nombre', { ascending: true })
-        .limit(500); // Límite
+        .limit(500);
+
+      if (signal) {
+        (query as any).abortSignal(signal);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
+        if (error.name === 'AbortError') throw error;
         console.error('❌ Error al listar clientes:', error.message);
         return [];
       }
 
       const result = Array.isArray(data) ? data : [];
-      this.setCache('clientes_resumido', result);
+      await this.cacheService.set(CACHE_KEY, result);
+      console.log(`✅ ${result.length} clientes resumidos cargados`);
       return result;
     } catch (error: any) {
+      if (error.name === 'AbortError') throw error;
       console.error('❌ Error en listarClientesResumido:', error.message);
       return [];
     }
   }
 
   /**
-   * Listar TODOS los clientes (incluyendo pendientes) - Para recepción
+   * Listar clientes pendientes de aprobación
+   * ✅ Usa caché persistente
    */
-  async listarClientesPendientes(): Promise<Cliente[]> {
+  async listarClientesPendientes(signal?: AbortSignal): Promise<Cliente[]> {
     try {
+      const CACHE_KEY = 'clientes:pendientes';
+      
       // Verificar caché
-      const cached = this.getCached<Cliente[]>('clientes_pendientes');
+      const cached = await this.cacheService.get<Cliente[]>(CACHE_KEY, this.CACHE_TTL);
       if (cached) {
+        console.log('✅ Clientes pendientes cargados desde caché');
         return cached;
       }
 
-      const { data, error } = await this.supabaseService
+      const query = this.supabaseService
         .getClient()
         .from('clientes')
         .select('*')
         .eq('Estado', false)
         .order('nombre', { ascending: true })
-        .limit(200); // Límite menor para pendientes
+        .limit(200);
+
+      if (signal) {
+        (query as any).abortSignal(signal);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
+        if (error.name === 'AbortError') throw error;
         console.error('Error al listar clientes pendientes:', error);
         return [];
       }
 
       const result = data || [];
-      this.setCache('clientes_pendientes', result);
+      await this.cacheService.set(CACHE_KEY, result);
+      console.log(`✅ ${result.length} clientes pendientes cargados`);
       return result;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') throw error;
       console.error('Error al listar clientes pendientes:', error);
       return [];
     }
   }
 
   /**
-   * Aprobar cliente (cambiar Estado a true)
+   * Aprobar o desaprobar cliente (cambiar Estado)
    */
   async aprobarCliente(id: number, estado: boolean = true): Promise<boolean> {
     try {
@@ -220,8 +254,9 @@ export class ClienteService {
         return false;
       }
 
-      // Invalidar caché
-      this.invalidateCache();
+      // Invalidar caché y notificar cambios
+      await this.invalidateCache();
+      this.stateService.notifyClientesModificados();
 
       return true;
     } catch (error) {
@@ -231,14 +266,24 @@ export class ClienteService {
   }
 
   /**
+   * Alias para aprobarCliente (mantiene compatibilidad)
+   */
+  async actualizarEstado(id: number, estado: boolean): Promise<boolean> {
+    return this.aprobarCliente(id, estado);
+  }
+
+  /**
    * Obtener un cliente por su ID con todos los detalles
+   * ✅ Usa caché persistente
    */
   async obtenerClientePorId(id: number): Promise<any> {
     try {
+      const CACHE_KEY = `clientes:${id}`;
+      
       // Verificar caché
-      const cacheKey = `cliente_${id}`;
-      const cached = this.getCached(cacheKey);
+      const cached = await this.cacheService.get(CACHE_KEY, this.CACHE_TTL);
       if (cached) {
+        console.log(`✅ Cliente ${id} cargado desde caché`);
         return cached;
       }
       
@@ -253,9 +298,9 @@ export class ClienteService {
         return null;
       }
 
-      // Guardar en caché
+      // Guardar en caché persistente
       if (data) {
-        this.setCache(cacheKey, data);
+        await this.cacheService.set(CACHE_KEY, data);
       }
       return data;
     } catch (error: any) {

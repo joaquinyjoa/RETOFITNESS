@@ -240,10 +240,6 @@ export class RutinaService {
       // Filtrar ejercicios que fueron eliminados (ejercicio === null)
       const ejerciciosValidos = ejerciciosEnriquecidos.filter(ej => ej.ejercicio !== null);
 
-      if (ejerciciosEnriquecidos.length !== ejerciciosValidos.length) {
-        console.warn(`⚠️ Se filtraron ${ejerciciosEnriquecidos.length - ejerciciosValidos.length} ejercicios eliminados`);
-      }
-
       const rutinaCompleta: RutinaConDetalles = {
         ...rutina,
         ejercicios: ejerciciosValidos
@@ -339,10 +335,6 @@ export class RutinaService {
 
       // Filtrar ejercicios eliminados
       const ejerciciosValidos = ejerciciosEnriquecidos.filter(ej => ej.ejercicio !== null);
-
-      if (ejerciciosEnriquecidos.length !== ejerciciosValidos.length) {
-        console.warn(`⚠️ Se filtraron ${ejerciciosEnriquecidos.length - ejerciciosValidos.length} ejercicios eliminados`);
-      }
 
       return { data: ejerciciosValidos, error: null };
     } catch (error) {
@@ -867,39 +859,43 @@ export class RutinaService {
 
   /**
    * Obtener rutinas asignadas a un cliente con sus ejercicios personalizados
+   * ✅ OPTIMIZADO: Una sola query con JOIN anidado (elimina problema N+1)
    */
   async obtenerRutinasClienteConEjercicios(clienteId: number): Promise<{ data: any[] | null; error: any }> {
     try {
       const supabase = this.supabaseService['supabase'];
       
-      // Obtener rutinas asignadas
-      const { data: rutinasCliente, error: errorRutinas } = await supabase
+      // ✅ UNA SOLA QUERY con JOIN anidado - elimina el problema N+1
+      const { data, error } = await supabase
         .from('rutinas_clientes')
         .select(`
           *,
-          rutina:rutinas(*)
+          rutina:rutinas(*),
+          ejercicios:rutinas_clientes_ejercicios(
+            *,
+            ejercicio:ejercicios!rutinas_clientes_ejercicios_ejercicio_fk(*),
+            ejercicio_alternativo:ejercicios!rutinas_clientes_ejercicios_ejercicio_alternativo_id_fkey(*)
+          )
         `)
         .eq('cliente_id', clienteId)
         .order('fecha_asignacion', { ascending: false });
 
-      if (errorRutinas || !rutinasCliente) {
-        return { data: null, error: errorRutinas };
+      if (error) {
+        console.error('❌ Error al cargar rutinas:', error);
+        return { data: null, error };
       }
 
-      // Para cada rutina, obtener sus ejercicios personalizados
-      const rutinasConEjercicios = await Promise.all(
-        rutinasCliente.map(async (rc) => {
-          const { data: ejercicios } = await this.obtenerEjerciciosPersonalizados(rc.id);
-          return {
-            ...rc,
-            ejercicios: ejercicios || []
-          };
-        })
-      );
+      // Procesar ejercicios para filtrar los eliminados y ordenar
+      const rutinasConEjerciciosFiltrados = (data || []).map(rc => ({
+        ...rc,
+        ejercicios: (rc.ejercicios || [])
+          .filter((ej: any) => ej.ejercicio !== null) // Filtrar ejercicios eliminados
+          .sort((a: any, b: any) => a.orden - b.orden) // Ordenar por orden
+      }));
 
-      return { data: rutinasConEjercicios, error: null };
+      return { data: rutinasConEjerciciosFiltrados, error: null };
     } catch (error) {
-      console.error('Error al obtener rutinas de cliente con ejercicios:', error);
+      console.error('❌ Error al obtener rutinas de cliente con ejercicios:', error);
       return { data: null, error };
     }
   }

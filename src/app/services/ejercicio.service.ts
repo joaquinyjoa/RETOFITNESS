@@ -1,54 +1,39 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { Ejercicio } from '../models/ejercicio/ejercicio.interface';
+import { CacheService } from './cache.service';
+import { StateService } from './state.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EjercicioService {
 
-  // Caché en memoria con TTL
-  private cache = new Map<string, { data: any; timestamp: number }>();
-  private readonly CACHE_TTL = 2 * 60 * 1000; // 2 minutos
+  // TTL aumentado a 15 minutos (antes: 2 minutos)
+  private readonly CACHE_TTL = 15 * 60 * 1000; // 15 minutos
 
-  constructor(private supabaseService: SupabaseService) {}
-
-  /**
-   * Obtener datos del caché si no han expirado
-   */
-  private getCached(key: string): any | null {
-    const cached = this.cache.get(key);
-    if (!cached) return null;
-
-    const now = Date.now();
-    if (now - cached.timestamp > this.CACHE_TTL) {
-      this.cache.delete(key);
-      return null;
-    }
-
-    return cached.data;
-  }
+  constructor(
+    private supabaseService: SupabaseService,
+    private cacheService: CacheService,
+    private stateService: StateService
+  ) {}
 
   /**
-   * Guardar datos en caché
+   * Invalidar caché de ejercicios
    */
-  private setCache(key: string, data: any): void {
-    this.cache.set(key, { data, timestamp: Date.now() });
-  }
-
-  /**
-   * Invalidar todo el caché (llamar al crear/actualizar/eliminar)
-   */
-  private invalidateCache(): void {
-    this.cache.clear();
+  private async invalidateCache(): Promise<void> {
+    await this.cacheService.invalidatePattern('ejercicios:');
   }
 
   /**
    * Listar todos los ejercicios activos
+   * ✅ Usa caché persistente con IndexedDB
    */
-  async listarEjercicios(): Promise<Ejercicio[]> {
+  async listarEjercicios(signal?: AbortSignal): Promise<Ejercicio[]> {
+    const CACHE_KEY = 'ejercicios:activos';
+    
     // Verificar caché primero
-    const cached = this.getCached('ejercicios_activos');
+    const cached = await this.cacheService.get<Ejercicio[]>(CACHE_KEY, this.CACHE_TTL);
     if (cached) {
       return cached;
     }
@@ -56,14 +41,21 @@ export class EjercicioService {
     const tiempoInicio = performance.now();
     
     try {
-      const { data, error } = await this.supabaseService['supabase']
+      const query = this.supabaseService['supabase']
         .from('ejercicios')
         .select('*')
         .eq('activo', true)
         .order('nombre', { ascending: true })
-        .limit(500); // Límite para evitar sobrecarga
+        .limit(500);
+
+      if (signal) {
+        (query as any).abortSignal(signal);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
+        if (error.name === 'AbortError') throw error;
         console.error('🔴 [EjercicioService] Error en consulta:', error);
         return [];
       }
@@ -73,11 +65,12 @@ export class EjercicioService {
 
       const result = Array.isArray(data) ? data : [];
       
-      // Guardar en caché
-      this.setCache('ejercicios_activos', result);
+      // Guardar en caché persistente
+      await this.cacheService.set(CACHE_KEY, result);
       
       return result;
     } catch (error: any) {
+      if (error.name === 'AbortError') throw error;
       const tiempoFin = performance.now();
       const duracion = (tiempoFin - tiempoInicio).toFixed(2);
       console.error(`🔴 [EjercicioService] Error en listarEjercicios después de ${duracion}ms:`, error);
@@ -121,8 +114,9 @@ export class EjercicioService {
         return { success: false, error: error.message };
       }
       
-      // Invalidar caché tras crear
-      this.invalidateCache();
+      // Invalidar caché y notificar cambios
+      await this.invalidateCache();
+      this.stateService.notifyEjerciciosModificados();
       
       return { success: true, data };
     } catch (error: any) {
@@ -214,16 +208,13 @@ export class EjercicioService {
               .from(bucket)
               .remove([filePath]);
 
-            if (storageError) {
-              // No detener la operación principal por un error de storage, solo loguear
-              console.warn('EjercicioService: No se pudo eliminar el archivo en Storage:', storageError);
-            } else {
-              console.log('EjercicioService: Archivo eliminado del bucket:', bucket, filePath);
+            if (!storageError) {
+              // Archivo eliminado exitosamente
             }
           }
         }
       } catch (storageErr) {
-        console.warn('EjercicioService: Error al intentar eliminar archivo en storage:', storageErr);
+        // Error al eliminar archivo, continuar
       }
 
       // Invalidar caché tras eliminar

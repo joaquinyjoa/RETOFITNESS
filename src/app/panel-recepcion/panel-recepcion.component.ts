@@ -8,6 +8,8 @@ import { ConfirmService } from '../services/confirm.service';
 import { ClienteService } from '../services/cliente.service';
 import { Cliente } from '../services/supabase.service';
 import { SpinnerComponent } from '../spinner/spinner.component';
+import { ToastService } from '../services/toast.service';
+import { CacheService } from '../services/cache.service';
 
 @Component({
   selector: 'app-panel-recepcion',
@@ -24,43 +26,61 @@ export class PanelRecepcionComponent implements OnInit {
   filtro: 'todos' | 'pendientes' | 'aprobados' = 'todos';
   busquedaCorreo: string = '';
 
+  // ✅ AbortController para cancelar requests
+  private abortController: AbortController | null = null;
+
   private router = inject(Router);
   private authService = inject(AuthService);
   private confirmService = inject(ConfirmService);
   private clienteService = inject(ClienteService);
   private cdr = inject(ChangeDetectorRef);
+  private toastService = inject(ToastService);
+  private cacheService = inject(CacheService);
 
   ngOnInit() {
     this.cargarClientes();
   }
 
   async cargarClientes(mostrarSpinner: boolean = true) {
+    // ✅ Cancelar request anterior si existe
+    if (this.abortController) {
+      this.abortController.abort();
+    }
+
+    // Crear nuevo AbortController
+    this.abortController = new AbortController();
+    const signal = this.abortController.signal;
+
     if (mostrarSpinner) {
       this.mostrarSpinner = true;
       this.cdr.detectChanges();
     }
 
     try {
-      // OPTIMIZACIÓN: Cargar en paralelo y con límite razonable (max 500 registros)
+      // ✅ Cargar con AbortSignal para poder cancelar
       if (this.filtro === 'pendientes') {
-        this.clientes = await this.clienteService.listarClientesPendientes();
+        this.clientes = await this.clienteService.listarClientesPendientes(signal);
       } else if (this.filtro === 'aprobados') {
-        this.clientes = await this.clienteService.listarClientes();
+        this.clientes = await this.clienteService.listarClientes(signal);
       } else {
-        // Obtener todos en paralelo en lugar de secuencial
+        // Obtener todos en paralelo con señal de cancelación
         const [pendientes, aprobados] = await Promise.all([
-          this.clienteService.listarClientesPendientes(),
-          this.clienteService.listarClientes()
+          this.clienteService.listarClientesPendientes(signal),
+          this.clienteService.listarClientes(signal)
         ]);
         this.clientes = [...pendientes, ...aprobados]
           .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''))
-          .slice(0, 500); // Límite de 500 registros para evitar sobrecarga
+          .slice(0, 500);
       }
 
       this.aplicarFiltroCorreo();
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        return;
+      }
       console.error('Error al cargar clientes:', error);
     } finally {
+      this.abortController = null;
       if (mostrarSpinner) {
         setTimeout(() => {
           this.mostrarSpinner = false;
@@ -91,45 +111,35 @@ export class PanelRecepcionComponent implements OnInit {
     }
 
     const nuevoEstado = !cliente.Estado;
+    const estadoAnterior = cliente.Estado;
 
-    // Mostrar spinner solo si se está aprobando (nuevoEstado = true)
-    if (nuevoEstado) {
-      this.mostrarSpinner = true;
-      this.cdr.detectChanges();
-    }
+    // ✅ OPTIMISTIC UPDATE: Actualizar UI inmediatamente
+    cliente.Estado = nuevoEstado;
+    this.cdr.detectChanges();
 
     try {
-      // Si se aprueba, esperar al menos 1.5s antes de ocultar spinner
-      if (nuevoEstado) {
-        const [exito] = await Promise.all([
-          this.clienteService.aprobarCliente(cliente.id, nuevoEstado),
-          new Promise(resolve => setTimeout(resolve, 1500))
-        ]);
-
-        if (exito) {
-          cliente.Estado = nuevoEstado;
-          await this.cargarClientes(false); // No mostrar spinner adicional
-        } else {
-          console.error('Error al cambiar estado');
-          alert('Error al actualizar el estado del cliente');
-        }
-      } else {
-        // Si se desaprueba, no mostrar spinner
-        const exito = await this.clienteService.aprobarCliente(cliente.id, nuevoEstado);
-
-        if (exito) {
-          cliente.Estado = nuevoEstado;
-          await this.cargarClientes(false); // No mostrar spinner
-        } else {
-          console.error('Error al cambiar estado');
-          alert('Error al actualizar el estado del cliente');
-        }
+      // Guardar en backend (sin spinner, en background)
+      const success = await this.clienteService.actualizarEstado(cliente.id, nuevoEstado);
+      
+      if (!success) {
+        throw new Error('Error al actualizar estado');
       }
-    } finally {
-      if (nuevoEstado) {
-        this.mostrarSpinner = false;
-        this.cdr.detectChanges();
-      }
+
+      // Invalidar caché para próxima carga
+      await this.cacheService.invalidatePattern('clientes:');
+      
+      // Mostrar mensaje de éxito
+      const mensaje = nuevoEstado ? 'Cliente aprobado' : 'Cliente deshabilitado';
+      this.toastService.mostrarExito(mensaje);
+      
+    } catch (error) {
+      // ❌ ERROR: Revertir cambio
+      console.error('Error al cambiar estado:', error);
+      cliente.Estado = estadoAnterior;
+      this.cdr.detectChanges();
+      
+      // Mostrar mensaje de error
+      this.toastService.mostrarError('No se pudo actualizar el estado del cliente');
     }
   }
 
