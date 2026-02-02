@@ -170,25 +170,39 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
     this.router.navigate(['/register']);
   }
 
+  // Verificar conexión a internet
+  private verificarConexion(): boolean {
+    // En móvil, confiar en navigator.onLine es suficiente
+    return navigator.onLine;
+  }
+
   // Proceso de login
   async onLogin() {
     this.intentoLogin = true;
     this.enviando = true;
-    // Iniciar spinner y registrar tiempo de inicio para asegurar 1.5s mínimo
     this.mostrarSpinner = true;
-    const _spinnerStart = Date.now();
     this.cdr.detectChanges();
     
+    // Timeout de seguridad: apagar spinner después de 30 segundos máximo
+    const timeoutId = setTimeout(() => {
+      this.mostrarSpinner = false;
+      this.enviando = false;
+      this.cdr.detectChanges();
+    }, 30000);
+    
     try {
+      // Verificar conexión a internet PRIMERO
+      const tieneConexion = this.verificarConexion();
+      if (!tieneConexion) {
+        await this.presentToast('⚠️ Necesitas conectarte a internet para iniciar sesión', 'top');
+        return;
+      }
+
       // Validar datos antes del login
       if (!this.isFormValid()) {
-        
         // Forzar validación visual
         this.validateCorreo(true);
         this.validatePassword(true);
-        
-        this.enviando = false;
-        this.cdr.detectChanges();
         return;
       }
 
@@ -198,88 +212,54 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
 
       // Validar que no estén vacías después del trim
       if (!correoLimpio || !passwordLimpio) {
-        console.error('❌ Credenciales vacías después del trim');
-        this.enviando = false;
-        this.cdr.detectChanges();
         await this.presentToast('Por favor ingresa correo y contraseña', 'top');
         return;
       }
 
-      // Intentar login
-      const result = await this.authService.login(correoLimpio, passwordLimpio);
+      // Intentar login con timeout de 15 segundos
+      const loginPromise = this.authService.login(correoLimpio, passwordLimpio);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Login timeout')), 15000)
+      );
+      
+      const result = await Promise.race([loginPromise, timeoutPromise]) as any;
       
       if (!result.success) {
-        this.enviando = false;
-        // Forzar detección de cambios (no ocultar el spinner aquí)
-        this.cdr.detectChanges();
-        // Mostrar error con toast en la parte superior
         await this.presentToast(result.error || 'Error al iniciar sesión', 'top');
         return;
       }
       
       // Guardar sesión
       if (result.usuario) {
-        this.authService.guardarSesion(result.usuario);
-        
-        // Verificar que se guardó correctamente
-        const sesionGuardada = this.authService.obtenerSesion();
+        try {
+          this.authService.guardarSesion(result.usuario);
+        } catch (e) {
+          console.error('Error guardando sesión:', e);
+        }
       }
-
-      // Mostrar éxito en la parte superior con nombre personalizado
-      let mensajeBienvenida = '¡Bienvenido usuario!';
       
+      // Navegar según el tipo de usuario INMEDIATAMENTE
+      let ruta = '/login';
       if (result.usuario?.tipo === 'cliente') {
-        const clienteData = result.usuario.data as any;
-        const nombreCompleto = [clienteData.nombre, clienteData.apellido]
-          .filter(Boolean)
-          .join(' ') || 'cliente';
-        mensajeBienvenida = `¡Bienvenido ${nombreCompleto}!`;
+        ruta = '/panel-cliente';
       } else if (result.usuario?.tipo === 'entrenador') {
-        mensajeBienvenida = '¡Bienvenido entrenador!';
+        ruta = '/panel-entrenador';
       } else if (result.usuario?.tipo === 'recepcion') {
-        mensajeBienvenida = '¡Bienvenido recepción!';
+        ruta = '/panel-recepcion';
       }
       
-      await this.presentToast(mensajeBienvenida, 'top');
+      await this.router.navigate([ruta], { replaceUrl: true });
       
-      // Navegar según el tipo de usuario inmediatamente
-      try {
-        // Mantener el spinner visible hasta cerrar el flujo (finally)
-        this.enviando = false;
-        this.cdr.detectChanges();
-        if (result.usuario?.tipo === 'cliente') {
-          await this.router.navigate(['/panel-cliente'], { replaceUrl: true });
-        } else if (result.usuario?.tipo === 'entrenador') {
-          await this.router.navigate(['/panel-entrenador'], { replaceUrl: true });
-        } else if (result.usuario?.tipo === 'recepcion') {
-          await this.router.navigate(['/panel-recepcion'], { replaceUrl: true });
-        } else {
-          await this.presentToast('Correo no creado', 'top');
-          return;
-        }
-
-      } catch (navError) {
-        this.enviando = false;
-        this.cdr.detectChanges();
-        await this.presentToast('Error al cargar el panel. Intenta de nuevo.', 'top');
-        return;
+    } catch (error: any) {
+      console.error('ERROR EN LOGIN:', error);
+      if (error.message === 'Login timeout') {
+        await this.presentToast('El servidor está tardando mucho. Intenta nuevamente.', 'top');
+      } else {
+        await this.presentToast('Error inesperado durante el login', 'top');
       }
-      
-    } catch (error) {
-      console.error('💥 ERROR INESPERADO:', error);
-      this.enviando = false;
-      this.cdr.detectChanges();
-      await this.presentToast('Error inesperado durante el login', 'top');
     } finally {
-      // Garantizar que el spinner se muestre al menos 1.5s
-      try {
-        const elapsed = Date.now() - (_spinnerStart || Date.now());
-        if (elapsed < 1500) {
-          await new Promise(resolve => setTimeout(resolve, 1500 - elapsed));
-        }
-      } catch (e) {
-        // ignore
-      }
+      clearTimeout(timeoutId);
+      // SIEMPRE apagar spinner
       this.enviando = false;
       this.mostrarSpinner = false;
       this.cdr.detectChanges();

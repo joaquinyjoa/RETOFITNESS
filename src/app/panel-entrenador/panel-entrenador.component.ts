@@ -4,6 +4,7 @@ import { IonicModule, ViewWillEnter, ViewWillLeave } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { AuthService, UsuarioLogueado } from '../services/auth.service';
 import { ConfirmService } from '../services/confirm.service';
+import { ToastService } from '../services/toast.service';
 import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
@@ -21,6 +22,7 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
   private router = inject(Router);
   private authService = inject(AuthService);
   private confirmService = inject(ConfirmService);
+  private toastService = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
 
   // Getter para obtener datos del entrenador con type safety
@@ -81,8 +83,21 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
     this.mostrarSpinner = false;
   }
 
+  // Verificar conexión a internet
+  private verificarConexion(): boolean {
+    // En móvil, confiar en navigator.onLine es suficiente
+    return navigator.onLine;
+  }
+
   // Navegar a ver clientes
   async verClientes() {
+    // Verificar conexión antes de navegar
+    const tieneConexion = this.verificarConexion();
+    if (!tieneConexion) {
+      await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para ver los clientes');
+      return;
+    }
+
     // Mostrar overlay local y esperar 1.5s antes de navegar
     this.mostrarSpinner = true;
     this.cdr.detectChanges();
@@ -97,6 +112,13 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
 
   // Ver ejercicios
   async verEjercicios() {
+    // Verificar conexión antes de navegar
+    const tieneConexion = this.verificarConexion();
+    if (!tieneConexion) {
+      await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para ver los ejercicios');
+      return;
+    }
+
     // Mostrar overlay local y esperar 1.5s antes de navegar
     this.mostrarSpinner = true;
     this.cdr.detectChanges();

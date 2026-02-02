@@ -53,6 +53,12 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
   // Caché de pesos en localStorage
   private readonly PESOS_CACHE_KEY = 'pesos_ejercicios_cache';
 
+  // Verificar conexión a internet
+  private verificarConexion(): boolean {
+    // En móvil, confiar en navigator.onLine es suficiente
+    return navigator.onLine;
+  }
+
   async ngOnInit() {
     // Obtener información del usuario logueado
     const sesion = this.authService.obtenerSesion();
@@ -84,6 +90,16 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
       this.rutinasPorDia.clear();
       this.rutinaAsignada = null;
       this.cdr.detectChanges();
+
+      // Verificar conexión a internet
+      const tieneConexion = this.verificarConexion();
+      if (!tieneConexion) {
+        this.mostrarSpinner = false;
+        this.loading = false;
+        this.cdr.detectChanges();
+        await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para cargar tu rutina');
+        return;
+      }
 
       const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 

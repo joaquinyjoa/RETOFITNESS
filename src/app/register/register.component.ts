@@ -473,6 +473,12 @@ export class RegisterComponent implements OnInit {
     return new Blob([u8arr], { type: mime });
   }
 
+  // Verificar conexión a internet
+  private verificarConexion(): boolean {
+    // En móvil, confiar en navigator.onLine es suficiente
+    return navigator.onLine;
+  }
+
   async onSubmit() {
     this.isSubmitting = true;
     this.showSpinner = true;
@@ -483,6 +489,16 @@ export class RegisterComponent implements OnInit {
     const minSpinnerDuration = 1500; // 1.5 segundos
     
     try {
+      // Verificar conexión a internet PRIMERO
+      const tieneConexion = this.verificarConexion();
+      if (!tieneConexion) {
+        this.isSubmitting = false;
+        this.showSpinner = false;
+        this.cdr.detectChanges();
+        await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para registrarte');
+        return;
+      }
+
       // Validar datos antes del registro
       if (!this.validateAllData()) {
         this.isSubmitting = false;

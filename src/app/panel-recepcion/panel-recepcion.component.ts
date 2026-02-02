@@ -41,7 +41,20 @@ export class PanelRecepcionComponent implements OnInit {
     this.cargarClientes();
   }
 
+  // Verificar conexión a internet
+  private verificarConexion(): boolean {
+    // En móvil, confiar en navigator.onLine es suficiente
+    return navigator.onLine;
+  }
+
   async cargarClientes(mostrarSpinner: boolean = true) {
+    // Verificar conexión a internet
+    const tieneConexion = this.verificarConexion();
+    if (!tieneConexion) {
+      await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para cargar los clientes');
+      return;
+    }
+
     // ✅ Cancelar request anterior si existe
     if (this.abortController) {
       this.abortController.abort();
@@ -110,6 +123,13 @@ export class PanelRecepcionComponent implements OnInit {
       return;
     }
 
+    // Verificar conexión a internet
+    const tieneConexion = this.verificarConexion();
+    if (!tieneConexion) {
+      await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para cambiar el estado del cliente');
+      return;
+    }
+
     const nuevoEstado = !cliente.Estado;
     const estadoAnterior = cliente.Estado;
 
@@ -164,8 +184,16 @@ export class PanelRecepcionComponent implements OnInit {
     return estado ? 'success' : 'warning';
   }
 
-  abrirModalCambiarPassword(cliente: Cliente) {
+  async abrirModalCambiarPassword(cliente: Cliente) {
     if (!cliente.id) return;
+    
+    // Verificar conexión a internet
+    const tieneConexion = this.verificarConexion();
+    if (!tieneConexion) {
+      await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para cambiar la contraseña');
+      return;
+    }
+    
     this.router.navigate(['/cambiar-password', cliente.id]);
   }
 }
