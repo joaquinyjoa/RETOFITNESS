@@ -25,42 +25,34 @@
   backdrop-filter: blur(4px);
 }
 
-// Header personalizado (neon removed)
+// Header personalizado
 .custom-header {
   ion-toolbar {
-    /* Neutral background instead of neon gradient */
     --background: var(--dark-bg);
-    --color: var(--text-primary);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    --color: var(--primary-green);
+    border-bottom: 1px solid rgba(0, 255, 136, 0.2);
     box-shadow: none;
     position: relative;
     z-index: 50;
-    animation: none;
   }
 
   ion-toolbar::part(native) {
     background: var(--dark-bg) !important;
-    color: var(--text-primary) !important;
     box-shadow: none !important;
   }
 }
 
-/* Forzar color neutro en el título y el icono dentro de esta vista
-   para evitar que estilos globales apliquen el neón */
-ion-title.custom-title,
-ion-title.custom-title .title-icon,
-.custom-title {
-  color: var(--text-primary) !important;
-  text-shadow: none !important;
-  filter: none !important;
-  box-shadow: none !important;
-  background: none !important;
+// Título y icono en verde neón
+ion-title.custom-title {
+  color: var(--primary-green) !important;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
 }
 
 .custom-title .title-icon {
-  color: var(--text-primary) !important;
-  filter: none !important;
-  text-shadow: none !important;
+  color: var(--primary-green) !important;
+  margin-right: 8px;
+  filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.6));
 }
 
 .custom-toolbar {

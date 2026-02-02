@@ -147,17 +147,30 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
     }, 300);
   }
 
-  verMas(cliente: any) {
+  async verMas(cliente: any) {
     this.mostrarSpinner = true;
     this.cdr.detectChanges();
     
-    // Simulamos un pequeño delay para dar feedback visual
-    setTimeout(() => {
-      this.clienteSeleccionado = cliente;
+    try {
+      // Cargar datos completos del cliente desde la base de datos
+      const clienteCompleto = await this.clienteService.obtenerClientePorId(cliente.id);
+      
+      if (clienteCompleto) {
+        this.clienteSeleccionado = clienteCompleto;
+        this.isModalOpen = true;
+      } else {
+        console.error('No se pudo cargar la información completa del cliente');
+        this.clienteSeleccionado = cliente; // Usar datos parciales como fallback
+        this.isModalOpen = true;
+      }
+    } catch (error) {
+      console.error('Error al cargar cliente:', error);
+      this.clienteSeleccionado = cliente; // Usar datos parciales como fallback
       this.isModalOpen = true;
+    } finally {
       this.mostrarSpinner = false;
       this.cdr.detectChanges();
-    }, 1500);
+    }
   }
 
   cerrarModal() {

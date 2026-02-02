@@ -4,6 +4,7 @@ import { IonicModule, ViewWillEnter, ViewWillLeave } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { AnimationController } from '@ionic/angular';
 import { SpinnerComponent } from '../spinner/spinner.component';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-welcome',
@@ -18,6 +19,7 @@ export class WelcomeComponent implements OnInit, OnDestroy, ViewWillEnter, ViewW
   private router = inject(Router);
   private animationCtrl = inject(AnimationController);
   private cdr = inject(ChangeDetectorRef);
+  private authService = inject(AuthService);
 
   ngOnInit() {
     // Resetear spinner por si volvemos al componente - usar setTimeout para evitar NG0100
@@ -106,8 +108,22 @@ export class WelcomeComponent implements OnInit, OnDestroy, ViewWillEnter, ViewW
   }
 
   navegarAlLogin() {
-    // Navegar inmediatamente sin mostrar spinner
-    this.router.navigate(['/login']);
+    // Verificar si ya hay sesión activa
+    const sesion = this.authService.obtenerSesion();
+    
+    if (sesion) {
+      // Si ya está logueado, redirigir directamente al panel correspondiente
+      if (sesion.tipo === 'cliente') {
+        this.router.navigate(['/panel-cliente'], { replaceUrl: true });
+      } else if (sesion.tipo === 'entrenador') {
+        this.router.navigate(['/panel-entrenador'], { replaceUrl: true });
+      } else if (sesion.tipo === 'recepcion') {
+        this.router.navigate(['/panel-recepcion'], { replaceUrl: true });
+      }
+    } else {
+      // Si no hay sesión, navegar al login
+      this.router.navigate(['/login']);
+    }
   }
 
   navegarAlRegistro() {

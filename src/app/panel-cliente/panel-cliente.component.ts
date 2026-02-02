@@ -215,11 +215,9 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
       if (esAlternativo) {
         // Cargar ejercicio alternativo
         ejercicioId = ejercicio.ejercicio_alternativo_id || ejercicio.ejercicio_alternativo?.id;
-        console.log('📋 Cargando ejercicio alternativo ID:', ejercicioId);
       } else {
         // Cargar ejercicio principal
         ejercicioId = ejercicio.ejercicio_id || ejercicio.ejercicio?.id;
-        console.log('📋 Cargando ejercicio principal ID:', ejercicioId);
       }
 
       if (!ejercicioId) {
@@ -240,7 +238,6 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
 
       if (data && !error) {
         this.ejercicioDetalle = data;
-        console.log('✅ Ejercicio cargado:', data.nombre);
       } else {
         console.error('❌ Error al obtener ejercicio:', error);
         await this.toastService.mostrarError('Error al cargar detalles del ejercicio');
@@ -251,7 +248,6 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
     } finally {
       this.cargandoDetalle = false;
       this.cdr.detectChanges();
-      console.log('🔄 Spinner ocultado, cargandoDetalle:', this.cargandoDetalle);
     }
   }
 

@@ -12,60 +12,70 @@
 
 // Header personalizado
 .custom-header {
-  --background: var(--primary-green);
-  --background-hover: var(--secondary-green);
-  --background-activated: var(--secondary-green);
-  --color: #000000;
-  --border-radius: 12px;
-  --padding-start: 12px;
-  --padding-end: 12px;
-  --padding-top: 8px;
-  --padding-bottom: 8px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  text-transform: none;
-  letter-spacing: 0.3px;
-  transition: all 0.15s ease;
+  --background: var(--dark-bg);
+}
 
-  /* Agregar borde al botón */
-  border: 2px solid rgba(0, 0, 0, 0.3) !important;
-  outline: none !important;
-  box-shadow: none !important;
+.custom-toolbar {
+  --background: var(--dark-bg);
+  --border-width: 0;
+  --min-height: 70px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+}
 
-  &:hover:not([disabled]) {
-    transform: translateY(-1px);
-    border-color: rgba(0, 0, 0, 0.5) !important;
+.custom-title {
+  color: #00ff88 !important;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-shadow: 0 0 15px rgba(0, 255, 136, 0.6), 0 0 30px rgba(0, 255, 136, 0.4);
+
+  .title-icon {
+    font-size: 1.6rem;
+    color: #00ff88 !important;
+    filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.8));
   }
+}
 
-  &[disabled] {
-    opacity: 0.5;
-    cursor: not-allowed;
+.logout-button {
+  --background: rgba(0, 255, 136, 0.1);
+  --background-hover: rgba(0, 255, 136, 0.2);
+  --background-activated: rgba(0, 255, 136, 0.3);
+  --color: #00ff88;
+  --border-radius: 24px;
+  --padding-start: 20px;
+  --padding-end: 20px;
+  --padding-top: 16px;
+  --padding-bottom: 16px;
+  height: 56px;
+  min-width: 56px;
+  border-radius: 24px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(0, 255, 136, 0.4);
+    border-color: rgba(0, 255, 136, 0.6);
   }
 
   ion-icon {
-    font-size: 1.1rem;
-    margin-right: 4px;
+    font-size: 2rem;
+    color: #00ff88 !important;
   }
-
-  span {
-    font-weight: 600;
-  }
-
-  &:focus,
-  &:active {
-    outline: none !important;
-    box-shadow: none !important;
-    border: none !important;
-  }
-  }
+}
 
 /* Asegurar que no haya borde proveniente del shadow DOM de ion-button */
 ion-button.password-button,
 .password-button {
   --box-shadow: none !important;
-  --border-radius: 12px;
+  --border-radius: 20px;
   --border: none !important;
   border: none !important;
+  border-radius: 20px !important;
   box-shadow: none !important;
 }
 
@@ -235,17 +245,21 @@ ion-button.password-button::part(native) .button-native,
 // Grid de clientes
 .clientes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 400px));
+  gap: 20px;
+  justify-content: center;
+  padding: 0 8px;
 }
 
 .cliente-card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 16px;
-  padding: 20px;
+  padding: 18px;
   box-shadow: var(--glow-shadow);
   transition: all 0.3s ease;
+  max-width: 100%;
+  overflow: hidden;
 
   &:hover {
     transform: translateY(-4px);

@@ -106,7 +106,6 @@ export class ClienteService {
       // Verificar caché primero (IndexedDB)
       const cached = await this.cacheService.get<any[]>(CACHE_KEY, this.CACHE_TTL);
       if (cached) {
-        console.log('✅ Clientes aprobados cargados desde caché');
         return cached;
       }
 
@@ -139,7 +138,6 @@ export class ClienteService {
       return result;
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.log('⚠️ Request de clientes cancelado');
         throw error;
       }
       console.error('Error en listarClientes:', error);
@@ -153,18 +151,17 @@ export class ClienteService {
    */
   async listarClientesResumido(signal?: AbortSignal): Promise<any[]> {
     try {
-      const CACHE_KEY = 'clientes:resumido';
+      const CACHE_KEY = 'clientes:resumido:v2'; // v2 para forzar recarga con nuevos campos
       
       // Verificar caché
       const cached = await this.cacheService.get<any[]>(CACHE_KEY, this.CACHE_TTL);
       if (cached) {
-        console.log('✅ Clientes resumidos cargados desde caché');
         return cached;
       }
 
       const query = this.supabaseService['supabase']
         .from('clientes')
-        .select('id, nombre, apellido, correo, Estado, genero')
+        .select('id, nombre, apellido, correo, Estado, genero, edad, altura, peso')
         .eq('Estado', true)
         .order('nombre', { ascending: true })
         .limit(500);
@@ -183,7 +180,6 @@ export class ClienteService {
 
       const result = Array.isArray(data) ? data : [];
       await this.cacheService.set(CACHE_KEY, result);
-      console.log(`✅ ${result.length} clientes resumidos cargados`);
       return result;
     } catch (error: any) {
       if (error.name === 'AbortError') throw error;
@@ -203,7 +199,6 @@ export class ClienteService {
       // Verificar caché
       const cached = await this.cacheService.get<Cliente[]>(CACHE_KEY, this.CACHE_TTL);
       if (cached) {
-        console.log('✅ Clientes pendientes cargados desde caché');
         return cached;
       }
 
@@ -283,7 +278,7 @@ export class ClienteService {
       // Verificar caché
       const cached = await this.cacheService.get(CACHE_KEY, this.CACHE_TTL);
       if (cached) {
-        console.log(`✅ Cliente ${id} cargado desde caché`);
+
         return cached;
       }
       

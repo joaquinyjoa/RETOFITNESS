@@ -145,7 +145,7 @@ export class PanelRecepcionComponent implements OnInit {
 
   cambiarFiltro(nuevoFiltro: 'todos' | 'pendientes' | 'aprobados') {
     this.filtro = nuevoFiltro;
-    this.cargarClientes();
+    this.cargarClientes(false); // Sin spinner al cambiar filtros
   }
 
   async cerrarSesion() {

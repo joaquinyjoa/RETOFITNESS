@@ -375,7 +375,6 @@ export class VerEjerciciosComponent implements OnInit {
     while (intento < maxReintentos) {
       try {
         intento++;
-        console.log(`📤 Intento ${intento}/${maxReintentos} de subir archivo: ${file.name}`);
 
         const { getSupabaseClient } = await import('../services/supabase-client');
         const supabase = getSupabaseClient();
@@ -405,11 +404,9 @@ export class VerEjerciciosComponent implements OnInit {
         };
         
         const contentType = mimeTypes[extension || ''] || file.type || 'application/octet-stream';
-        console.log(`📝 Content-Type detectado: ${contentType}`);
 
         // Convertir archivo a ArrayBuffer para mejor compatibilidad
         const arrayBuffer = await file.arrayBuffer();
-        console.log(`📦 Archivo convertido a ArrayBuffer: ${arrayBuffer.byteLength} bytes`);
 
         // Obtener la URL base del proyecto
         const supabaseUrl = 'https://tylyzyivlvibfyvetchr.supabase.co';
@@ -444,14 +441,12 @@ export class VerEjerciciosComponent implements OnInit {
           
           // Esperar antes del próximo intento (backoff exponencial)
           const delay = Math.min(1000 * Math.pow(2, intento - 1), 5000);
-          console.log(`⏳ Esperando ${delay}ms antes del próximo intento...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
 
         // Construir URL pública
         const publicUrl = `${supabaseUrl}/storage/v1/object/public/ejercicios/${filePath}`;
-        console.log(`✅ Archivo subido exitosamente: ${publicUrl}`);
         return { success: true, url: publicUrl };
 
       } catch (error: any) {
@@ -464,7 +459,6 @@ export class VerEjerciciosComponent implements OnInit {
         
         // Esperar antes del próximo intento
         const delay = Math.min(1000 * Math.pow(2, intento - 1), 5000);
-        console.log(`⏳ Esperando ${delay}ms antes del próximo intento...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -1735,7 +1729,6 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
 
   // Método para manejar la carga de imágenes
   onImageLoad(videoUrl: string) {
-    console.log('Imagen cargada para:', videoUrl);
   }
 
   // === MÉTODOS PARA CARRUSEL DE EJERCICIOS EN LISTADO ===

@@ -24,6 +24,11 @@
       font-weight: 700;
       color: var(--primary-green);
     }
+
+    ion-title.left-aligned-title {
+      text-align: start;
+      padding-inline-start: 56px;
+    }
     
     ion-button {
       --color: var(--primary-green);

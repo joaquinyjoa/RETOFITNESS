@@ -33,10 +33,8 @@ export class ConfirmService {
           backdropDismiss: false
         });
 
-        console.log('[ConfirmService] presenting modal');
         await modal.present();
         const { data, role } = await modal.onWillDismiss();
-        console.log('[ConfirmService] modal dismissed', { data, role });
         return data === true || role === 'confirm';
       }
 

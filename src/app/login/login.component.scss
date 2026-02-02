@@ -319,30 +319,6 @@
   }
 }
 
-.quick-access-btn {
-  --color: var(--primary-green);
-  --background: transparent;
-  --border-radius: 12px;
-  --padding-top: 12px;
-  --padding-bottom: 12px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  text-transform: none;
-  border: 1px dashed rgba(0, 255, 136, 0.3);
-  margin-bottom: 20px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    --background: rgba(0, 255, 136, 0.05);
-    border-color: rgba(0, 255, 136, 0.6);
-    transform: translateY(-1px);
-  }
-
-  ion-icon {
-    margin-right: 8px;
-  }
-}
-
 .divider {
   position: relative;
   text-align: center;
@@ -731,36 +707,6 @@ ion-list {
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-/* ===== ACCESO RÁPIDO ===== */
-.quick-access {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 12px 0 8px 0;
-  
-  .quick-access-button {
-    --background: transparent;
-    --border-radius: 12px;
-    --padding-top: 12px;
-    --padding-bottom: 12px;
-    --color: rgba(0, 255, 136, 0.8);
-    font-size: 0.9rem;
-    font-weight: 500;
-    text-transform: none;
-    letter-spacing: 0.5px;
-    border: 1px dashed rgba(0, 255, 136, 0.4);
-    transition: all 0.3s ease;
-    
-    &:hover {
-      --background: rgba(0, 255, 136, 0.05);
-      --color: rgba(0, 255, 136, 1);
-      border-color: rgba(0, 255, 136, 0.6);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2);
-    }
   }
 }
 

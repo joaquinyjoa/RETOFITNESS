@@ -137,7 +137,6 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
 
     if (!confirmado) return;
     
-    console.log('[AsignarRutina] Mostrando spinner...');
     this.mostrarSpinner = true;
     this.cdr.detectChanges();
     

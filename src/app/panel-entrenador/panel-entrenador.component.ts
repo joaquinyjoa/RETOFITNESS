@@ -115,7 +115,7 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
     if (!ok) return;
 
     this.authService.cerrarSesion();
-    this.router.navigate(['/welcome']);
+    this.router.navigate(['/login']);
   }
 
 }
