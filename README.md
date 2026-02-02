@@ -374,27 +374,12 @@ npm run test:coverage
 
 ### 🚧 Versión 1.1 (En Desarrollo)
 - [ ] Notificaciones push
-- [ ] Chat entrenador-cliente
 - [ ] Gráficas de progreso
 - [ ] Exportar rutinas a PDF
 
 ### 🔮 Versión 2.0 (Futuro)
 - [ ] Modo offline completo
-- [ ] Integración con wearables
-- [ ] Planes nutricionales
 - [ ] Gamificación y logros
-
----
-
-## 🤝 Contribución
-
-Las contribuciones son bienvenidas. Por favor:
-
-1. Fork el proyecto
-2. Crea una rama feature (`git checkout -b feature/AmazingFeature`)
-3. Commit cambios (`git commit -m 'Add AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
 
 ---
 
@@ -403,9 +388,9 @@ Las contribuciones son bienvenidas. Por favor:
 **Tu Nombre**
 
 - 🌐 Portfolio: [tu-portfolio.com](https://tu-portfolio.com)
-- 💼 LinkedIn: [linkedin.com/in/tu-perfil](https://linkedin.com/in/tu-perfil)
-- 📧 Email: tu.email@example.com
-- 🐙 GitHub: [@tu-usuario](https://github.com/tu-usuario)
+- 💼 LinkedIn: [linkedin.com/in/tu-perfil]([https://linkedin.com/in/](https://www.linkedin.com/in/joaqu%C3%ADn-alfredo-greco-015588277/))
+- 📧 Email: joaquinalfredogreco@gmail.com
+- 🐙 GitHub: [@joaquinyjoa](https://github.com/joaquinyjoa)
 
 ---
 
@@ -425,15 +410,13 @@ Este proyecto está bajo la Licencia MIT. Ver [LICENSE](LICENSE) para más infor
 ---
 
 ## 📞 Soporte
-
+1127538462
 ¿Tienes preguntas? Abre un [Issue](https://github.com/tu-usuario/retofitness-app/issues) o contacta directamente.
 
 ---
 
 <div align="center">
 
-**⭐ Si te gustó este proyecto, dale una estrella en GitHub ⭐**
-
-Made with ❤️ and ☕ by [Tu Nombre]
+**⭐ Si te gustó este proyecto, dale una estrella en GitHub ⭐** 
 
 </div>
