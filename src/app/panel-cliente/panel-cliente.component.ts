@@ -325,19 +325,14 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
       
       // Si está offline, intentar cargar desde el caché local
       if (!this.isOnline) {
-        console.log('📴 Modo offline - Cargando detalles desde caché');
-        console.log('Ejercicio completo:', ejercicio);
-        
         let detalleEjercicio = null;
         
         if (esAlternativo) {
           // Usar el ejercicio alternativo que ya está en el objeto
           detalleEjercicio = ejercicio.ejercicio_alternativo;
-          console.log('Cargando alternativo desde caché:', detalleEjercicio);
         } else {
           // Usar el ejercicio principal que ya está en el objeto
           detalleEjercicio = ejercicio.ejercicio;
-          console.log('Cargando principal desde caché:', detalleEjercicio);
         }
 
         // Si no hay detalles en ejercicio.ejercicio, intentar del objeto raíz
@@ -356,16 +351,13 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
             instrucciones: ejercicio.instrucciones,
             consejos: ejercicio.consejos
           };
-          console.log('Usando datos del objeto raíz:', detalleEjercicio);
         }
 
         if (detalleEjercicio && detalleEjercicio.id) {
           // Delay de 1.5s para consistencia
           await new Promise(resolve => setTimeout(resolve, 1500));
           this.ejercicioDetalle = detalleEjercicio;
-          console.log('✅ Detalles cargados desde caché');
         } else {
-          console.log('❌ No hay detalles en caché');
           await this.toastService.mostrarError('⚠️ Detalles no disponibles offline');
         }
         
