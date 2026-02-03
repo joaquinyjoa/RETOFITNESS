@@ -40,7 +40,12 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" [scrollY]="true" class="main-content">
+<ion-content 
+  [fullscreen]="true" 
+  [scrollY]="true" 
+  class="main-content"
+  (touchstart)="onTabSwipeStart($event)"
+  (touchend)="onTabSwipeEnd($event)">
   
   <!-- ============================================ -->
   <!-- TAB DE EJERCICIOS -->
@@ -392,20 +397,22 @@
 
           <ion-item>
             <ion-label position="stacked">Categoría *</ion-label>
-            <ion-select [(ngModel)]="ejercicioActual.categoria" name="categoria" interface="popover">
-              <ion-select-option *ngFor="let cat of categorias" [value]="cat.value">
-                {{ cat.label }}
-              </ion-select-option>
-            </ion-select>
+            <ion-input 
+              [(ngModel)]="ejercicioActual.categoria" 
+              name="categoria"
+              placeholder="Ej: Fuerza, Cardio, Flexibilidad..."
+              type="text">
+            </ion-input>
           </ion-item>
 
           <ion-item>
             <ion-label position="stacked">Músculo principal *</ion-label>
-            <ion-select [(ngModel)]="ejercicioActual.musculo_principal" name="musculo_principal" interface="popover">
-              <ion-select-option *ngFor="let musculo of gruposMusculares" [value]="musculo">
-                {{ musculo }}
-              </ion-select-option>
-            </ion-select>
+            <ion-input 
+              [(ngModel)]="ejercicioActual.musculo_principal" 
+              name="musculo_principal"
+              placeholder="Ej: Pectorales, Cuádriceps, Bíceps..."
+              type="text">
+            </ion-input>
           </ion-item>
 
           <ion-item>
@@ -495,15 +502,12 @@
               <div *ngFor="let musculo of ejercicioActual.musculos_secundarios; let i = index; trackBy: trackByIndex" class="dynamic-item">
                 <ion-item>
                   <ion-label position="stacked">Músculo {{ i + 1 }}</ion-label>
-                  <ion-select 
+                  <ion-input 
                     [(ngModel)]="ejercicioActual.musculos_secundarios[i]" 
                     [name]="'musculo_secundario_' + i"
-                    placeholder="Seleccionar músculo"
-                    interface="popover">
-                    <ion-select-option *ngFor="let m of gruposMusculares" [value]="m">
-                      {{ m }}
-                    </ion-select-option>
-                  </ion-select>
+                    placeholder="Ej: Bíceps, Tríceps, Deltoides..."
+                    type="text">
+                  </ion-input>
                   <ion-button 
                     slot="end" 
                     fill="clear" 

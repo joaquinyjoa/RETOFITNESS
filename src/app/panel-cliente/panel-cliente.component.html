@@ -3,12 +3,15 @@
     <ion-title>
       <ion-icon name="fitness-outline" class="title-icon"></ion-icon>
       Mi Entrenamiento
+      <ion-badge *ngIf="!isOnline" color="warning" style="margin-left: 8px; font-size: 0.7em;">
+        📴 Offline
+      </ion-badge>
     </ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="irAModificarPerfil()">
         <ion-icon name="person-circle-outline" slot="icon-only"></ion-icon>
       </ion-button>
-      <ion-button (click)="cargarRutinaAsignada()">
+      <ion-button (click)="cargarRutinaAsignada()" [disabled]="!isOnline">
         <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
       </ion-button>
       <ion-button (click)="logout()">

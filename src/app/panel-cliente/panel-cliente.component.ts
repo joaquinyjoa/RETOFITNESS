@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, OnDestroy } from '@angular/core';
 import { ViewWillEnter } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
@@ -18,7 +18,7 @@ import { SpinnerComponent } from '../spinner/spinner.component';
   standalone: true,
   imports: [CommonModule, IonicModule, FormsModule, SpinnerComponent]
 })
-export class PanelClienteComponent implements OnInit, ViewWillEnter {
+export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
   private router = inject(Router);
   private rutinaService = inject(RutinaService);
   private authService = inject(AuthService);
@@ -52,14 +52,22 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
 
   // Caché de pesos en localStorage
   private readonly PESOS_CACHE_KEY = 'pesos_ejercicios_cache';
+  private readonly RUTINA_CACHE_KEY = 'rutina_cliente_cache';
+
+  // Control de conexión
+  isOnline = navigator.onLine;
+  private onlineListener?: () => void;
+  private offlineListener?: () => void;
 
   // Verificar conexión a internet
   private verificarConexion(): boolean {
-    // En móvil, confiar en navigator.onLine es suficiente
     return navigator.onLine;
   }
 
   async ngOnInit() {
+    // Configurar listeners para detectar cambios de conexión
+    this.setupConnectionListeners();
+
     // Obtener información del usuario logueado
     const sesion = this.authService.obtenerSesion();
     
@@ -77,11 +85,75 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
     }
   }
 
+  ngOnDestroy() {
+    // Limpiar listeners al destruir el componente
+    if (this.onlineListener) {
+      window.removeEventListener('online', this.onlineListener);
+    }
+    if (this.offlineListener) {
+      window.removeEventListener('offline', this.offlineListener);
+    }
+  }
+
+  private setupConnectionListeners() {
+    this.onlineListener = async () => {
+      this.isOnline = true;
+      this.cdr.detectChanges();
+      await this.toastService.mostrarExito('🌐 Conexión restaurada');
+      // Auto-refresh al volver online
+      await this.cargarRutinaAsignada();
+    };
+
+    this.offlineListener = async () => {
+      this.isOnline = false;
+      this.cdr.detectChanges();
+      await this.toastService.mostrarAdvertencia('📴 Sin conexión - Modo offline');
+    };
+
+    window.addEventListener('online', this.onlineListener);
+    window.addEventListener('offline', this.offlineListener);
+  }
+
   async cargarRutinaAsignada() {
     try {
       if (!this.clienteId) {
         console.error('❌ No hay cliente ID');
         return;
+      }
+
+      // Verificar conexión a internet
+      const tieneConexion = this.verificarConexion();
+      this.isOnline = tieneConexion;
+
+      // Si está offline, intentar cargar desde caché
+      if (!tieneConexion) {
+        const rutinaCache = this.cargarRutinaDesdeCache();
+        
+        if (rutinaCache) {
+          // Restaurar datos desde caché
+          this.rutinasAsignadas = rutinaCache.rutinas;
+          this.rutinasPorDia = new Map(rutinaCache.rutinasPorDia);
+          
+          // Seleccionar día
+          if (!this.rutinasPorDia.has(this.diaSeleccionado)) {
+            const primerDia = Array.from(this.rutinasPorDia.keys())[0] || 1;
+            this.seleccionarDia(primerDia);
+          } else {
+            this.seleccionarDia(this.diaSeleccionado);
+          }
+          
+          this.loading = false;
+          this.mostrarSpinner = false;
+          this.cdr.detectChanges();
+          await this.toastService.mostrarAdvertencia('📴 Modo offline - Mostrando rutina guardada');
+          return;
+        } else {
+          this.mostrarSpinner = false;
+          this.loading = false;
+          this.cdr.detectChanges();
+          await this.toastService.mostrarError('⚠️ Sin conexión y no hay rutina guardada');
+          return;
+        }
       }
 
       // Mostrar spinner y limpiar datos actuales para forzar recarga completa
@@ -90,16 +162,6 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
       this.rutinasPorDia.clear();
       this.rutinaAsignada = null;
       this.cdr.detectChanges();
-
-      // Verificar conexión a internet
-      const tieneConexion = this.verificarConexion();
-      if (!tieneConexion) {
-        this.mostrarSpinner = false;
-        this.loading = false;
-        this.cdr.detectChanges();
-        await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para cargar tu rutina');
-        return;
-      }
 
       const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -110,6 +172,28 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
 
         if (error) {
           console.error('❌ Error al cargar rutinas:', error);
+          
+          // FALLBACK: Si falla la carga (posible error de red), intentar caché
+          const rutinaCache = this.cargarRutinaDesdeCache();
+          
+          if (rutinaCache) {
+            // Restaurar datos desde caché
+            this.rutinasAsignadas = rutinaCache.rutinas;
+            this.rutinasPorDia = new Map(rutinaCache.rutinasPorDia);
+            
+            // Seleccionar día
+            if (!this.rutinasPorDia.has(this.diaSeleccionado)) {
+              const primerDia = Array.from(this.rutinasPorDia.keys())[0] || 1;
+              this.seleccionarDia(primerDia);
+            } else {
+              this.seleccionarDia(this.diaSeleccionado);
+            }
+            
+            await this.toastService.mostrarAdvertencia('📴 Error de conexión - Mostrando rutina guardada');
+            return; // Salir exitosamente usando caché
+          }
+          
+          // Si no hay caché, mostrar error
           this.toastService.mostrarError('Error al cargar rutinas');
           return;
         }
@@ -136,6 +220,16 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
           // Reemplazar datos cuando todo esté listo
           this.rutinasAsignadas = nuevasRutinas;
           this.rutinasPorDia = nuevoMap;
+
+          // Validar y completar ejercicios alternativos antes de guardar en caché
+          await this.validarEjerciciosAlternativos(nuevasRutinas);
+
+          // Guardar en caché para uso offline
+          this.guardarRutinaEnCache({
+            rutinas: nuevasRutinas,
+            rutinasPorDia: Array.from(nuevoMap.entries()),
+            fecha: new Date().toISOString()
+          });
 
           // Mantener día seleccionado si existe, sino ir a día 1
           if (!this.rutinasPorDia.has(this.diaSeleccionado)) {
@@ -226,6 +320,58 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
       const videoIndex = this.getVideoCarouselIndex(ejercicioIndex);
       const esAlternativo = videoIndex === 1 && ejercicio.ejercicio_alternativo;
       
+      // Si está offline, intentar cargar desde el caché local
+      if (!this.isOnline) {
+        console.log('📴 Modo offline - Cargando detalles desde caché');
+        console.log('Ejercicio completo:', ejercicio);
+        
+        let detalleEjercicio = null;
+        
+        if (esAlternativo) {
+          // Usar el ejercicio alternativo que ya está en el objeto
+          detalleEjercicio = ejercicio.ejercicio_alternativo;
+          console.log('Cargando alternativo desde caché:', detalleEjercicio);
+        } else {
+          // Usar el ejercicio principal que ya está en el objeto
+          detalleEjercicio = ejercicio.ejercicio;
+          console.log('Cargando principal desde caché:', detalleEjercicio);
+        }
+
+        // Si no hay detalles en ejercicio.ejercicio, intentar del objeto raíz
+        if (!detalleEjercicio && !esAlternativo) {
+          // A veces los detalles están directamente en el objeto ejercicio
+          detalleEjercicio = {
+            id: ejercicio.ejercicio_id,
+            nombre: ejercicio.nombre,
+            descripcion: ejercicio.descripcion,
+            categoria: ejercicio.categoria,
+            musculo_principal: ejercicio.musculo_principal,
+            musculos_secundarios: ejercicio.musculos_secundarios,
+            nivel_dificultad: ejercicio.nivel_dificultad,
+            enlace_video: ejercicio.enlace_video,
+            equipamiento: ejercicio.equipamiento,
+            instrucciones: ejercicio.instrucciones,
+            consejos: ejercicio.consejos
+          };
+          console.log('Usando datos del objeto raíz:', detalleEjercicio);
+        }
+
+        if (detalleEjercicio && detalleEjercicio.id) {
+          // Delay de 1.5s para consistencia
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          this.ejercicioDetalle = detalleEjercicio;
+          console.log('✅ Detalles cargados desde caché');
+        } else {
+          console.log('❌ No hay detalles en caché');
+          await this.toastService.mostrarError('⚠️ Detalles no disponibles offline');
+        }
+        
+        this.cargandoDetalle = false;
+        this.cdr.detectChanges();
+        return;
+      }
+
+      // Si está online, cargar desde la BD como antes
       let ejercicioId: number | undefined;
       
       if (esAlternativo) {
@@ -374,6 +520,61 @@ export class PanelClienteComponent implements OnInit, ViewWillEnter {
         ejercicio.peso_registrado = pesosCache[ejercicioId].peso;
       }
     });
+  }
+
+  // Guardar rutina en caché para modo offline
+  private guardarRutinaEnCache(data: any) {
+    try {
+      const cacheKey = `${this.RUTINA_CACHE_KEY}_${this.clienteId}`;
+      localStorage.setItem(cacheKey, JSON.stringify(data));
+    } catch (error) {
+      console.error('❌ Error al guardar rutina en caché:', error);
+    }
+  }
+
+  // Validar y cargar ejercicios alternativos
+  private async validarEjerciciosAlternativos(rutinas: any[]): Promise<void> {
+    try {
+      for (const rutina of rutinas) {
+        if (rutina.ejercicios && Array.isArray(rutina.ejercicios)) {
+          for (const ejercicio of rutina.ejercicios) {
+            // Cargar detalles del ejercicio principal si no están completos
+            if (ejercicio.ejercicio_id && !ejercicio.ejercicio_completo) {
+              const { data, error } = await this.rutinaService.obtenerEjercicioPorId(ejercicio.ejercicio_id);
+              
+              if (data && !error) {
+                ejercicio.ejercicio = data;
+                ejercicio.ejercicio_completo = true;
+              }
+            }
+
+            // Si tiene ejercicio alternativo, cargar sus detalles completos
+            if (ejercicio.ejercicio_alternativo_id && !ejercicio.ejercicio_alternativo_completo) {
+              const { data, error } = await this.rutinaService.obtenerEjercicioPorId(ejercicio.ejercicio_alternativo_id);
+              
+              if (data && !error) {
+                ejercicio.ejercicio_alternativo = data;
+                ejercicio.ejercicio_alternativo_completo = true;
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error al validar ejercicios alternativos:', error);
+    }
+  }
+
+  // Cargar rutina desde caché
+  private cargarRutinaDesdeCache(): any {
+    try {
+      const cacheKey = `${this.RUTINA_CACHE_KEY}_${this.clienteId}`;
+      const cache = localStorage.getItem(cacheKey);
+      return cache ? JSON.parse(cache) : null;
+    } catch (error) {
+      console.error('❌ Error al leer caché de rutina:', error);
+      return null;
+    }
   }
 
   // === MÉTODOS PARA MINI CARRUSEL DE VIDEOS (Principal/Alternativo) ===

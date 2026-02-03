@@ -97,6 +97,10 @@ export class VerEjerciciosComponent implements OnInit {
   ejerciciosAlternativosFiltrados: Map<number, Ejercicio[]> = new Map();
   mostrarListaAlternativo: Map<number, boolean> = new Map();
 
+  // Variables para swipe entre pestañas
+  tabSwipeStartX = 0;
+  tabSwipeEndX = 0;
+
   // Opciones para los select
   categorias = [
     { value: 'cardio', label: 'Cardio' },
@@ -863,10 +867,7 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
     this.ejercicioActual.musculos_secundarios.push('');
   }
 
-  async eliminarMusculoSecundario(index: number) {
-    if (this.ejercicioActual.musculos_secundarios.length === 1) {
-      await this.toastService.mostrarInfo('Debe mantener al menos un músculo secundario o eliminar todos');
-    }
+  eliminarMusculoSecundario(index: number) {
     this.ejercicioActual.musculos_secundarios.splice(index, 1);
   }
 
@@ -874,10 +875,7 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
     this.ejercicioActual.equipamiento.push('');
   }
 
-  async eliminarEquipamiento(index: number) {
-    if (this.ejercicioActual.equipamiento.length === 1) {
-      await this.toastService.mostrarInfo('Eliminando último equipamiento');
-    }
+  eliminarEquipamiento(index: number) {
     this.ejercicioActual.equipamiento.splice(index, 1);
   }
 
@@ -986,6 +984,46 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
     if (this.segmentValue === 'rutinas' && this.rutinas.length === 0) {
       this.cargarRutinas();
     } 
+  }
+
+  /**
+   * Maneja el inicio del touch para detectar swipe horizontal entre pestañas
+   */
+  onTabSwipeStart(event: TouchEvent) {
+    this.tabSwipeStartX = event.changedTouches[0].screenX;
+  }
+
+  /**
+   * Maneja el fin del touch y determina si cambiar de pestaña
+   */
+  onTabSwipeEnd(event: TouchEvent) {
+    this.tabSwipeEndX = event.changedTouches[0].screenX;
+    this.handleTabSwipeGesture();
+  }
+
+  /**
+   * Procesa el gesto de swipe y cambia de pestaña
+   */
+  handleTabSwipeGesture() {
+    const threshold = 50; // Distancia mínima para considerar un swipe
+    const difference = this.tabSwipeStartX - this.tabSwipeEndX;
+
+    if (Math.abs(difference) > threshold) {
+      if (difference > 0) {
+        // Swipe left - ir a rutinas
+        if (this.segmentValue === 'ejercicios') {
+          this.segmentValue = 'rutinas';
+          if (this.rutinas.length === 0) {
+            this.cargarRutinas();
+          }
+        }
+      } else {
+        // Swipe right - ir a ejercicios
+        if (this.segmentValue === 'rutinas') {
+          this.segmentValue = 'ejercicios';
+        }
+      }
+    }
   }
 
   async cargarRutinas(forzarRecarga = false) {

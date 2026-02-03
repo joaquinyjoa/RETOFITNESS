@@ -33,12 +33,12 @@
         
         <ion-item class="custom-item">
           <ion-label position="stacked">Nombre *</ion-label>
-          <ion-input [(ngModel)]="cliente.nombre" name="nombre" type="text" required></ion-input>
+          <ion-input [(ngModel)]="cliente.nombre" name="nombre" type="text" required [disabled]="true"></ion-input>
         </ion-item>
 
         <ion-item class="custom-item">
           <ion-label position="stacked">Apellido</ion-label>
-          <ion-input [(ngModel)]="cliente.apellido" name="apellido" type="text"></ion-input>
+          <ion-input [(ngModel)]="cliente.apellido" name="apellido" type="text" [disabled]="true"></ion-input>
         </ion-item>
 
         <ion-item class="custom-item">
@@ -48,11 +48,7 @@
 
         <ion-item class="custom-item">
           <ion-label position="stacked">Género</ion-label>
-          <ion-select [(ngModel)]="cliente.genero" name="genero" placeholder="Seleccionar">
-            <ion-select-option value="masculino">Masculino</ion-select-option>
-            <ion-select-option value="femenino">Femenino</ion-select-option>
-            <ion-select-option value="otro">Otro</ion-select-option>
-          </ion-select>
+          <ion-input [value]="getGeneroLabel(cliente.genero)" name="genero_display" type="text" [disabled]="true"></ion-input>
         </ion-item>
 
         <ion-item class="custom-item">
@@ -67,13 +63,12 @@
 
         <ion-item class="custom-item">
           <ion-label position="stacked">Nivel de Actividad</ion-label>
-          <ion-select [(ngModel)]="cliente.nivelActividad" name="nivelActividad" placeholder="Seleccionar">
-            <ion-select-option value="sedentario">Sedentario</ion-select-option>
-            <ion-select-option value="ligero">Ligero</ion-select-option>
-            <ion-select-option value="moderado">Moderado</ion-select-option>
-            <ion-select-option value="activo">Activo</ion-select-option>
-            <ion-select-option value="muy_activo">Muy Activo</ion-select-option>
-          </ion-select>
+          <ion-input 
+            [(ngModel)]="cliente.nivelActividad" 
+            name="nivelActividad" 
+            type="text"
+            placeholder="Escribe: baja, media o alta">
+          </ion-input>
         </ion-item>
 
         <ion-item class="custom-item">

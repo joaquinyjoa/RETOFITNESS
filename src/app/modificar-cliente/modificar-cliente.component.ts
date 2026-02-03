@@ -147,7 +147,27 @@ export class ModificarClienteComponent implements OnInit {
       return false;
     }
 
+    // Validar nivel de actividad si está presente
+    if (this.cliente.nivelActividad && this.cliente.nivelActividad.trim() !== '') {
+      const nivelNormalizado = this.cliente.nivelActividad.trim().toLowerCase();
+      const nivelesValidos = ['baja', 'media', 'alta'];
+      
+      if (!nivelesValidos.includes(nivelNormalizado)) {
+        this.toastService.mostrarError('El nivel de actividad debe ser: baja, media o alta');
+        return false;
+      }
+    }
+
     return true;
+  }
+
+  getGeneroLabel(genero: string): string {
+    const generos: { [key: string]: string } = {
+      'masculino': 'Masculino',
+      'femenino': 'Femenino',
+      'otro': 'Otro'
+    };
+    return generos[genero] || genero || 'No especificado';
   }
 
   volver() {
