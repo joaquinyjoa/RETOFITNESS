@@ -173,6 +173,9 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
         if (error) {
           console.error('❌ Error al cargar rutinas:', error);
           
+          // Marcar como offline ya que falló la conexión
+          this.isOnline = false;
+          
           // FALLBACK: Si falla la carga (posible error de red), intentar caché
           const rutinaCache = this.cargarRutinaDesdeCache();
           
