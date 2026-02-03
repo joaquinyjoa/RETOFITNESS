@@ -442,11 +442,20 @@ ion-content.no-scroll .ion-page {
   color: var(--primary-green);
   font-size: 1.3rem;
   font-weight: 700;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 
   ion-icon {
     font-size: 1.5rem;
   }
+}
+
+.swipe-hint {
+  text-align: center;
+  color: white;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+  opacity: 0.8;
+  font-weight: 400;
 }
 
 .ejercicio-card {

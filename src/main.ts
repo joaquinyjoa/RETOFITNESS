@@ -106,7 +106,8 @@ import {
   speedometerOutline,
   bulbOutline,
   swapHorizontal,
-  cloudUploadOutline
+  cloudUploadOutline,
+  chatboxEllipsesOutline
 } from 'ionicons/icons';
 
 import { routes } from './app/app.routes';
@@ -114,6 +115,7 @@ import { AppComponent } from './app/app.component';
 
 // Registrar iconos (todos los necesarios para el proyecto)
 addIcons({
+  "chatbox-ellipses-outline": chatboxEllipsesOutline,
   "medkit-outline": medicalOutline,
   "cloud-upload-outline": cloudUploadOutline,
   "swap-horizontal": swapHorizontal,

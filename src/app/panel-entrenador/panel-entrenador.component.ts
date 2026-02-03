@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ViewWillEnter, ViewWillLeave } from '@ionic/angular';
 import { Router } from '@angular/router';
@@ -24,6 +24,7 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
   private confirmService = inject(ConfirmService);
   private toastService = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
+  private ngZone = inject(NgZone);
 
   // Getter para obtener datos del entrenador con type safety
   get datosEntrenador() {
@@ -52,25 +53,22 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
   }
 
   private cargarDatosEntrenador() {
-    // Pequeño delay para asegurar que localStorage esté disponible
-    setTimeout(() => {
-      // Obtener información del entrenador logueado
-      this.entrenador = this.authService.obtenerSesion();
-      
-      // Verificar si hay sesión
-      if (!this.entrenador) {
-        this.router.navigate(['/login']);
-        return;
-      }
-      
-      // Verificar si es entrenador
-      if (this.entrenador.tipo !== 'entrenador') {
-        this.router.navigate(['/login']);
-        return;
-      }
-      
-      this.cdr.detectChanges();
-    }, 100);
+    // Obtener información del entrenador logueado
+    this.entrenador = this.authService.obtenerSesion();
+    
+    // Verificar si hay sesión
+    if (!this.entrenador) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    
+    // Verificar si es entrenador
+    if (this.entrenador.tipo !== 'entrenador') {
+      this.router.navigate(['/login']);
+      return;
+    }
+    
+    this.cdr.detectChanges();
   }
 
   ionViewWillLeave() {
@@ -98,16 +96,21 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
       return;
     }
 
-    // Mostrar overlay local y esperar 1.5s antes de navegar
+    // Mostrar overlay local brevemente
     this.mostrarSpinner = true;
     this.cdr.detectChanges();
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    try {
-      await this.router.navigate(['/ver-clientes']);
-    } finally {
-      this.mostrarSpinner = false;
-      this.cdr.detectChanges();
-    }
+    
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Navegar dentro de NgZone para mejor rendimiento
+    await this.ngZone.run(async () => {
+      try {
+        await this.router.navigate(['/ver-clientes']);
+      } finally {
+        this.mostrarSpinner = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   // Ver ejercicios
@@ -119,16 +122,21 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
       return;
     }
 
-    // Mostrar overlay local y esperar 1.5s antes de navegar
+    // Mostrar overlay local brevemente
     this.mostrarSpinner = true;
     this.cdr.detectChanges();
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    try {
-      await this.router.navigate(['/ver-ejercicios']);
-    } finally {
-      this.mostrarSpinner = false;
-      this.cdr.detectChanges();
-    }
+    
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Navegar dentro de NgZone para mejor rendimiento
+    await this.ngZone.run(async () => {
+      try {
+        await this.router.navigate(['/ver-ejercicios']);
+      } finally {
+        this.mostrarSpinner = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   // Cerrar sesión

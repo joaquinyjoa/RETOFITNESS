@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 
 @Injectable({
@@ -6,53 +6,69 @@ import { ToastController } from '@ionic/angular';
 })
 export class ToastService {
 
-  constructor(private toastController: ToastController) { }
+  constructor(
+    private toastController: ToastController,
+    private ngZone: NgZone
+  ) { }
 
   async mostrarExito(mensaje: string, duracion: number = 3000) {
-    const toast = await this.toastController.create({
-      message: mensaje,
-      duration: duracion,
-      position: 'top',
-      color: 'success',
-      icon: 'checkmark-circle-outline',
-      cssClass: 'toast-success'
+    // Forzar ejecución en NgZone para asegurar que el toast se muestre
+    return this.ngZone.run(async () => {
+      const toast = await this.toastController.create({
+        message: mensaje,
+        duration: duracion,
+        position: 'top',
+        color: 'success',
+        icon: 'checkmark-circle-outline',
+        cssClass: 'toast-success'
+      });
+      await toast.present();
+      return toast;
     });
-    toast.present();
   }
 
   async mostrarError(mensaje: string, duracion: number = 4000) {
-    const toast = await this.toastController.create({
-      message: mensaje,
-      duration: duracion,
-      position: 'top',
-      color: 'danger',
-      icon: 'alert-circle-outline',
-      cssClass: 'toast-error'
+    return this.ngZone.run(async () => {
+      const toast = await this.toastController.create({
+        message: mensaje,
+        duration: duracion,
+        position: 'top',
+        color: 'danger',
+        icon: 'alert-circle-outline',
+        cssClass: 'toast-error'
+      });
+      await toast.present();
+      return toast;
     });
-    toast.present();
   }
 
   async mostrarAdvertencia(mensaje: string, duracion: number = 3500) {
-    const toast = await this.toastController.create({
-      message: mensaje,
-      duration: duracion,
-      position: 'top',
-      color: 'warning',
-      icon: 'warning-outline',
-      cssClass: 'toast-warning'
+    return this.ngZone.run(async () => {
+      const toast = await this.toastController.create({
+        message: mensaje,
+        duration: duracion,
+        position: 'top',
+        color: 'warning',
+        icon: 'warning-outline',
+        cssClass: 'toast-warning'
+      });
+      await toast.present();
+      return toast;
     });
-    toast.present();
   }
 
   async mostrarInfo(mensaje: string, duracion: number = 3000) {
-    const toast = await this.toastController.create({
-      message: mensaje,
-      duration: duracion,
-      position: 'top',
-      color: 'primary',
-      icon: 'information-circle-outline',
-      cssClass: 'toast-info'
+    return this.ngZone.run(async () => {
+      const toast = await this.toastController.create({
+        message: mensaje,
+        duration: duracion,
+        position: 'top',
+        color: 'primary',
+        icon: 'information-circle-outline',
+        cssClass: 'toast-info'
+      });
+      await toast.present();
+      return toast;
     });
-    toast.present();
   }
 }

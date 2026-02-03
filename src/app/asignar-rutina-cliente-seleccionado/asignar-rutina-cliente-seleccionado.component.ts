@@ -2,7 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, ToastController } from '@ionic/angular';
 import { ConfirmService } from '../services/confirm.service';
 import { RutinaService, Rutina } from '../services/rutina.service';
 import { ClienteService } from '../services/cliente.service';
@@ -25,6 +25,7 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
   private toastService = inject(ToastService);
   private confirmService = inject(ConfirmService);
   private cdr = inject(ChangeDetectorRef);
+  private toastController = inject(ToastController);
 
   clienteId: number | null = null;
   cliente: any = null;
@@ -148,7 +149,41 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
         throw new Error('Datos incompletos');
       }
 
-      // Verificar si la rutina ya existe en el mismo día
+      // Verificar si el cliente ya tiene cualquier rutina asignada en ese día
+      const { data: rutinasCliente } = await this.rutinaService.obtenerRutinasDeCliente(this.clienteId);
+      console.log('Rutinas del cliente:', rutinasCliente);
+      console.log('Día seleccionado:', this.diaSeleccionado);
+      
+      if (rutinasCliente && rutinasCliente.length > 0) {
+        const tieneRutinaMismoDia = rutinasCliente.some((rc: any) => {
+          console.log('Comparando rutina dia_semana:', rc.dia_semana, 'con día seleccionado:', this.diaSeleccionado);
+          return rc.dia_semana === this.diaSeleccionado;
+        });
+        
+        if (tieneRutinaMismoDia) {
+          console.log('¡VALIDACIÓN ACTIVADA! Cliente ya tiene rutina ese día');
+          this.mostrarSpinner = false;
+          this.cdr.detectChanges();
+          
+          // Delay para asegurar que el spinner se oculte
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Crear y mostrar toast manualmente para mejor control en móvil
+          const toast = await this.toastController.create({
+            message: 'El cliente ya tiene una rutina asignada ese día. No se puede asignar otra.',
+            duration: 4000,
+            position: 'top',
+            color: 'warning',
+            icon: 'warning-outline',
+            cssClass: 'toast-warning'
+          });
+          
+          await toast.present();
+          return;
+        }
+      }
+      
+      // Verificar si esta rutina específica ya está asignada en el mismo día
       const verificacion = await this.rutinaService.verificarRutinaDuplicada(
         this.clienteId,
         this.rutinaSeleccionadaId,
@@ -158,16 +193,7 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
       if (verificacion.existe) {
         this.mostrarSpinner = false;
         this.cdr.detectChanges();
-        this.toastService.mostrarAdvertencia('Rutina existente en el mismo día');
-        return;
-      }
-
-      // Verificar si el cliente ya tiene cualquier otra rutina asignada en ese día
-      const { data: rutinasCliente } = await this.rutinaService.obtenerRutinasDeCliente(this.clienteId);
-      if (rutinasCliente && rutinasCliente.some((rc: any) => rc.dia_semana === this.diaSeleccionado)) {
-        this.mostrarSpinner = false;
-        this.cdr.detectChanges();
-        this.toastService.mostrarAdvertencia('El cliente ya tiene una rutina asignada en ese día');
+        this.toastService.mostrarAdvertencia('Esta rutina ya está asignada a este cliente ese día.');
         return;
       }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, AlertController } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
@@ -126,6 +126,7 @@ export class VerEjerciciosComponent implements OnInit {
   private sanitizer = inject(DomSanitizer);
   private cdr = inject(ChangeDetectorRef);
   private alertController = inject(AlertController);
+  private ngZone = inject(NgZone);
 
   // Índice del ejercicio cuyo botón editar está mostrando spinner
   isEditingIndex: number | null = null;
@@ -531,23 +532,33 @@ export class VerEjerciciosComponent implements OnInit {
         // Mantener spinner visible por un momento
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        // Ocultar spinner antes de cerrar modal
-        this.mostrarSpinnerGlobal = false;
-        this.cdr.detectChanges();
+        // Forzar ejecución en NgZone para asegurar change detection
+        await this.ngZone.run(async () => {
+          // Ocultar spinner antes de cerrar modal
+          this.mostrarSpinnerGlobal = false;
+          this.cdr.detectChanges();
 
-        // Pequeña pausa
-        await new Promise(resolve => setTimeout(resolve, 100));
+          // Pequeña pausa
+          await new Promise(resolve => setTimeout(resolve, 100));
 
-        // Cerrar modal
-        this.cerrarModal();
+          // Cerrar modal
+          this.cerrarModal();
+          this.cdr.markForCheck();
 
-        // Mostrar toast de éxito
-        await this.toastService.mostrarExito(
-          this.editMode ? 'Ejercicio actualizado correctamente' : 'Ejercicio creado correctamente'
-        );
+          // Pequeña pausa antes del toast
+          await new Promise(resolve => setTimeout(resolve, 50));
 
-        // Recargar ejercicios
-        await this.cargarEjercicios(true);
+          // Mostrar toast de éxito
+          await this.toastService.mostrarExito(
+            this.editMode ? 'Ejercicio actualizado correctamente' : 'Ejercicio creado correctamente'
+          );
+
+          // Recargar ejercicios
+          await this.cargarEjercicios(true);
+          
+          // Forzar actualización final
+          this.cdr.detectChanges();
+        });
 
       } else {
         // Error al guardar
@@ -603,21 +614,27 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
       // Mantener spinner visible por un momento
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      // Ocultar spinner
-      this.eliminandoEjercicio = false;
-      this.cdr.detectChanges();
+      // Forzar ejecución en NgZone
+      await this.ngZone.run(async () => {
+        // Ocultar spinner
+        this.eliminandoEjercicio = false;
+        this.cdr.detectChanges();
 
-      // Pequeña pausa antes de mostrar toast y actualizar lista
-      await new Promise(resolve => setTimeout(resolve, 100));
+        // Actualizar lista INMEDIATAMENTE (desaparece el ejercicio)
+        this.ejercicios = this.ejercicios.filter(e => e.id !== ejercicio.id);
+        this.cacheEjercicios = this.ejercicios;
+        this.aplicarFiltros();
+        this.cdr.detectChanges();
 
-      // Mostrar toast
-      await this.toastService.mostrarExito('Ejercicio eliminado');
+        // Pequeña pausa antes de mostrar toast
+        await new Promise(resolve => setTimeout(resolve, 50));
 
-      // Actualizar lista (desaparece el ejercicio)
-      this.ejercicios = this.ejercicios.filter(e => e.id !== ejercicio.id);
-      this.cacheEjercicios = this.ejercicios;
-      this.aplicarFiltros();
-      this.cdr.detectChanges();
+        // Mostrar toast
+        await this.toastService.mostrarExito('Ejercicio eliminado');
+        
+        // Forzar actualización final
+        this.cdr.markForCheck();
+      });
     } else {
       this.eliminandoEjercicio = false;
       this.cdr.detectChanges();
@@ -1186,23 +1203,29 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
       // Mantener spinner visible por un momento
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      // Cerrar modal primero
-      this.cerrarModalRutina();
+      // Forzar ejecución en NgZone
+      await this.ngZone.run(async () => {
+        // Cerrar modal primero
+        this.cerrarModalRutina();
 
-      // Ocultar spinner después de cerrar modal
-      this.mostrarSpinnerGlobal = false;
-      this.cdr.detectChanges();
+        // Ocultar spinner después de cerrar modal
+        this.mostrarSpinnerGlobal = false;
+        this.cdr.detectChanges();
 
-      // Pequeña pausa
-      await new Promise(resolve => setTimeout(resolve, 100));
+        // Pequeña pausa
+        await new Promise(resolve => setTimeout(resolve, 50));
 
-      // Mostrar toast de éxito
-      await this.toastService.mostrarExito(
-        this.editModeRutina ? 'Rutina actualizada correctamente' : 'Rutina creada correctamente'
-      );
+        // Mostrar toast de éxito
+        await this.toastService.mostrarExito(
+          this.editModeRutina ? 'Rutina actualizada correctamente' : 'Rutina creada correctamente'
+        );
 
-      // Recargar rutinas
-      await this.cargarRutinas(true);
+        // Recargar rutinas
+        await this.cargarRutinas(true);
+        
+        // Forzar actualización final
+        this.cdr.markForCheck();
+      });
 
     } catch (error) {
       // Ocultar spinner global en caso de error
@@ -1553,6 +1576,22 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
 
       // Dar tiempo al spinner para mostrarse
       await new Promise(resolve => setTimeout(resolve, 50));
+      
+      // Verificar si algún cliente ya tiene una rutina en ese día
+      for (const clienteId of this.clientesSeleccionados) {
+        const { data: rutinasCliente } = await this.rutinaService.obtenerRutinasDeCliente(clienteId);
+        if (rutinasCliente && rutinasCliente.some((rc: any) => rc.dia_semana === this.diaSemanaAsignacion)) {
+          // Buscar el nombre del cliente
+          const cliente = this.clientesDisponibles.find((c: any) => c.id === clienteId);
+          const nombreCliente = cliente ? `${cliente.nombre} ${cliente.apellido}` : 'Un cliente';
+          this.mostrarSpinnerGlobal = false;
+          this.cdr.detectChanges();
+          await this.toastService.mostrarAdvertencia(
+            `${nombreCliente} ya tiene una rutina asignada ese día. No se puede asignar otra.`
+          );
+          return;
+        }
+      }
 
       const { success, error } = await this.rutinaService.asignarRutinaAClientes(
         this.rutinaParaAsignar.id,

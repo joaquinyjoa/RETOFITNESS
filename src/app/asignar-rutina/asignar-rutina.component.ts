@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, CUSTOM_ELEMENTS_SCHEMA, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -82,6 +82,7 @@ export class AsignarRutinaComponent implements OnInit {
   private confirmService = inject(ConfirmService);
   private modalController = inject(ModalController);
   private cdr = inject(ChangeDetectorRef);
+  private ngZone = inject(NgZone);
 
   rutina: Rutina | null = null;
   rutinaId: number | null = null;
@@ -236,7 +237,24 @@ export class AsignarRutinaComponent implements OnInit {
 
       const clienteIds = Array.from(this.clientesSeleccionados);
       
-      // Validar si la rutina ya está asignada en el mismo día para algún cliente
+      // Verificar si algún cliente ya tiene UNA rutina en ese día
+      for (const clienteId of clienteIds) {
+        const { data: rutinasCliente } = await this.rutinaService.obtenerRutinasDeCliente(clienteId);
+        if (rutinasCliente && rutinasCliente.some((rc: any) => rc.dia_semana === this.diaSemana)) {
+          // Buscar el nombre del cliente
+          const cliente = this.clientes.find(c => c.id === clienteId);
+          const nombreCliente = cliente ? `${cliente.nombre} ${cliente.apellido}` : 'este cliente';
+          this.guardando = false;
+          this.cdr.detectChanges();
+          await this.mostrarToast(
+            `${nombreCliente} ya tiene una rutina asignada ese día. No se puede asignar otra.`,
+            'warning'
+          );
+          return;
+        }
+      }
+      
+      // Verificar si la rutina específica ya está asignada en el mismo día para algún cliente
       const { existe, cliente } = await this.rutinaService.verificarRutinaAsignadaMismoDia(
         this.rutinaId!,
         clienteIds,
@@ -247,7 +265,7 @@ export class AsignarRutinaComponent implements OnInit {
         this.guardando = false;
         this.cdr.detectChanges();
         await this.mostrarToast(
-          `Esta rutina ya está asignada a "${cliente}" el mismo día. Elige otro día.`,
+          `${cliente} ya tiene esta rutina asignada ese día.`,
           'warning'
         );
         return;
@@ -264,27 +282,33 @@ export class AsignarRutinaComponent implements OnInit {
         // Mantener spinner visible por un momento
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        // Ocultar spinner
-        this.guardando = false;
-        this.cdr.detectChanges();
+        // Forzar ejecución en NgZone
+        await this.ngZone.run(async () => {
+          // Ocultar spinner
+          this.guardando = false;
+          this.cdr.detectChanges();
 
-        // Pequeña pausa
-        await new Promise(resolve => setTimeout(resolve, 100));
+          // Pequeña pausa
+          await new Promise(resolve => setTimeout(resolve, 50));
 
-        // Mostrar toast
-        await this.mostrarToast(
-          `Rutina asignada exitosamente a ${clienteIds.length} cliente(s)`,
-          'success'
-        );
+          // Mostrar toast
+          await this.mostrarToast(
+            `Rutina asignada exitosamente a ${clienteIds.length} cliente(s)`,
+            'success'
+          );
 
-        // Esperar un momento adicional antes de navegar
-        await new Promise(resolve => setTimeout(resolve, 200));
+          // Esperar un momento adicional antes de navegar
+          await new Promise(resolve => setTimeout(resolve, 200));
 
-        // Asegurar que no queden overlays abiertos y ocultar cualquier overlay residual
-        await this.dismissAllOverlays();
+          // Limpiar overlays
+          await this.dismissAllOverlays();
 
-        // Navegar de vuelta
-        this.router.navigate(['/ver-ejercicios'], { replaceUrl: true });
+          // Navegar de vuelta
+          await this.router.navigate(['/ver-ejercicios'], { replaceUrl: true });
+          
+          // Forzar actualización
+          this.cdr.markForCheck();
+        });
       } else {
         console.error('Error al asignar rutina:', error);
         this.guardando = false;

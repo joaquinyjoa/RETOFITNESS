@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -61,6 +61,7 @@ export class ConfigurarEjercicioComponent implements OnInit {
   private toastService = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
   private alertController = inject(AlertController);
+  private ngZone = inject(NgZone);
 
   // Parámetros de ruta
   ejercicioPersonalizadoId: number | null = null;
@@ -231,8 +232,17 @@ export class ConfigurarEjercicioComponent implements OnInit {
       const { success, error } = resultado as any;
 
       if (success) {
-        this.toastService.mostrarExito('Ejercicio actualizado correctamente');
-        this.goBack();
+        // Forzar ejecución en NgZone
+        await this.ngZone.run(async () => {
+          this.mostrarSpinner = false;
+          this.cdr.detectChanges();
+          
+          await new Promise(resolve => setTimeout(resolve, 50));
+          
+          await this.toastService.mostrarExito('Ejercicio actualizado correctamente');
+          
+          this.goBack();
+        });
       } else {
         this.toastService.mostrarError(error || 'Error al actualizar ejercicio');
       }
