@@ -37,6 +37,9 @@ export class WelcomeComponent implements OnInit, OnDestroy, ViewWillEnter, ViewW
     setTimeout(() => {
       this.mostrarSpinner = false;
       this.cdr.detectChanges();
+      
+      // Reiniciar animaciones cada vez que entramos a la vista
+      this.playWelcomeAnimation();
     }, 0);
   }
 
