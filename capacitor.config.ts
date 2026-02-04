@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.retofitness.app',
-  appName: 'RetoFitness',
+  appName: 'Retofitness',
   webDir: 'www',
   server: {
     androidScheme: 'http',

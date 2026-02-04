@@ -36,6 +36,8 @@ export interface Cliente {
   peso: number;
   altura: number;
   nivelActividad: string;
+  terminos_aceptados?: boolean; // Aceptación de términos y condiciones
+  fecha_aceptacion_terminos?: string; // Fecha de aceptación de términos
 }
 
 @Injectable({

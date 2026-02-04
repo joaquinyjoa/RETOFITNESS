@@ -769,6 +769,47 @@ ion-item {
   }
 }
 
+/* ===== Aceptación de términos y condiciones ===== */
+.terms-acceptance {
+  margin: 24px 0 16px;
+  padding: 0 8px;
+  
+  .terms-checkbox {
+    --background: transparent;
+    --border-width: 0;
+    --padding-start: 0;
+    --inner-padding-end: 0;
+    
+    ion-checkbox {
+      --size: 24px;
+      --checkbox-background: rgba(255, 255, 255, 0.05);
+      --checkbox-background-checked: var(--primary-green);
+      --border-color: var(--primary-green);
+      --border-color-checked: var(--primary-green);
+      --checkmark-color: #000000;
+      margin-right: 12px;
+    }
+    
+    ion-label {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      
+      .terms-link {
+        color: var(--primary-green);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        
+        &:hover {
+          color: var(--secondary-green);
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+}
+
 /* ===== Botones simplificados y centrados ===== */
 .step-buttons {
   display: flex;

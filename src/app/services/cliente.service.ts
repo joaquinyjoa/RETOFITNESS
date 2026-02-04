@@ -50,7 +50,9 @@ export class ClienteService {
       const clienteConUserId = {
         ...clienteData,
         user_id: authResult.userId,
-        Estado: false // Cliente pendiente de aprobación por recepción
+        Estado: false, // Cliente pendiente de aprobación por recepción
+        terminos_aceptados: clienteData.terminos_aceptados || true, // Valor por defecto true
+        fecha_aceptacion_terminos: new Date().toISOString() // Fecha actual
       };
 
       // Normalizar campos de texto opcionales cuando estén vacíos, undefined o null.

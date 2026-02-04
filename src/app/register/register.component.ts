@@ -55,7 +55,8 @@ export class RegisterComponent implements OnInit {
     edad: '',
     correo: '',
     password: '',
-    genero: ''
+    genero: '',
+    terminos: ''
   };
 
   // Seguimiento de campos tocados por el usuario
@@ -94,6 +95,8 @@ export class RegisterComponent implements OnInit {
   // Detección de dispositivo móvil para iconos
   isMobile: boolean = false;
   
+  // Aceptación de términos y condiciones
+  aceptaTerminos: boolean = false;
   
   // Variables para animaciones
   animationClass: string = '';
@@ -166,6 +169,9 @@ export class RegisterComponent implements OnInit {
     };
     this.objetivoOtro = '';
     
+    // Resetear aceptación de términos
+    this.aceptaTerminos = false;
+    
     // Resetear validación de campos
     this.fieldsTouched = {
       nombre: false,
@@ -182,7 +188,8 @@ export class RegisterComponent implements OnInit {
       edad: '',
       correo: '',
       password: '',
-      genero: ''
+      genero: '',
+      terminos: ''
     };
   }
 
@@ -304,6 +311,13 @@ export class RegisterComponent implements OnInit {
       this.currentStep--;
     } else {
       this.router.navigate(['/welcome']);
+    }
+  }
+
+  // Método para manejar el cambio en el checkbox de términos
+  onTermsChange() {
+    if (this.aceptaTerminos) {
+      this.validationErrors.terminos = '';
     }
   }
 
@@ -480,6 +494,13 @@ export class RegisterComponent implements OnInit {
   }
 
   async onSubmit() {
+    // Validar que aceptó los términos
+    if (!this.aceptaTerminos) {
+      this.validationErrors.terminos = 'Debes aceptar los términos y condiciones';
+      await this.toastService.mostrarError('Debes aceptar los términos y condiciones para continuar');
+      return;
+    }
+
     this.isSubmitting = true;
     this.showSpinner = true;
     this.cdr.detectChanges();

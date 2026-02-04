@@ -721,6 +721,30 @@
         </div>
       </div>
 
+      <!-- Aceptación de Términos y Condiciones -->
+      <div class="terms-acceptance">
+        <ion-item lines="none" class="terms-checkbox">
+          <ion-checkbox 
+            slot="start" 
+            [(ngModel)]="aceptaTerminos"
+            (ionChange)="onTermsChange()">
+          </ion-checkbox>
+          <ion-label class="ion-text-wrap">
+            Acepto los 
+            <a href="https://joaquinyjoa.github.io/retofitness-legal/terms.html" target="_blank" class="terms-link">
+              Términos y Condiciones
+            </a> 
+            y la 
+            <a href="https://joaquinyjoa.github.io/retofitness-legal/privacy-policy.html" target="_blank" class="terms-link">
+              Política de Privacidad
+            </a>
+          </ion-label>
+        </ion-item>
+        <div class="error-message" *ngIf="validationErrors.terminos">
+          {{ validationErrors.terminos }}
+        </div>
+      </div>
+
       <div class="step-buttons">
         <ion-button class="back-button" (click)="prevStep()">
           Anterior
@@ -728,7 +752,7 @@
         <ion-button 
           class="next-button" 
           (click)="onSubmit()" 
-          [disabled]="isSubmitting">
+          [disabled]="isSubmitting || !aceptaTerminos">
           Completar
         </ion-button>
       </div>
