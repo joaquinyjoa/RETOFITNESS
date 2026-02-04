@@ -17,7 +17,7 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
   clientes: any[] = [];
   filteredClientes: any[] = [];
   q: string = '';
-  loading = false;
+  loading = true; // Iniciar en true para mostrar spinner desde el inicio
   mostrarSpinner = false;
   
   // Caché para evitar recargas innecesarias
@@ -76,6 +76,8 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
     if (!forzarRecarga && this.cacheClientes && (ahora - this.ultimaCarga) < this.CACHE_TTL) {
       this.clientes = this.cacheClientes;
       this.applyFilter();
+      this.loading = false; // Asegurar que loading sea false cuando usa caché
+      this.cdr.detectChanges();
       return;
     }
 

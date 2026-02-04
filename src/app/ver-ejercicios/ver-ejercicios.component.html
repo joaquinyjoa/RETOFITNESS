@@ -90,11 +90,16 @@
     </div>
   </div>
 
+  <!-- Spinner de carga inicial -->
+  <div *ngIf="loading" class="loading-container">
+    <app-spinner></app-spinner>
+  </div>
+
   <!-- Lista de ejercicios -->
   <div *ngIf="!loading" class="exercises-grid">
     
     <!-- Sin ejercicios -->
-    <div *ngIf="ejerciciosFiltrados.length === 0" class="no-exercises">
+    <div *ngIf="ejerciciosFiltrados.length === 0 && !loading" class="no-exercises">
       <ion-icon name="barbell-outline" size="large"></ion-icon>
       <h3>No hay ejercicios</h3>
       <p *ngIf="filtroTexto || filtroCategoria || filtroMusculo">
@@ -270,6 +275,11 @@
           </ion-select-option>
         </ion-select>
       </div>
+    </div>
+
+    <!-- Spinner de carga de rutinas -->
+    <div *ngIf="loadingRutinas" class="loading-container">
+      <app-spinner></app-spinner>
     </div>
 
     <div *ngIf="!loadingRutinas && rutinasFiltradas.length === 0" style="text-align: center; padding: 40px;">

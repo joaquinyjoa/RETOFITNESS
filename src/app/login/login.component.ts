@@ -238,7 +238,7 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
         }
       }
       
-      // Navegar según el tipo de usuario INMEDIATAMENTE
+      // Navegar según el tipo de usuario con delay de 1.5s para mostrar spinner
       let ruta = '/login';
       if (result.usuario?.tipo === 'cliente') {
         ruta = '/panel-cliente';
@@ -247,6 +247,9 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
       } else if (result.usuario?.tipo === 'recepcion') {
         ruta = '/panel-recepcion';
       }
+      
+      // Esperar 1.5 segundos antes de navegar
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       await this.router.navigate([ruta], { replaceUrl: true });
       

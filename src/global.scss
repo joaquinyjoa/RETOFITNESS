@@ -584,7 +584,12 @@ ion-alert {
 
 .neon-action-sheet .alert-button[role="destructive"],
 .neon-action-sheet .alert-button.alert-button-role-destructive {
-	color: #ff6b6b;
+	color: #ff6b6b !important;
+}
+
+.neon-action-sheet .alert-button[role="destructive"] ion-icon,
+.neon-action-sheet .alert-button.alert-button-role-destructive ion-icon {
+	color: #ff6b6b !important;
 }
 
 .neon-action-sheet ion-icon {

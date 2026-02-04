@@ -32,6 +32,7 @@
 .welcome-title { opacity: 0; }
 .welcome-description { opacity: 0; }
 .welcome-buttons { opacity: 0; }
+.legal-links { opacity: 0; }
 
 /* Logo specifics */
 .welcome-logo img {
@@ -180,4 +181,33 @@
   align-items: center;
   justify-content: center;
   z-index: 9999;
+}
+// Enlaces legales
+.legal-links {
+  margin-top: 30px;
+  padding: 20px 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  
+  a {
+    color: var(--primary-green);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    
+    &:hover {
+      color: var(--secondary-green);
+      text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+    }
+    
+    &:active {
+      opacity: 0.7;
+    }
+  }
+  
+  .separator {
+    margin: 0 12px;
+    color: rgba(255, 255, 255, 0.3);
+  }
 }

@@ -295,3 +295,62 @@
   </div>
 
 </ion-content>
+
+<!-- Modal para seleccionar ejercicio alternativo -->
+<ion-modal [isOpen]="showModalEjercicioAlternativo" (didDismiss)="cerrarModalEjercicioAlternativo()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar class="neon-toolbar">
+        <ion-title>{{ ejercicioPersonalizadoActual?.ejercicio_alternativo_id ? 'Cambiar' : 'Agregar' }} Ejercicio Alternativo</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarModalEjercicioAlternativo()">
+            <ion-icon name="close"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    
+    <ion-content class="modal-content-neon">
+      <!-- Buscador -->
+      <div style="padding: 16px;">
+        <ion-searchbar
+          [(ngModel)]="filtroEjercicioAlternativo"
+          (ionInput)="filtrarEjerciciosAlternativos()"
+          placeholder="Buscar por nombre, músculo o categoría..."
+          [debounce]="300"
+          show-clear-button="focus">
+        </ion-searchbar>
+      </div>
+      
+      <!-- Lista de ejercicios -->
+      <ion-list class="ejercicios-list">
+        <ion-item 
+          *ngFor="let ej of ejerciciosDisponiblesFiltrados" 
+          button 
+          (click)="seleccionarEjercicioAlternativo(ej.id)"
+          [class.selected]="ej.id === ejercicioPersonalizadoActual?.ejercicio_alternativo_id">
+          <ion-label>
+            <h3>{{ ej.nombre }}</h3>
+            <p>
+              <ion-icon name="body-outline"></ion-icon>
+              {{ ej.musculo_principal }}
+              <span *ngIf="ej.categoria"> • {{ ej.categoria }}</span>
+            </p>
+          </ion-label>
+          <ion-icon 
+            *ngIf="ej.id === ejercicioPersonalizadoActual?.ejercicio_alternativo_id" 
+            name="checkmark-circle" 
+            slot="end" 
+            color="success">
+          </ion-icon>
+        </ion-item>
+        
+        <!-- Sin resultados -->
+        <div *ngIf="ejerciciosDisponiblesFiltrados.length === 0" style="text-align: center; padding: 40px; color: var(--ion-color-medium);">
+          <ion-icon name="search-outline" style="font-size: 48px;"></ion-icon>
+          <p>No se encontraron ejercicios</p>
+        </div>
+      </ion-list>
+    </ion-content>
+  </ng-template>
+</ion-modal>

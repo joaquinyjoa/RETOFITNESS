@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef, inject, OnDestroy } from '@angular/core';
-import { ViewWillEnter } from '@ionic/angular';
+import { ViewWillEnter, ActionSheetController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
@@ -24,6 +24,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
   private authService = inject(AuthService);
   private confirmService = inject(ConfirmService);
   private toastService = inject(ToastService);
+  private actionSheetController = inject(ActionSheetController);
   // sanitizer and Drive helpers removed
   private cdr = inject(ChangeDetectorRef);
 
@@ -114,7 +115,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
     window.addEventListener('offline', this.offlineListener);
   }
 
-  async cargarRutinaAsignada() {
+  async cargarRutinaAsignada(fromRefresh: boolean = false) {
     try {
       if (!this.clienteId) {
         console.error('❌ No hay cliente ID');
@@ -156,8 +157,10 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
         }
       }
 
-      // Mostrar spinner y limpiar datos actuales para forzar recarga completa
-      this.mostrarSpinner = true;
+      // Mostrar spinner solo si NO viene de pull-to-refresh
+      if (!fromRefresh) {
+        this.mostrarSpinner = true;
+      }
       this.rutinasAsignadas = [];
       this.rutinasPorDia.clear();
       this.rutinaAsignada = null;
@@ -266,6 +269,17 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
   ionViewWillEnter(): void {
     // No await here so Ionic lifecycle isn't blocked, but trigger reload
     this.cargarRutinaAsignada().catch(err => console.error('[PanelCliente] ionViewWillEnter error', err));
+  }
+
+  // Manejar pull-to-refresh
+  async handleRefresh(event: any) {
+    try {
+      await this.cargarRutinaAsignada(true); // fromRefresh = true
+    } catch (error) {
+      console.error('Error en refresh:', error);
+    } finally {
+      event.target.complete();
+    }
   }
 
   seleccionarDia(dia: number) {
@@ -532,7 +546,9 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
     try {
       for (const rutina of rutinas) {
         if (rutina.ejercicios && Array.isArray(rutina.ejercicios)) {
-          for (const ejercicio of rutina.ejercicios) {
+          for (let i = 0; i < rutina.ejercicios.length; i++) {
+            const ejercicio = rutina.ejercicios[i];
+            
             // Cargar detalles del ejercicio principal si no están completos
             if (ejercicio.ejercicio_id && !ejercicio.ejercicio_completo) {
               const { data, error } = await this.rutinaService.obtenerEjercicioPorId(ejercicio.ejercicio_id);
@@ -550,6 +566,13 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
               if (data && !error) {
                 ejercicio.ejercicio_alternativo = data;
                 ejercicio.ejercicio_alternativo_completo = true;
+              }
+            } else if (!ejercicio.ejercicio_alternativo_id) {
+              // Si el ejercicio ya no tiene alternativo (fue eliminado), resetear el índice del carrusel
+              const indiceCarruselActual = this.videoCarouselIndices.get(i);
+              if (indiceCarruselActual === 1) {
+                // Estaba viendo el alternativo, cambiar a principal
+                this.videoCarouselIndices.set(i, 0);
               }
             }
           }
@@ -589,6 +612,44 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   // actualizarPesoSerie removed - now using [(ngModel)] for better UX
+
+  async mostrarMenuOpciones() {
+    const actionSheet = await this.actionSheetController.create({
+      header: 'Opciones',
+      cssClass: 'neon-action-sheet',
+      buttons: [
+        {
+          text: 'Modificar perfil',
+          icon: 'person-circle-outline',
+          handler: () => {
+            this.irAModificarPerfil();
+          }
+        },
+        {
+          text: 'Refrescar',
+          icon: 'refresh-outline',
+          handler: () => {
+            this.cargarRutinaAsignada();
+          }
+        },
+        {
+          text: 'Cerrar sesión',
+          icon: 'log-out-outline',
+          role: 'destructive',
+          handler: () => {
+            this.logout();
+          }
+        },
+        {
+          text: 'Cancelar',
+          icon: 'close',
+          role: 'cancel'
+        }
+      ]
+    });
+
+    await actionSheet.present();
+  }
 
   async irAModificarPerfil() {
     this.mostrarSpinner = true;

@@ -28,8 +28,9 @@
       show-clear-button="focus">
     </ion-searchbar>
 
-    <div *ngIf="loading" class="loading-placeholder">
-      <ion-spinner name="crescent"></ion-spinner>
+    <!-- Spinner de carga inicial -->
+    <div *ngIf="loading" class="loading-container">
+      <app-spinner></app-spinner>
     </div>
 
     <div *ngIf="!loading">
@@ -91,9 +92,10 @@
         </ion-card>
       </div>
 
-      <div *ngIf="filteredClientes.length === 0" class="no-results">
+      <div *ngIf="filteredClientes.length === 0 && !loading" class="no-results">
         <ion-icon name="sad-outline" class="no-results-icon"></ion-icon>
-        <p>No se encontraron clientes.</p>
+        <p *ngIf="q">No se encontraron clientes con ese criterio de búsqueda.</p>
+        <p *ngIf="!q">Aún no hay clientes registrados.</p>
       </div>
     </div>
 

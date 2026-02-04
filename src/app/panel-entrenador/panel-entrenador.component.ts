@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, ViewWillEnter, ViewWillLeave } from '@ionic/angular';
+import { IonicModule, ViewWillEnter, ViewWillLeave, NavController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { AuthService, UsuarioLogueado } from '../services/auth.service';
 import { ConfirmService } from '../services/confirm.service';
@@ -20,6 +20,7 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
   mostrarSpinner = false;
 
   private router = inject(Router);
+  private navCtrl = inject(NavController);
   private authService = inject(AuthService);
   private confirmService = inject(ConfirmService);
   private toastService = inject(ToastService);
@@ -96,21 +97,24 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
       return;
     }
 
-    // Mostrar overlay local brevemente
+    // Mostrar spinner durante 1.5s para dar tiempo de carga
     this.mostrarSpinner = true;
     this.cdr.detectChanges();
     
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Esperar 1.5 segundos antes de navegar
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Navegar dentro de NgZone para mejor rendimiento
-    await this.ngZone.run(async () => {
-      try {
-        await this.router.navigate(['/ver-clientes']);
-      } finally {
-        this.mostrarSpinner = false;
-        this.cdr.detectChanges();
-      }
+    // Navegar sin animación para evitar problemas visuales
+    await this.navCtrl.navigateForward('/ver-clientes', {
+      animated: false
     });
+    
+    // Pequeño delay para que el nuevo componente renderice
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Ocultar spinner suavemente después de navegar
+    this.mostrarSpinner = false;
+    this.cdr.detectChanges();
   }
 
   // Ver ejercicios
@@ -122,21 +126,24 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
       return;
     }
 
-    // Mostrar overlay local brevemente
+    // Mostrar spinner durante 1.5s para dar tiempo de carga
     this.mostrarSpinner = true;
     this.cdr.detectChanges();
     
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Esperar 1.5 segundos antes de navegar
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Navegar dentro de NgZone para mejor rendimiento
-    await this.ngZone.run(async () => {
-      try {
-        await this.router.navigate(['/ver-ejercicios']);
-      } finally {
-        this.mostrarSpinner = false;
-        this.cdr.detectChanges();
-      }
+    // Navegar sin animación para evitar problemas visuales
+    await this.navCtrl.navigateForward('/ver-ejercicios', {
+      animated: false
     });
+    
+    // Pequeño delay para que el nuevo componente renderice
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Ocultar spinner suavemente después de navegar
+    this.mostrarSpinner = false;
+    this.cdr.detectChanges();
   }
 
   // Cerrar sesión

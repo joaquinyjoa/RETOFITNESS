@@ -1,7 +1,33 @@
 .custom-header {
   ion-toolbar {
-    --background: #000000;
-    --color: #00ff88;
+    --background: linear-gradient(90deg, #001a0f 0%, rgba(0,255,136,0.06) 50%, #002214 100%);
+    --color: #000000;
+    border-bottom: 1px solid rgba(0,255,136,0.12);
+    box-shadow: 0 8px 30px rgba(0,255,136,0.12), inset 0 0 40px rgba(0,255,136,0.03);
+    position: relative;
+    z-index: 50;
+    animation: neon-pulse 2.8s ease-in-out infinite;
+  }
+
+  /* Para WebView/Shadow DOM nativo
+     aplicamos el fondo y color también al part native cuando sea soportado */
+  ion-toolbar::part(native) {
+    background: linear-gradient(90deg, #001a0f 0%, rgba(0,255,136,0.06) 50%, #002214 100%) !important;
+    color: #000000 !important;
+    box-shadow: 0 8px 30px rgba(0,255,136,0.12) !important;
+  }
+
+  ion-title {
+    color: var(--primary-green);
+    text-shadow: 0 0 10px rgba(0,255,136,0.45);
+    font-weight: 800;
+    letter-spacing: 0.6px;
+  }
+
+  ion-button ion-icon,
+  ion-button {
+    color: var(--primary-green) !important;
+    text-shadow: 0 0 6px rgba(0,255,136,0.25);
   }
 }
 

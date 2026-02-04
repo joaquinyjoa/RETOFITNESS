@@ -1800,6 +1800,16 @@ ion-header {
   pointer-events: auto;
 }
 
+// Container de carga inicial centrado
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  width: 100%;
+  background: transparent;
+}
+
 // === ESTILOS DE CARRUSEL ===
 .carousel-container {
   position: relative;

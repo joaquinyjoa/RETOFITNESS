@@ -788,3 +788,101 @@ ion-segment {
     font-style: italic;
   }
 }
+
+// Estilos para modal de ejercicio alternativo
+ion-modal {
+  --width: 90%;
+  --max-width: 500px;
+  --height: 80%;
+  --border-radius: 16px;
+  --background: #000;
+  
+  .neon-toolbar {
+    --background: linear-gradient(90deg, #001a0f 0%, rgba(0,255,136,0.06) 50%, #002214 100%);
+    --color: var(--primary-green);
+    border-bottom: 1px solid rgba(0,255,136,0.2);
+    
+    ion-title {
+      color: var(--primary-green);
+      text-shadow: 0 0 10px rgba(0,255,136,0.45);
+      font-weight: 700;
+    }
+    
+    ion-button {
+      --color: var(--primary-green);
+      
+      ion-icon {
+        font-size: 28px;
+      }
+    }
+  }
+  
+  .modal-content-neon {
+    --background: #000;
+    
+    ion-searchbar {
+      --background: rgba(0, 255, 136, 0.05);
+      --border-radius: 12px;
+      --box-shadow: 0 0 10px rgba(0, 255, 136, 0.1);
+      --placeholder-color: rgba(0, 255, 136, 0.5);
+      --color: var(--primary-green);
+      --icon-color: var(--primary-green);
+      --clear-button-color: var(--primary-green);
+      padding: 0;
+    }
+  }
+  
+  .ejercicios-list {
+    padding: 0 16px 16px;
+    background: transparent;
+    
+    ion-item {
+      --background: rgba(0, 255, 136, 0.05);
+      --border-color: rgba(0, 255, 136, 0.2);
+      --color: #fff;
+      --padding-start: 16px;
+      --padding-end: 16px;
+      margin-bottom: 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 255, 136, 0.2);
+      transition: all 0.3s ease;
+      
+      &:hover {
+        --background: rgba(0, 255, 136, 0.1);
+        border-color: rgba(0, 255, 136, 0.4);
+        transform: translateX(4px);
+      }
+      
+      &.selected {
+        --background: rgba(0, 255, 136, 0.15);
+        border-color: var(--primary-green);
+        box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+      }
+      
+      ion-label {
+        h3 {
+          color: var(--primary-green);
+          font-weight: 600;
+          margin-bottom: 4px;
+        }
+        
+        p {
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 0.875rem;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          
+          ion-icon {
+            font-size: 1rem;
+            color: var(--primary-green);
+          }
+        }
+      }
+      
+      ion-icon[slot="end"] {
+        font-size: 24px;
+      }
+    }
+  }
+}

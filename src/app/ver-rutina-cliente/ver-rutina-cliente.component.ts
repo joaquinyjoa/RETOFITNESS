@@ -19,6 +19,10 @@ import {
   IonLabel,
   IonSegment,
   IonSegmentButton,
+  IonModal,
+  IonSearchbar,
+  IonList,
+  IonItem,
   AlertController
 } from '@ionic/angular/standalone';
 import { RutinaService } from '../services/rutina.service';
@@ -53,6 +57,10 @@ import { SpinnerComponent } from '../spinner/spinner.component';
     IonLabel,
     IonSegment,
     IonSegmentButton,
+    IonModal,
+    IonSearchbar,
+    IonList,
+    IonItem,
     SpinnerComponent
   ]
 })
@@ -86,6 +94,11 @@ export class VerRutinaClienteComponent implements OnInit {
   filtroEjercicio = '';
   cargandoEjercicios = false;
   cambiandoEjercicio = false;
+  
+  // Modal para ejercicio alternativo
+  showModalEjercicioAlternativo = false;
+  ejercicioPersonalizadoActual: any = null;
+  filtroEjercicioAlternativo = '';
 
   // Mapeo de días
   diasSemana: { [key: number]: string } = {
@@ -398,7 +411,7 @@ export class VerRutinaClienteComponent implements OnInit {
         role: 'destructive',
         cssClass: 'neon-destructive',
         handler: () => {
-          this.eliminarEjercicioAlternativo(rutinaCliente, ejercicioPersonalizado);
+          this.eliminarEjercicioAlternativo(rutinaCliente, ejercicioPersonalizado, this.getCarouselIndex(rutinaCliente));
         }
       });
     } else {
@@ -421,7 +434,7 @@ export class VerRutinaClienteComponent implements OnInit {
     const actionSheet = await this.alertController.create({
       header: 'Opciones de ejercicio',
       buttons,
-      cssClass: 'neon-alert'
+      cssClass: 'neon-action-sheet'
     });
 
     await actionSheet.present();
@@ -448,45 +461,69 @@ export class VerRutinaClienteComponent implements OnInit {
       const ejercicios = await this.ejercicioService.listarEjercicios();
       
       // Filtrar el ejercicio principal actual
-      const ejerciciosFiltrados = ejercicios.filter(ej => ej.id !== ejercicioPersonalizado.ejercicio_id);
-
-      const alert = await this.alertController.create({
-        header: ejercicioPersonalizado.ejercicio_alternativo_id ? 'Cambiar alternativo' : 'Agregar alternativo',
-        message: 'Selecciona el nuevo ejercicio alternativo para este cliente:',
-        inputs: ejerciciosFiltrados.slice(0, 50).map(ej => ({
-          type: 'radio' as const,
-          label: `${ej.nombre} (${ej.musculo_principal})`,
-          value: ej.id,
-          checked: ej.id === ejercicioPersonalizado.ejercicio_alternativo_id
-        })),
-        buttons: [
-          {
-            text: 'Cancelar',
-            role: 'cancel',
-            cssClass: 'neon-cancel'
-          },
-          {
-            text: 'Guardar',
-            role: 'confirm',
-            cssClass: 'neon-confirm',
-            handler: async (ejercicioIdSeleccionado: number) => {
-              if (!ejercicioIdSeleccionado) return;
-              await this.guardarEjercicioAlternativo(ejercicioPersonalizado, ejercicioIdSeleccionado, ejercicios);
-            }
-          }
-        ],
-        cssClass: 'neon-alert'
-      });
-
+      this.ejerciciosDisponibles = ejercicios.filter(ej => ej.id !== ejercicioPersonalizado.ejercicio_id);
+      this.ejerciciosDisponiblesFiltrados = [...this.ejerciciosDisponibles];
+      
+      // Guardar contexto para el modal
+      this.ejercicioPersonalizadoActual = ejercicioPersonalizado;
+      this.rutinaClienteActual = rutinaCliente;
+      this.filtroEjercicioAlternativo = '';
+      
+      // Abrir modal
+      this.showModalEjercicioAlternativo = true;
       this.mostrarSpinner = false;
       this.cdr.detectChanges();
-      await alert.present();
     } catch (error) {
       console.error('Error al cargar ejercicios:', error);
       this.mostrarSpinner = false;
       this.cdr.detectChanges();
       await this.toastService.mostrarError('Error al cargar ejercicios');
     }
+  }
+  
+  /**
+   * Filtrar ejercicios alternativos
+   */
+  filtrarEjerciciosAlternativos() {
+    const filtro = this.filtroEjercicioAlternativo.toLowerCase().trim();
+    
+    if (!filtro) {
+      this.ejerciciosDisponiblesFiltrados = [...this.ejerciciosDisponibles];
+    } else {
+      this.ejerciciosDisponiblesFiltrados = this.ejerciciosDisponibles.filter(ej => 
+        ej.nombre?.toLowerCase().includes(filtro) ||
+        ej.musculo_principal?.toLowerCase().includes(filtro) ||
+        ej.categoria?.toLowerCase().includes(filtro)
+      );
+    }
+  }
+  
+  /**
+   * Seleccionar ejercicio alternativo desde el modal
+   */
+  async seleccionarEjercicioAlternativo(ejercicioId: number) {
+    if (!this.ejercicioPersonalizadoActual) return;
+    
+    await this.guardarEjercicioAlternativo(
+      this.ejercicioPersonalizadoActual, 
+      ejercicioId, 
+      this.ejerciciosDisponibles
+    );
+    
+    this.cerrarModalEjercicioAlternativo();
+  }
+  
+  /**
+   * Cerrar modal de ejercicio alternativo
+   */
+  cerrarModalEjercicioAlternativo() {
+    this.showModalEjercicioAlternativo = false;
+    this.ejercicioPersonalizadoActual = null;
+    this.rutinaClienteActual = null;
+    this.filtroEjercicioAlternativo = '';
+    this.ejerciciosDisponibles = [];
+    this.ejerciciosDisponiblesFiltrados = [];
+    this.cdr.detectChanges();
   }
 
   /**
@@ -525,7 +562,7 @@ export class VerRutinaClienteComponent implements OnInit {
   /**
    * Eliminar el ejercicio alternativo
    */
-  async eliminarEjercicioAlternativo(rutinaCliente: any, ejercicioPersonalizado: any) {
+  async eliminarEjercicioAlternativo(rutinaCliente: any, ejercicioPersonalizado: any, ejercicioIndex: number) {
     const confirmado = await this.confirmService.confirm(
       '¿Estás seguro de eliminar el ejercicio alternativo para este cliente?',
       '¿Eliminar alternativo?'
@@ -547,8 +584,20 @@ export class VerRutinaClienteComponent implements OnInit {
         ejercicioPersonalizado.ejercicio_alternativo_id = null;
         ejercicioPersonalizado.ejercicio_alternativo = null;
         
+        // Si el usuario estaba viendo el ejercicio alternativo (índice 1), cambiar a principal (índice 0)
+        const videoKey = this.getVideoKey(rutinaCliente, ejercicioIndex);
+        const currentVideoIndex = this.videoCarouselIndices.get(videoKey) || 0;
+        
+        if (currentVideoIndex === 1) {
+          // Cambiar automáticamente al ejercicio principal
+          this.videoCarouselIndices.set(videoKey, 0);
+        }
+        
         // Forzar detección de cambios
         this.cdr.detectChanges();
+        
+        // Esperar 1.5 segundos antes de ocultar el spinner
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
         // Mostrar toast de éxito sin esperar
         this.toastService.mostrarExito('Ejercicio alternativo eliminado');

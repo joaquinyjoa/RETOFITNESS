@@ -26,7 +26,7 @@ export class VerEjerciciosComponent implements OnInit {
   // === EJERCICIOS ===
   ejercicios: Ejercicio[] = [];
   ejerciciosFiltrados: Ejercicio[] = [];
-  loading = false;
+  loading = true; // Iniciar en true para evitar parpadeo
   eliminandoEjercicio = false;
   
   // Variables para manejo de archivos
@@ -144,9 +144,11 @@ export class VerEjerciciosComponent implements OnInit {
   private ultimaCargaRutinas = 0;
   private CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
-  ngOnInit() {
+  async ngOnInit() {
     // Solo cargar ejercicios inicialmente (lazy load de rutinas)
-    this.cargarEjercicios();
+    // Usar setTimeout para evitar conflictos con transición de navegación
+    await new Promise(resolve => setTimeout(resolve, 100));
+    await this.cargarEjercicios();
   }
 
   async cargarEjercicios(forzarRecarga = false) {
@@ -363,13 +365,41 @@ export class VerEjerciciosComponent implements OnInit {
 
     this.archivoSeleccionado = file;
     
-    // Crear preview
-    const reader = new FileReader();
-    reader.onload = (e: any) => {
-      this.previewUrl = e.target.result;
+    // Crear preview - usar createObjectURL que es más confiable en móviles
+    try {
+      // Usar URL.createObjectURL que funciona mejor en dispositivos móviles
+      this.previewUrl = URL.createObjectURL(file);
       this.cdr.detectChanges();
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error al crear preview:', error);
+      // Fallback a FileReader si createObjectURL falla
+      try {
+        const base64 = await this.convertFileToBase64(file);
+        this.previewUrl = base64;
+        this.cdr.detectChanges();
+      } catch (fallbackError) {
+        console.error('Error en fallback:', fallbackError);
+        await this.toastService.mostrarError('Error al cargar vista previa del archivo');
+      }
+    }
+  }
+
+  // Convertir File a base64 como fallback
+  private convertFileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+      
+      reader.onerror = (error) => {
+        console.error('FileReader error:', error);
+        reject(error);
+      };
+      
+      reader.readAsDataURL(file);
+    });
   }
 
   // Subir archivo a Supabase Storage con reintentos automáticos
