@@ -9,9 +9,8 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // Habilitar debugging solo en modo debug (deshabilitado en release)
-        if (BuildConfig.DEBUG) {
-            WebView.setWebContentsDebuggingEnabled(true);
-        }
+        // WebView debugging deshabilitado en producción por seguridad
+        // Para habilitar durante desarrollo, descomentar la siguiente línea:
+        // WebView.setWebContentsDebuggingEnabled(true);
     }
 }

@@ -68,3 +68,12 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# 🔐 SEGURIDAD: Archivos de firma de APK - NUNCA SUBIR
+*.jks
+*.keystore
+key.properties
+android/app/*.jks
+android/app/*.keystore
+android/key.properties
+KEYSTORE_DOCUMENTATION.md
