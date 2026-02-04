@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseClient } from './supabase-client';
 import { Recepcion } from '../models/recepcion.interface';
+import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,7 +10,7 @@ import { Recepcion } from '../models/recepcion.interface';
 export class RecepcionService {
   private supabase: SupabaseClient;
 
-  constructor() {
+  constructor(private logger: LoggerService) {
     this.supabase = getSupabaseClient();
   }
 
@@ -49,7 +50,7 @@ export class RecepcionService {
       return { success: true, data: recepcion };
 
     } catch (error: any) {
-      console.error('RecepcionService: Error inesperado en loginRecepcion:', error);
+      this.logger.error('RecepcionService: Error inesperado en loginRecepcion:', error);
       return { success: false, error: error.message };
     }
   }

@@ -392,7 +392,6 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
       }
 
       if (!ejercicioId) {
-        console.warn('⚠️ No se pudo determinar el ID del ejercicio');
         await this.toastService.mostrarError('No se pudo cargar el ejercicio');
         this.cargandoDetalle = false;
         this.cdr.detectChanges();

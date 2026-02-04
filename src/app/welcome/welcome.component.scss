@@ -18,8 +18,8 @@
 .welcome-container {
   position: relative;
   z-index: 1;
-  padding: 40px 20px;
-  min-height: 80vh; /* ensure it fills the viewport */
+  padding: 40px 20px 100px 20px;
+  min-height: calc(100vh - 100px); /* ensure it fills the viewport minus legal links */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -32,7 +32,6 @@
 .welcome-title { opacity: 0; }
 .welcome-description { opacity: 0; }
 .welcome-buttons { opacity: 0; }
-.legal-links { opacity: 0; }
 
 /* Logo specifics */
 .welcome-logo img {
@@ -111,8 +110,13 @@
 // Responsive adjustments
 @media (max-width: 480px) {
   .welcome-container {
-    padding: 18px 14px;
+    padding: 18px 14px 90px 14px;
     justify-content: space-between;
+  }
+  
+  .legal-links {
+    padding: 15px 10px;
+    font-size: 0.75rem;
   }
   
   .welcome-buttons {
@@ -182,13 +186,19 @@
   justify-content: center;
   z-index: 9999;
 }
-// Enlaces legales
+// Enlaces legales - fijados en la parte inferior
 .legal-links {
-  margin-top: 30px;
-  padding: 20px 0;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.6);
   text-align: center;
+  background: linear-gradient(to top, rgba(10, 10, 10, 0.95) 0%, rgba(10, 10, 10, 0.7) 70%, transparent 100%);
+  backdrop-filter: blur(10px);
+  z-index: 10;
   
   a {
     color: var(--primary-green);

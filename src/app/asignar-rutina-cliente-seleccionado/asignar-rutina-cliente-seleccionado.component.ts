@@ -69,8 +69,7 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
       // Cargar datos del cliente
       if (this.clienteId) {
         this.cliente = await this.clienteService.obtenerClientePorId(this.clienteId);
-        console.log('Cliente cargado:', this.cliente);
-      }
+        }
 
       // Cargar todas las rutinas disponibles
       const { data, error } = await this.rutinaService.obtenerRutinas();
@@ -80,8 +79,7 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
       } else {
         this.rutinasDisponibles = data || [];
         this.rutinasFiltradas = [...this.rutinasDisponibles];
-        console.log('Rutinas cargadas:', this.rutinasDisponibles.length);
-      }
+        }
     } catch (error) {
       console.error('Error al cargar datos:', error);
       this.toastService.mostrarError('Error al cargar los datos');
@@ -151,17 +149,12 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
 
       // Verificar si el cliente ya tiene cualquier rutina asignada en ese día
       const { data: rutinasCliente } = await this.rutinaService.obtenerRutinasDeCliente(this.clienteId);
-      console.log('Rutinas del cliente:', rutinasCliente);
-      console.log('Día seleccionado:', this.diaSeleccionado);
-      
       if (rutinasCliente && rutinasCliente.length > 0) {
         const tieneRutinaMismoDia = rutinasCliente.some((rc: any) => {
-          console.log('Comparando rutina dia_semana:', rc.dia_semana, 'con día seleccionado:', this.diaSeleccionado);
           return rc.dia_semana === this.diaSeleccionado;
         });
         
         if (tieneRutinaMismoDia) {
-          console.log('¡VALIDACIÓN ACTIVADA! Cliente ya tiene rutina ese día');
           this.mostrarSpinner = false;
           this.cdr.detectChanges();
           

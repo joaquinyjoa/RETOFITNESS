@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseClient } from './supabase-client';
+import { LoggerService } from './logger.service';
 
 // NO crear instancia aquí, usar la del archivo centralizado
 
@@ -43,7 +44,7 @@ export interface Cliente {
 export class SupabaseService {
   private supabase: SupabaseClient;
 
-  constructor() {
+  constructor(private logger: LoggerService) {
     // Usar la instancia compartida en lugar de crear una nueva
     this.supabase = getSupabaseClient();
   }
@@ -60,12 +61,12 @@ export class SupabaseService {
         .single();
 
       if (error) {
-        console.error('SupabaseService: Error al registrar cliente:', error);
+        this.logger.error('SupabaseService: Error al registrar cliente:', error);
         return { success: false, error: error.message };
       }
       return { success: true, data };
     } catch (error: any) {
-      console.error('SupabaseService: Error en registrarCliente:', error);
+      this.logger.error('SupabaseService: Error en registrarCliente:', error);
       return { success: false, error: error.message };
     }
   }
@@ -80,14 +81,14 @@ export class SupabaseService {
         .maybeSingle(); // Usar maybeSingle() en lugar de single() para evitar error si no existe
 
       if (error) {
-        console.error('SupabaseService: Error al verificar email:', error);
+        this.logger.error('SupabaseService: Error al verificar email:', error);
         return false;
       }
 
       const existe = data !== null;
       return existe;
     } catch (error) {
-      console.error('SupabaseService: Error inesperado en verificarEmailExistente:', error);
+      this.logger.error('SupabaseService: Error inesperado en verificarEmailExistente:', error);
       return false;
     }
   }
@@ -109,12 +110,12 @@ export class SupabaseService {
       });
 
       if (error) {
-        console.error('SupabaseService: Error al crear usuario auth:', error);
+        this.logger.error('SupabaseService: Error al crear usuario auth:', error);
         return { success: false, error: error.message };
       }
 
       if (!data.user) {
-        console.error('SupabaseService: No se obtuvo usuario después de signUp');
+        this.logger.error('SupabaseService: No se obtuvo usuario después de signUp');
         return { success: false, error: 'No se pudo crear el usuario' };
       }
 
@@ -127,7 +128,7 @@ export class SupabaseService {
       };
 
     } catch (error: any) {
-      console.error('SupabaseService: Error inesperado en crearUsuarioAuth:', error);
+      this.logger.error('SupabaseService: Error inesperado en crearUsuarioAuth:', error);
       return { success: false, error: error.message };
     }
   }
@@ -168,7 +169,7 @@ export class SupabaseService {
       return { success: true, data: cliente };
 
     } catch (error: any) {
-      console.error('SupabaseService: Error inesperado en loginCliente:', error);
+      this.logger.error('SupabaseService: Error inesperado en loginCliente:', error);
       return { success: false, error: error.message };
     }
   }

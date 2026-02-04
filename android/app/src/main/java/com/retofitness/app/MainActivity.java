@@ -1,4 +1,4 @@
-package io.ionic.starter;
+package com.retofitness.app;
 
 import android.os.Bundle;
 import android.webkit.WebView;
@@ -9,9 +9,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // Habilitar debugging solo en modo debug (deshabilitado en release)
-        if (BuildConfig.DEBUG) {
-            WebView.setWebContentsDebuggingEnabled(true);
-        }
+        // Habilitar debugging de WebView para Chrome DevTools
+        WebView.setWebContentsDebuggingEnabled(true);
     }
 }

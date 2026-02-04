@@ -87,8 +87,7 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
     // Timeout de seguridad: si tarda más de 3 segundos, mostrar mensaje
     const timeoutId = setTimeout(() => {
       if (this.loading) {
-        console.warn('⚠️ [Ver Clientes] La carga está tardando más de 3 segundos...');
-      }
+        }
     }, 3000);
     
     try {
@@ -231,3 +230,4 @@ export class VerClientesComponent implements OnInit, ViewWillEnter, ViewWillLeav
     this.router.navigate(['/panel-entrenador']);
   }
 }
+

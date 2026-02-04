@@ -7,8 +7,8 @@ android {
         applicationId "com.retofitness.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -18,17 +18,22 @@ android {
     }
     buildTypes {
         release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 
-    // Forzar nombre de APK generado (ej: retoFitness-debug-1.0.apk)
+    // Forzar nombre de APK generado con versión actual
     applicationVariants.all { variant ->
         variant.outputs.all { output ->
             def appName = "retoFitness"
-            def versionName = variant.versionName ?: "v"
-            outputFileName = "${appName}-0.1.0v.apk"
+            def buildType = variant.buildType.name
+            def versionName = variant.versionName
+            outputFileName = "${appName}-${buildType}-${versionName}.apk"
         }
     }
 }

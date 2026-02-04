@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
+import { LoggerService } from './logger.service';
 
 export interface Rutina {
   id?: number;
@@ -60,7 +61,10 @@ export class RutinaService {
   private cache = new Map<string, { data: any; timestamp: number }>();
   private readonly CACHE_TTL = 2 * 60 * 1000; // 2 minutos
 
-  constructor(private supabaseService: SupabaseService) {}
+  constructor(
+    private supabaseService: SupabaseService,
+    private logger: LoggerService
+  ) {}
 
   private getCached<T>(key: string): T | null {
     const cached = this.cache.get(key);
@@ -141,7 +145,7 @@ export class RutinaService {
 
       return { data, error };
     } catch (error) {
-      console.error('Error al obtener rutinas:', error);
+      this.logger.error('Error al obtener rutinas:', error);
       return { data: null, error };
     }
   }
@@ -169,7 +173,7 @@ export class RutinaService {
         .order('created_at', { ascending: false });
 
       if (errorRutinas || !rutinas) {
-        console.error('🔴 [RutinaService] Error en consulta:', errorRutinas);
+        this.logger.error('🔴 [RutinaService] Error en consulta:', errorRutinas);
         return { data: null, error: errorRutinas };
       }
 
@@ -193,7 +197,7 @@ export class RutinaService {
       return { data: rutinasConDetalles, error: null };
     } catch (error) {
       const tiempoFin = performance.now();
-      console.error(`🔴 [RutinaService] Error en obtenerRutinasConDetalles después de ${(tiempoFin - tiempoInicio).toFixed(2)}ms:`, error);
+      this.logger.error(`🔴 [RutinaService] Error en obtenerRutinasConDetalles después de ${(tiempoFin - tiempoInicio).toFixed(2)}ms:`, error);
       return { data: null, error };
     }
   }
@@ -248,7 +252,7 @@ export class RutinaService {
       this.setCache(cacheKey, rutinaCompleta);
       return { data: rutinaCompleta, error: null };
     } catch (error) {
-      console.error('Error al obtener rutina por ID:', error);
+      this.logger.error('Error al obtener rutina por ID:', error);
       return { data: null, error };
     }
   }
@@ -267,7 +271,7 @@ export class RutinaService {
 
       return { data, error };
     } catch (error) {
-      console.error('Error al crear rutina:', error);
+      this.logger.error('Error al crear rutina:', error);
       return { data: null, error };
     }
   }
@@ -287,7 +291,7 @@ export class RutinaService {
 
       return { data, error };
     } catch (error) {
-      console.error('Error al actualizar rutina:', error);
+      this.logger.error('Error al actualizar rutina:', error);
       return { data: null, error };
     }
   }
@@ -305,7 +309,7 @@ export class RutinaService {
 
       return { success: !error, error };
     } catch (error) {
-      console.error('Error al eliminar rutina:', error);
+      this.logger.error('Error al eliminar rutina:', error);
       return { success: false, error };
     }
   }
@@ -338,7 +342,7 @@ export class RutinaService {
 
       return { data: ejerciciosValidos, error: null };
     } catch (error) {
-      console.error('Error al obtener ejercicios de rutina:', error);
+      this.logger.error('Error al obtener ejercicios de rutina:', error);
       return { data: null, error };
     }
   }
@@ -357,7 +361,7 @@ export class RutinaService {
 
       return { data, error };
     } catch (error) {
-      console.error('Error al agregar ejercicio a rutina:', error);
+      this.logger.error('Error al agregar ejercicio a rutina:', error);
       return { data: null, error };
     }
   }
@@ -377,7 +381,7 @@ export class RutinaService {
 
       return { data, error };
     } catch (error) {
-      console.error('Error al actualizar ejercicio en rutina:', error);
+      this.logger.error('Error al actualizar ejercicio en rutina:', error);
       return { data: null, error };
     }
   }
@@ -395,7 +399,7 @@ export class RutinaService {
 
       return { success: !error, error };
     } catch (error) {
-      console.error('Error al eliminar ejercicio de rutina:', error);
+      this.logger.error('Error al eliminar ejercicio de rutina:', error);
       return { success: false, error };
     }
   }
@@ -425,7 +429,7 @@ export class RutinaService {
 
       return { success: !error, error };
     } catch (error) {
-      console.error('Error al guardar ejercicios en rutina:', error);
+      this.logger.error('Error al guardar ejercicios en rutina:', error);
       return { success: false, error };
     }
   }
@@ -458,7 +462,7 @@ export class RutinaService {
         .single();
 
       if (error) {
-        console.error('Error al verificar rutina:', error);
+        this.logger.error('Error al verificar rutina:', error);
         return { existe: false, cliente: '' };
       }
 
@@ -479,7 +483,7 @@ export class RutinaService {
 
       return { existe: false, cliente: '' };
     } catch (error) {
-      console.error('Error en verificarRutinaAsignadaMismoDia:', error);
+      this.logger.error('Error en verificarRutinaAsignadaMismoDia:', error);
       return { existe: false, cliente: '' };
     }
   }
@@ -521,7 +525,7 @@ export class RutinaService {
 
       return { success: true, error: null };
     } catch (error) {
-      console.error('Error al asignar rutina a clientes:', error);
+      this.logger.error('Error al asignar rutina a clientes:', error);
       return { success: false, error };
     }
   }
@@ -545,13 +549,13 @@ export class RutinaService {
         .limit(1);
 
       if (error) {
-        console.error('Error al verificar rutina:', error);
+        this.logger.error('Error al verificar rutina:', error);
         return { existe: false, error };
       }
 
       return { existe: data && data.length > 0, error: null };
     } catch (error) {
-      console.error('Error al verificar rutina:', error);
+      this.logger.error('Error al verificar rutina:', error);
       return { existe: false, error };
     }
   }
@@ -573,7 +577,7 @@ export class RutinaService {
 
       return { data, error };
     } catch (error) {
-      console.error('Error al obtener clientes con rutina:', error);
+      this.logger.error('Error al obtener clientes con rutina:', error);
       return { data: null, error };
     }
   }
@@ -595,7 +599,7 @@ export class RutinaService {
 
       return { data, error };
     } catch (error) {
-      console.error('Error al obtener rutinas de cliente:', error);
+      this.logger.error('Error al obtener rutinas de cliente:', error);
       return { data: null, error };
     }
   }
@@ -615,7 +619,7 @@ export class RutinaService {
 
       return { data, error };
     } catch (error) {
-      console.error('Error al actualizar asignación de rutina:', error);
+      this.logger.error('Error al actualizar asignación de rutina:', error);
       return { data: null, error };
     }
   }
@@ -633,7 +637,7 @@ export class RutinaService {
 
       return { success: !error, error };
     } catch (error) {
-      console.error('Error al desasignar rutina de cliente:', error);
+      this.logger.error('Error al desasignar rutina de cliente:', error);
       return { success: false, error };
     }
   }
@@ -653,12 +657,12 @@ export class RutinaService {
         .single();
 
       if (error) {
-        console.error('❌ Error al obtener ejercicio:', error);
+        this.logger.error('❌ Error al obtener ejercicio:', error);
         return { data: null, error };
       }
       return { data, error: null };
     } catch (error) {
-      console.error('❌ Error inesperado al obtener ejercicio:', error);
+      this.logger.error('❌ Error inesperado al obtener ejercicio:', error);
       return { data: null, error };
     }
   }
@@ -705,7 +709,7 @@ export class RutinaService {
 
       return { success: !errorInsert, error: errorInsert };
     } catch (error) {
-      console.error('Error al copiar ejercicios a asignación:', error);
+      this.logger.error('Error al copiar ejercicios a asignación:', error);
       return { success: false, error };
     }
   }
@@ -731,7 +735,7 @@ export class RutinaService {
 
       return { data: ejerciciosEnriquecidos, error: null };
     } catch (error) {
-      console.error('Error al obtener ejercicios personalizados:', error);
+      this.logger.error('Error al obtener ejercicios personalizados:', error);
       return { data: null, error };
     }
   }
@@ -764,7 +768,7 @@ export class RutinaService {
 
       return { success: !error, error };
     } catch (error) {
-      console.error('Error al cambiar ejercicio personalizado:', error);
+      this.logger.error('Error al cambiar ejercicio personalizado:', error);
       return { success: false, error };
     }
   }
@@ -785,13 +789,13 @@ export class RutinaService {
         .eq('id', ejercicioPersonalizadoId);
 
       if (error) {
-        console.error('Error al actualizar ejercicio alternativo del cliente:', error);
+        this.logger.error('Error al actualizar ejercicio alternativo del cliente:', error);
         return { success: false, error: error.message };
       }
 
       return { success: true };
     } catch (error: any) {
-      console.error('Error inesperado al actualizar ejercicio alternativo del cliente:', error);
+      this.logger.error('Error inesperado al actualizar ejercicio alternativo del cliente:', error);
       return { success: false, error: error.message };
     }
   }
@@ -813,7 +817,7 @@ export class RutinaService {
 
       return { data, error };
     } catch (error) {
-      console.error('Error al obtener ejercicio personalizado:', error);
+      this.logger.error('Error al obtener ejercicio personalizado:', error);
       return { data: null, error };
     }
   }
@@ -831,7 +835,7 @@ export class RutinaService {
 
       return { data, error };
     } catch (error) {
-      console.error('Error al obtener ejercicios de rutina cliente:', error);
+      this.logger.error('Error al obtener ejercicios de rutina cliente:', error);
       return { data: null, error };
     }
   }
@@ -852,7 +856,7 @@ export class RutinaService {
 
       return { success: !error, error };
     } catch (error) {
-      console.error('Error al actualizar ejercicio personalizado:', error);
+      this.logger.error('Error al actualizar ejercicio personalizado:', error);
       return { success: false, error };
     }
   }
@@ -881,7 +885,7 @@ export class RutinaService {
         .order('fecha_asignacion', { ascending: false });
 
       if (error) {
-        console.error('❌ Error al cargar rutinas:', error);
+        this.logger.error('❌ Error al cargar rutinas:', error);
         return { data: null, error };
       }
 
@@ -895,7 +899,7 @@ export class RutinaService {
 
       return { data: rutinasConEjerciciosFiltrados, error: null };
     } catch (error) {
-      console.error('❌ Error al obtener rutinas de cliente con ejercicios:', error);
+      this.logger.error('❌ Error al obtener rutinas de cliente con ejercicios:', error);
       return { data: null, error };
     }
   }

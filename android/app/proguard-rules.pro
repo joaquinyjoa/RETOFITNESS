@@ -5,17 +5,24 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Capacitor WebView requires these rules
+-keepclassmembers class fqcn.of.javascript.interface.for.webview {
+   public *;
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep Capacitor Bridge classes
+-keep class com.getcapacitor.** { *; }
+-keepclassmembers class com.getcapacitor.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keep WebView debugging info for production troubleshooting
+-keepattributes SourceFile,LineNumberTable
+
+# Keep line numbers for crash reports
+-keepattributes *Annotation*
+
+# Ionic/Angular specific
+-keep class org.apache.cordova.** { *; }
+-keep class com.ionicframework.** { *; }
+
+# Hide original source file name for security
+-renamesourcefileattribute SourceFile
