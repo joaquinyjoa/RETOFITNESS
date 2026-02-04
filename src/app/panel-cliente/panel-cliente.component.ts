@@ -632,6 +632,20 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
           }
         },
         {
+          text: 'Términos y Condiciones',
+          icon: 'document-text-outline',
+          handler: () => {
+            this.abrirTerminos();
+          }
+        },
+        {
+          text: 'Política de Privacidad',
+          icon: 'shield-checkmark-outline',
+          handler: () => {
+            this.abrirPrivacidad();
+          }
+        },
+        {
           text: 'Cerrar sesión',
           icon: 'log-out-outline',
           role: 'destructive',
@@ -648,6 +662,14 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
     });
 
     await actionSheet.present();
+  }
+
+  abrirTerminos() {
+    window.open('https://joaquinyjoa.github.io/retofitness-legal/terms.html', '_blank');
+  }
+
+  abrirPrivacidad() {
+    window.open('https://joaquinyjoa.github.io/retofitness-legal/privacy-policy.html', '_blank');
   }
 
   async irAModificarPerfil() {
