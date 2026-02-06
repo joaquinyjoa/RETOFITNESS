@@ -8,12 +8,6 @@ export class LoggerService {
   
   private isDevelopment = !environment.production;
 
-  log(message: string, ...optionalParams: any[]): void {
-    if (this.isDevelopment) {
-      console.log(message, ...optionalParams);
-    }
-  }
-
   warn(message: string, ...optionalParams: any[]): void {
     if (this.isDevelopment) {
       console.warn(message, ...optionalParams);

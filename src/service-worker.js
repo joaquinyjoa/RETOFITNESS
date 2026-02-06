@@ -9,15 +9,10 @@ const urlsToCache = [
 
 // Instalación del Service Worker
 self.addEventListener('install', (event) => {
-  console.log('🔧 Service Worker instalado');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('📦 Caché abierto');
         return cache.addAll(urlsToCache.map(url => new Request(url, {cache: 'reload'})));
-      })
-      .catch((error) => {
-        console.log('⚠️ Error al cachear:', error);
       })
   );
   // Forzar activación inmediata
@@ -26,13 +21,11 @@ self.addEventListener('install', (event) => {
 
 // Activación del Service Worker
 self.addEventListener('activate', (event) => {
-  console.log('✅ Service Worker activado');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('🗑️ Borrando caché antiguo:', cacheName);
             return caches.delete(cacheName);
           }
         })
