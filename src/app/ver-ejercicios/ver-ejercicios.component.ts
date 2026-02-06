@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, NgZone, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, AlertController } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
@@ -18,7 +18,10 @@ import { SpinnerComponent } from '../spinner/spinner.component';
   standalone: true,
   imports: [CommonModule, IonicModule, FormsModule, SpinnerComponent]
 })
-export class VerEjerciciosComponent implements OnInit {
+export class VerEjerciciosComponent implements OnInit, OnDestroy {
+
+  // Referencias a elementos del DOM
+  @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
 
   // Control de tabs
   segmentValue = 'ejercicios';
@@ -31,6 +34,7 @@ export class VerEjerciciosComponent implements OnInit {
   
   // Variables para manejo de archivos
   archivoSeleccionado: File | null = null;
+  archivoArrayBuffer: ArrayBuffer | null = null; // Guardar contenido del archivo inmediatamente
   previewUrl: string | null = null;
   subiendoArchivo = false;
   
@@ -142,13 +146,20 @@ export class VerEjerciciosComponent implements OnInit {
   private cacheRutinas: RutinaConDetalles[] | null = null;
   private ultimaCargaEjercicios = 0;
   private ultimaCargaRutinas = 0;
-  private CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+  private CACHE_TTL = 15 * 60 * 1000; // 15 minutos - Incrementado para reducir consultas
 
   async ngOnInit() {
     // Solo cargar ejercicios inicialmente (lazy load de rutinas)
     // Usar setTimeout para evitar conflictos con transición de navegación
     await new Promise(resolve => setTimeout(resolve, 100));
     await this.cargarEjercicios();
+  }
+
+  ngOnDestroy() {
+    // Limpiar URLs de objetos para evitar memory leaks
+    if (this.previewUrl && this.previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(this.previewUrl);
+    }
   }
 
   async cargarEjercicios(forzarRecarga = false) {
@@ -230,6 +241,14 @@ export class VerEjerciciosComponent implements OnInit {
 
   async abrirModal(ejercicio?: Ejercicio, suppressSpinner: boolean = false) {
     this.editMode = !!ejercicio;
+    
+    // Limpiar archivo seleccionado y preview al abrir modal
+    this.archivoSeleccionado = null;
+    this.archivoArrayBuffer = null;
+    if (this.previewUrl && this.previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(this.previewUrl);
+    }
+    this.previewUrl = null;
 
     // Si se solicita suprimir spinner, abrir modal inmediatamente con los datos
     if (ejercicio && suppressSpinner) {
@@ -323,17 +342,31 @@ export class VerEjerciciosComponent implements OnInit {
     }
   }
 
-  // Mostrar overlay spinner 1.5s y luego navegar a asignar rutina
+  // Mostrar overlay spinner y luego navegar a asignar rutina (optimizado)
   async asignarConSpinner(rutina: Rutina | RutinaConDetalles) {
     if (!rutina || !rutina.id) return;
-    this.mostrarSpinnerGlobal = true;
-    this.cdr.detectChanges();
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      await this.router.navigate(['/asignar-rutina', rutina.id]);
-    } finally {
-      this.mostrarSpinnerGlobal = false;
+    
+    // Activar spinner de forma optimizada
+    this.ngZone.run(() => {
+      this.mostrarSpinnerGlobal = true;
       this.cdr.detectChanges();
+    });
+    
+    try {
+      // Usar requestAnimationFrame para mejor rendimiento
+      await new Promise(resolve => requestAnimationFrame(() => {
+        setTimeout(resolve, 1500);
+      }));
+      
+      // Navegar dentro de NgZone
+      await this.ngZone.run(() => 
+        this.router.navigate(['/asignar-rutina', rutina.id])
+      );
+    } finally {
+      this.ngZone.run(() => {
+        this.mostrarSpinnerGlobal = false;
+        this.cdr.detectChanges();
+      });
     }
   }
 
@@ -341,7 +374,16 @@ export class VerEjerciciosComponent implements OnInit {
     this.showModal = false;
     this.ejercicioActual = this.getEmptyForm();
     this.archivoSeleccionado = null;
+    this.archivoArrayBuffer = null;
+    // Limpiar URL de objeto para evitar memory leaks
+    if (this.previewUrl && this.previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(this.previewUrl);
+    }
     this.previewUrl = null;
+    // Limpiar el input file para permitir seleccionar el mismo archivo nuevamente
+    if (this.fileInput?.nativeElement) {
+      this.fileInput.nativeElement.value = '';
+    }
   }
 
   // Manejar selección de archivo
@@ -363,24 +405,35 @@ export class VerEjerciciosComponent implements OnInit {
       return;
     }
 
-    this.archivoSeleccionado = file;
-    
-    // Crear preview - usar createObjectURL que es más confiable en móviles
     try {
-      // Usar URL.createObjectURL que funciona mejor en dispositivos móviles
-      this.previewUrl = URL.createObjectURL(file);
-      this.cdr.detectChanges();
-    } catch (error) {
-      console.error('Error al crear preview:', error);
-      // Fallback a FileReader si createObjectURL falla
-      try {
-        const base64 = await this.convertFileToBase64(file);
-        this.previewUrl = base64;
-        this.cdr.detectChanges();
-      } catch (fallbackError) {
-        console.error('Error en fallback:', fallbackError);
-        await this.toastService.mostrarError('Error al cargar vista previa del archivo');
+      // Leer el archivo INMEDIATAMENTE como ArrayBuffer para evitar problemas de permisos
+      const arrayBuffer = await file.arrayBuffer();
+      
+      // Guardar el archivo original y su contenido
+      this.archivoSeleccionado = file;
+      this.archivoArrayBuffer = arrayBuffer;
+      
+      // Limpiar preview anterior si existe
+      if (this.previewUrl && this.previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(this.previewUrl);
       }
+      
+      // Crear preview desde el ArrayBuffer (crear nuevo Blob)
+      const blob = new Blob([arrayBuffer], { type: file.type });
+      this.previewUrl = URL.createObjectURL(blob);
+      this.cdr.detectChanges();
+      
+    } catch (error) {
+      console.error('Error al procesar archivo:', error);
+      await this.toastService.mostrarError('Error al cargar el archivo. Por favor, inténtalo de nuevo.');
+      
+      // Limpiar en caso de error
+      this.archivoSeleccionado = null;
+      this.archivoArrayBuffer = null;
+      if (this.previewUrl && this.previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(this.previewUrl);
+      }
+      this.previewUrl = null;
     }
   }
 
@@ -403,7 +456,7 @@ export class VerEjerciciosComponent implements OnInit {
   }
 
   // Subir archivo a Supabase Storage con reintentos automáticos
-  async subirArchivoAStorage(file: File): Promise<{ success: boolean; url?: string; error?: string }> {
+  async subirArchivoAStorage(file: File, arrayBuffer: ArrayBuffer): Promise<{ success: boolean; url?: string; error?: string }> {
     const maxReintentos = 3;
     let intento = 0;
 
@@ -440,8 +493,7 @@ export class VerEjerciciosComponent implements OnInit {
         
         const contentType = mimeTypes[extension || ''] || file.type || 'application/octet-stream';
 
-        // Convertir archivo a ArrayBuffer para mejor compatibilidad
-        const arrayBuffer = await file.arrayBuffer();
+        // Usar el ArrayBuffer que ya fue leído (evita problemas de permisos)
 
         // Obtener la URL base del proyecto
         const supabaseUrl = 'https://tylyzyivlvibfyvetchr.supabase.co';
@@ -509,11 +561,18 @@ export class VerEjerciciosComponent implements OnInit {
         return;
       }
 
-      // Validar que haya archivo GIF
-      if (!this.archivoSeleccionado) {
+      // Validar que haya archivo GIF (solo para nuevos ejercicios o si se está reemplazando)
+      if (!this.editMode && !this.archivoSeleccionado) {
         await this.toastService.mostrarError('Debes subir un archivo GIF');
         return;
       }
+      
+      // En modo edición, validar que haya URL o nuevo archivo
+      if (this.editMode && !this.archivoSeleccionado && !this.ejercicioActual.enlace_video) {
+        await this.toastService.mostrarError('Debes subir un archivo GIF');
+        return;
+      }
+      
       // Mostrar spinner global
       this.mostrarSpinnerGlobal = true;
       this.cdr.detectChanges();
@@ -522,11 +581,11 @@ export class VerEjerciciosComponent implements OnInit {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       // Si hay archivo seleccionado, subirlo primero
-      if (this.archivoSeleccionado) {
+      if (this.archivoSeleccionado && this.archivoArrayBuffer) {
         this.subiendoArchivo = true;
         this.cdr.detectChanges();
 
-        const uploadResult = await this.subirArchivoAStorage(this.archivoSeleccionado);
+        const uploadResult = await this.subirArchivoAStorage(this.archivoSeleccionado, this.archivoArrayBuffer);
         
         this.subiendoArchivo = false;
         this.cdr.detectChanges();

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
   <meta charset="utf-8" />
@@ -11,12 +11,23 @@
   <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="format-detection" content="telephone=no" />
   <meta name="msapplication-tap-highlight" content="no" />
+  
+  <!-- PWA Meta Tags -->
+  <meta name="description" content="Tu app de fitness para entrenar, seguir rutinas y alcanzar tus objetivos" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="manifest" href="manifest.webmanifest" />
 
   <link rel="icon" type="image/png" href="assets/icon/maskable_icon.png" />
 
-  <!-- add to homescreen for ios -->
+  <!-- iOS Specific Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="RetoFitness" />
+  <link rel="apple-touch-icon" href="assets/icon/maskable_icon.png" />
+  <link rel="apple-touch-startup-image" href="assets/splash/splash.png" />
+  
+  <!-- Web App Capable (Android/Chrome) -->
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   <!-- Splash Screen Styles -->
   <style>
@@ -179,6 +190,48 @@
           }, 500);
         }
       }, 2000); // Show splash for 2 seconds
+    });
+
+    // Registrar Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then((registration) => {
+            console.log('✅ Service Worker registrado:', registration.scope);
+          })
+          .catch((error) => {
+            console.log('❌ Error al registrar Service Worker:', error);
+          });
+      });
+    }
+
+    // Capturar evento de instalación PWA
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      console.log('🎯 beforeinstallprompt evento capturado');
+      console.log('📱 Dispositivo:', navigator.userAgent);
+      e.preventDefault();
+      deferredPrompt = e;
+      // Guardar en window para que Angular pueda acceder
+      window.deferredPrompt = deferredPrompt;
+      // Disparar evento personalizado INMEDIATAMENTE
+      window.dispatchEvent(new Event('pwa-installable'));
+      console.log('✅ Evento pwa-installable disparado');
+      
+      // Verificación adicional después de 500ms
+      setTimeout(() => {
+        if (window.deferredPrompt) {
+          window.dispatchEvent(new Event('pwa-installable'));
+          console.log('🔄 Re-disparo del evento pwa-installable');
+        }
+      }, 500);
+    });
+
+    // Registrar si la app fue instalada
+    window.addEventListener('appinstalled', () => {
+      console.log('✅ PWA instalada exitosamente');
+      deferredPrompt = null;
+      window.deferredPrompt = null;
     });
   </script>
 </body>

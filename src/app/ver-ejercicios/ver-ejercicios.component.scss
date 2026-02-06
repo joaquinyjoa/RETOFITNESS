@@ -1783,21 +1783,32 @@ ion-header {
   }
 }
 
-// Spinner overlay transparente para eliminación
+// Spinner overlay transparente optimizado
 .spinner-overlay-transparent {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.35); // menos opaco para que no tape completamente
+  background-color: rgba(0, 0, 0, 0.5); // Fondo semi-transparente
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 12000; // mantener por encima del contenido pero por debajo de modales críticos
-  backdrop-filter: blur(2px);
-  transition: opacity 180ms ease-in-out, background-color 180ms ease-in-out;
+  z-index: 9999;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px); // Para iOS
   pointer-events: auto;
+  will-change: opacity; // Optimización de rendimiento
+  animation: fadeIn 0.15s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 // Container de carga inicial centrado

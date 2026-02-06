@@ -29,7 +29,8 @@ import {
   AlertController,
   ToastController,
   LoadingController,
-  ModalController
+  ModalController,
+  NavController
 } from '@ionic/angular/standalone';
 import { RutinaService, Rutina } from '../services/rutina.service';
 import { ClienteService } from '../services/cliente.service';
@@ -83,6 +84,7 @@ export class AsignarRutinaComponent implements OnInit {
   private modalController = inject(ModalController);
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone);
+  private navCtrl = inject(NavController);
 
   rutina: Rutina | null = null;
   rutinaId: number | null = null;
@@ -303,8 +305,10 @@ export class AsignarRutinaComponent implements OnInit {
           // Limpiar overlays
           await this.dismissAllOverlays();
 
-          // Navegar de vuelta
-          await this.router.navigate(['/ver-ejercicios'], { replaceUrl: true });
+          // Navegar de vuelta sin animación para evitar superposición
+          await this.navCtrl.navigateBack('/ver-ejercicios', {
+            animated: false
+          });
           
           // Forzar actualización
           this.cdr.markForCheck();
@@ -329,10 +333,13 @@ export class AsignarRutinaComponent implements OnInit {
     }
   }
 
-  goBack() {
-    // Antes de volver, limpiar overlays
-    this.dismissAllOverlays().then(() => {
-      this.router.navigate(['/ver-ejercicios'], { replaceUrl: true });
+  async goBack() {
+    // Limpiar overlays antes de volver
+    await this.dismissAllOverlays();
+    
+    // Navegar sin animación para evitar superposición de componentes
+    await this.navCtrl.navigateBack('/ver-ejercicios', {
+      animated: false
     });
   }
 

@@ -18,13 +18,14 @@
 .welcome-container {
   position: relative;
   z-index: 1;
-  padding: 40px 20px 100px 20px;
-  min-height: calc(100vh - 100px); /* ensure it fills the viewport minus legal links */
+  padding: 40px 20px 140px 20px; /* Aumentado el padding inferior */
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
+  padding-bottom: env(safe-area-inset-bottom, 140px); /* Soporte para notch iPhone */
 }
 
 // Elementos con animación de entrada
@@ -51,7 +52,7 @@
 .welcome-buttons {
   width: 100%;
   max-width: 320px;
-  margin: 0 auto;
+  margin: 20px auto 40px auto; /* Agregado margen inferior */
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -80,6 +81,27 @@
       &:active {
         transform: translateY(0);
         --box-shadow: 0 2px 10px rgba(0, 255, 136, 0.3);
+      }
+    }
+    
+    &.install-pwa-button {
+      --background: linear-gradient(135deg, #ff6b00 0%, #ff9500 100%);
+      --background-activated: #ff6b00;
+      --color: #ffffff;
+      --box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3);
+      text-transform: uppercase;
+      font-weight: 700;
+      animation: pulse-install 2s ease-in-out infinite;
+      
+      &:hover {
+        --background: linear-gradient(135deg, #ff9500 0%, #ffa500 100%);
+        --box-shadow: 0 6px 20px rgba(255, 107, 0, 0.5);
+        transform: translateY(-2px) scale(1.02);
+      }
+      
+      &:active {
+        transform: translateY(0) scale(1);
+        --box-shadow: 0 2px 10px rgba(255, 107, 0, 0.4);
       }
     }
     
@@ -155,8 +177,35 @@
 /* Very small phones: hide secondary verbose content to avoid scroll */
 @media (max-height: 640px) and (max-width: 420px) {
   .welcome-description { display: none; }
-  .welcome-container { padding: 12px 12px; }
-  .welcome-buttons { gap: 10px; }
+  .welcome-container { 
+    padding: 12px 12px 120px 12px; /* Mantener padding inferior */
+  }
+  .welcome-buttons { 
+    gap: 10px;
+    margin-bottom: 20px; /* Espacio adicional en pantallas pequeñas */
+  }
+  .install-hint {
+    font-size: 0.85rem;
+    padding: 10px 16px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    
+    ion-icon {
+      font-size: 1.1rem;
+    }
+  }
+  .legal-links {
+    font-size: 0.7rem;
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Media query para tablets y pantallas más grandes */
+@media (min-height: 800px) {
+  .welcome-container {
+    padding-bottom: 160px; /* Más espacio en pantallas grandes */
+  }
 }
 
 // Animación sutil para mejorar la experiencia
@@ -166,6 +215,17 @@
   }
   50% { 
     box-shadow: 0 4px 20px rgba(0, 255, 136, 0.35); 
+  }
+}
+
+@keyframes pulse-install {
+  0%, 100% { 
+    box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 6px 25px rgba(255, 107, 0, 0.5);
+    transform: scale(1.01);
   }
 }
 
@@ -187,19 +247,61 @@
   justify-content: center;
   z-index: 9999;
 }
+
+// Enlace sutil para instalación en móvil
+.install-hint {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  padding: 14px 20px;
+  background: rgba(0, 255, 136, 0.08);
+  border: 1px solid rgba(0, 255, 136, 0.25);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+  
+  ion-icon {
+    font-size: 1.3rem;
+    color: var(--primary-green);
+  }
+  
+  span {
+    font-size: 0.9rem;
+    color: var(--primary-green);
+    font-weight: 500;
+  }
+  
+  &:hover {
+    background: rgba(0, 255, 136, 0.12);
+    border-color: var(--primary-green);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.2);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    background: rgba(0, 255, 136, 0.15);
+  }
+}
+
 // Enlaces legales - fijados en la parte inferior
 .legal-links {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 20px;
-  font-size: 0.85rem;
+  padding: 16px 20px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); /* Safe area para iPhone */
+  font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.6);
   text-align: center;
-  background: linear-gradient(to top, rgba(10, 10, 10, 0.95) 0%, rgba(10, 10, 10, 0.7) 70%, transparent 100%);
-  backdrop-filter: blur(10px);
-  z-index: 10;
+  background: linear-gradient(to top, rgba(10, 10, 10, 0.98) 0%, rgba(10, 10, 10, 0.85) 60%, transparent 100%);
+  backdrop-filter: blur(8px);
+  z-index: 5; /* Reducido para que no tape botones */
   
   a {
     color: var(--primary-green);

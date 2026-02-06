@@ -10,19 +10,32 @@
   --text-secondary: rgba(255, 255, 255, 0.7);
 }
 
-// Spinner overlay con fondo transparente
-.spinner-overlay-transparent {
+// Spinner overlay fullscreen - Cubre TODO incluyendo header
+.spinner-overlay-fullscreen {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 10000;
-  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 99999;
+  backdrop-filter: blur(5px);
+  pointer-events: auto;
+  
+  // Asegurar que esté por encima de TODO
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    pointer-events: auto;
+  }
 }
 
 // Header personalizado

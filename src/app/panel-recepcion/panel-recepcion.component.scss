@@ -39,6 +39,44 @@
   }
 }
 
+// Estilos para ion-refresher (bolita neón)
+ion-refresher {
+  z-index: 1000;
+}
+
+ion-refresher-content {
+  // Ocultar el fondo gris
+  background: transparent !important;
+  
+  .refresher-pulling,
+  .refresher-refreshing {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent !important;
+    
+    // Ocultar iconos de texto
+    .refresher-pulling-icon,
+    .refresher-pulling-text,
+    .refresher-refreshing-text {
+      display: none !important;
+    }
+  }
+
+  ion-spinner {
+    --color: var(--primary-green);
+    width: 40px;
+    height: 40px;
+    filter: drop-shadow(0 0 12px var(--primary-green)) drop-shadow(0 0 20px var(--primary-green));
+    margin: 0 !important;
+  }
+}
+
+// Ocultar el contenedor gris del refresher
+ion-refresher::part(native) {
+  background: transparent !important;
+}
+
 .logout-button {
   --background: rgba(0, 255, 136, 0.1);
   --background-hover: rgba(0, 255, 136, 0.2);

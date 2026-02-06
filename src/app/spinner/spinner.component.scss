@@ -37,15 +37,15 @@
   object-fit: cover;
   border-radius: 50%;
   clip-path: circle(45% at 50% 50%);
-  animation: spinLogo 2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+  animation: spinLogo 1.2s linear infinite;
+  will-change: transform;
+  transform: translateZ(0); /* Forzar aceleración de hardware */
+  backface-visibility: hidden;
 }
 
 @keyframes spinLogo {
   0% {
     transform: rotate(0deg);
-  }
-  85% {
-    transform: rotate(340deg);
   }
   100% {
     transform: rotate(360deg);

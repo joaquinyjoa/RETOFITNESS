@@ -13,6 +13,16 @@
 </ion-header>
 
 <ion-content class="ion-padding recepcion-content">
+  <!-- Pull to refresh -->
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)" [disabled]="mostrarSpinner">
+    <ion-refresher-content
+      pullingIcon=""
+      pullingText=""
+      refreshingSpinner="dots"
+      refreshingText="">
+    </ion-refresher-content>
+  </ion-refresher>
+
   <!-- Spinner Overlay -->
   <div class="spinner-overlay" *ngIf="mostrarSpinner">
     <app-spinner></app-spinner>

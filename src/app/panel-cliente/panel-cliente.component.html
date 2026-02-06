@@ -17,8 +17,8 @@
 
 <ion-content class="panel-content" [class.no-scroll]="mostrarSpinner">
   
-  <!-- Pull to refresh -->
-  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)" [disabled]="!isOnline || mostrarSpinner">
+  <!-- Pull to refresh - Funciona incluso offline para reintentar conexión -->
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)" [disabled]="mostrarSpinner">
     <ion-refresher-content
       pullingIcon=""
       pullingText=""
@@ -106,7 +106,7 @@
           <ion-icon name="list-outline"></ion-icon>
           Tus Ejercicios
         </h2>
-        <p class="swipe-hint">Mueve a la derecha para ver el siguiente ejercicio</p>
+        <p class="swipe-hint">Desliza hacia derecha para ver el siguiente ejercicio</p>
 
         <div class="ejercicios-carrusel">
           <ion-card *ngFor="let ej of rutinaAsignada.detalles?.ejercicios; let i = index" class="ejercicio-card">

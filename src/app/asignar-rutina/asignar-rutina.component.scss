@@ -49,19 +49,31 @@
   }
 }
 
-// Spinner overlay personalizado
+// Spinner overlay optimizado para mejor rendimiento
 .spinner-overlay-transparent {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(128, 128, 128, 0.7);
-  backdrop-filter: blur(5px);
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 20000; // Aumentado para estar encima de alerts y modals
+  z-index: 9999;
+  pointer-events: auto;
+  will-change: opacity;
+  transform: translateZ(0); /* Aceleración de hardware */
+  animation: fadeIn 0.15s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 // Card de información de rutina

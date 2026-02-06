@@ -60,6 +60,18 @@
       Asignar Nueva Rutina ({{ rutinasAsignadas.length }}/6)
     </ion-button>
 
+    <!-- Botón para eliminar todas las rutinas -->
+    <ion-button 
+      *ngIf="rutinasAsignadas.length > 0"
+      class="btn-eliminar-todas"
+      (click)="eliminarTodasLasRutinas()"
+      expand="block"
+      fill="outline"
+      color="danger">
+      <ion-icon name="trash-outline" slot="start"></ion-icon>
+      Eliminar Todas las Rutinas
+    </ion-button>
+
     <!-- Mensaje cuando ya tiene 6 rutinas -->
     <div *ngIf="rutinasAsignadas.length >= 6" class="max-rutinas-message">
       <ion-icon name="checkmark-circle-outline"></ion-icon>
@@ -67,7 +79,7 @@
     </div>
 
     <!-- Rutinas asignadas por día -->
-    <div *ngFor="let rutinaAsignada of rutinasAMostrar">
+    <div *ngFor="let rutinaAsignada of rutinasAMostrar; trackBy: trackByRutinaId">
       <ion-card class="rutina-card">
         <ion-card-header>
           <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -147,7 +159,7 @@
                 <div class="carousel-track" 
                      [style.transform]="'translateX(' + getCarouselTransform(rutinaAsignada) + ')'"
                      [class.transitioning]="!isDragging(rutinaAsignada)">
-                  <div class="ejercicio-slide" *ngFor="let ej of rutinaAsignada.ejercicios; let i = index">
+                  <div class="ejercicio-slide" *ngFor="let ej of rutinaAsignada.ejercicios; let i = index; trackBy: trackByEjercicioIndex">
                     <div class="ejercicio-card">
                       
                       <!-- Header compacto -->
@@ -204,9 +216,9 @@
                           </span>
                         </div>
 
-                        <!-- Video Principal -->
+                        <!-- Video Principal - Lazy loading -->
                         <div *ngIf="getVideoCarouselIndex(rutinaAsignada, i) === 0" class="video-slide-mini">
-                          <div class="media-wrapper" *ngIf="ej.ejercicio?.enlace_video">
+                          <div class="media-wrapper" *ngIf="ej.ejercicio?.enlace_video && isEjercicioVisible(rutinaAsignada, i)">
                             <ng-container *ngIf="isImageUrl(ej.ejercicio.enlace_video); else iframeBlockPrincipal">
                               <img [src]="getDirectImageUrl(ej.ejercicio.enlace_video)" alt="Ejercicio Principal" class="media-content" />
                             </ng-container>
@@ -232,9 +244,9 @@
                           </div>
                         </div>
 
-                        <!-- Video Alternativo -->
+                        <!-- Video Alternativo - Lazy loading -->
                         <div *ngIf="ej.ejercicio_alternativo && getVideoCarouselIndex(rutinaAsignada, i) === 1" class="video-slide-mini">
-                          <div class="media-wrapper" *ngIf="ej.ejercicio_alternativo.enlace_video">
+                          <div class="media-wrapper" *ngIf="ej.ejercicio_alternativo.enlace_video && isEjercicioVisible(rutinaAsignada, i)">
                             <ng-container *ngIf="isImageUrl(ej.ejercicio_alternativo.enlace_video); else iframeBlockAlt">
                               <img [src]="getDirectImageUrl(ej.ejercicio_alternativo.enlace_video)" alt="Ejercicio Alternativo" class="media-content" />
                             </ng-container>

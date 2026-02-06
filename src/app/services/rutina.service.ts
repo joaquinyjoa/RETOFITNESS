@@ -57,9 +57,9 @@ export interface RutinaConDetalles extends Rutina {
 })
 export class RutinaService {
   
-  // OPTIMIZACIÓN: Caché simple con TTL de 2 minutos para reducir queries repetidas
+  // OPTIMIZACIÓN: Caché simple con TTL de 10 minutos para reducir queries repetidas
   private cache = new Map<string, { data: any; timestamp: number }>();
-  private readonly CACHE_TTL = 2 * 60 * 1000; // 2 minutos
+  private readonly CACHE_TTL = 10 * 60 * 1000; // 10 minutos
 
   constructor(
     private supabaseService: SupabaseService,
@@ -638,6 +638,24 @@ export class RutinaService {
       return { success: !error, error };
     } catch (error) {
       this.logger.error('Error al desasignar rutina de cliente:', error);
+      return { success: false, error };
+    }
+  }
+
+  /**
+   * Eliminar todas las rutinas asignadas a un cliente
+   */
+  async eliminarTodasLasRutinasDeCliente(clienteId: number): Promise<{ success: boolean; error: any }> {
+    try {
+      const supabase = this.supabaseService['supabase'];
+      const { error } = await supabase
+        .from('rutinas_clientes')
+        .delete()
+        .eq('cliente_id', clienteId);
+
+      return { success: !error, error };
+    } catch (error) {
+      this.logger.error('Error al eliminar todas las rutinas del cliente:', error);
       return { success: false, error };
     }
   }

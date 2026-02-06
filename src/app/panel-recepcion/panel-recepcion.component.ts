@@ -196,4 +196,21 @@ export class PanelRecepcionComponent implements OnInit {
     
     this.router.navigate(['/cambiar-password', cliente.id]);
   }
+
+  // Manejar pull-to-refresh
+  async handleRefresh(event: any) {
+    try {
+      const tieneConexion = this.verificarConexion();
+      
+      if (!tieneConexion) {
+        await this.toastService.mostrarInfo('📴 Sin conexión - No se pueden recargar los datos');
+      } else {
+        await this.cargarClientes(false); // Recargar sin mostrar spinner
+      }
+    } catch (error) {
+      console.error('Error en refresh:', error);
+    } finally {
+      event.target.complete();
+    }
+  }
 }

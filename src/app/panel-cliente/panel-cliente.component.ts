@@ -122,6 +122,9 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
         return;
       }
 
+      // Actualizar timestamp de última carga
+      this.ultimaCarga = Date.now();
+
       // Verificar conexión a internet
       const tieneConexion = this.verificarConexion();
       this.isOnline = tieneConexion;
@@ -209,17 +212,30 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
           const nuevoMap = new Map<number, any>();
           const nuevasRutinas: any[] = data;
 
+          // Agrupar rutinas por día - almacenando TODAS las rutinas, no solo la primera
           for (const rutina of data) {
             const dia = rutina.dia_semana || 1;
+            const rutinaFormateada = {
+              ...rutina,
+              detalles: {
+                ...rutina.rutina,
+                ejercicios: rutina.ejercicios // Ejercicios personalizados del cliente
+              }
+            };
+
+            // Si ya existe una rutina para este día, usar la más reciente
+            // O agregar lógica para manejar múltiples rutinas por día
             if (!nuevoMap.has(dia)) {
-              // Los ejercicios personalizados ya vienen en rutina.ejercicios
-              nuevoMap.set(dia, {
-                ...rutina,
-                detalles: {
-                  ...rutina.rutina,
-                  ejercicios: rutina.ejercicios // Ejercicios personalizados del cliente
-                }
-              });
+              nuevoMap.set(dia, rutinaFormateada);
+            } else {
+              // Comparar fechas y guardar la más reciente
+              const rutinaExistente = nuevoMap.get(dia);
+              const fechaExistente = new Date(rutinaExistente.fecha_asignacion || 0);
+              const fechaNueva = new Date(rutina.fecha_asignacion || 0);
+              
+              if (fechaNueva > fechaExistente) {
+                nuevoMap.set(dia, rutinaFormateada);
+              }
             }
           }
 
@@ -265,15 +281,31 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
     }
   }
 
+  // Timestamp de última carga para evitar recargas innecesarias
+  private ultimaCarga = 0;
+  private readonly RECARGA_MIN_INTERVAL = 2 * 60 * 1000; // 2 minutos
+
   // Recargar datos cuando la vista entra en foco (volver desde otra pantalla)
   ionViewWillEnter(): void {
-    // No await here so Ionic lifecycle isn't blocked, but trigger reload
-    this.cargarRutinaAsignada().catch(err => console.error('[PanelCliente] ionViewWillEnter error', err));
+    const ahora = Date.now();
+    // Solo recargar si pasaron más de 2 minutos desde la última carga
+    if (ahora - this.ultimaCarga > this.RECARGA_MIN_INTERVAL) {
+      this.ultimaCarga = ahora;
+      this.cargarRutinaAsignada().catch(err => console.error('[PanelCliente] ionViewWillEnter error', err));
+    }
   }
 
   // Manejar pull-to-refresh
   async handleRefresh(event: any) {
     try {
+      // Verificar conexión actual
+      const tieneConexion = navigator.onLine;
+      
+      if (!tieneConexion) {
+        // En modo offline, mostrar mensaje e intentar cargar desde caché
+        await this.toastService.mostrarInfo('📴 Sin conexión - Recargando desde caché guardado');
+      }
+      
       await this.cargarRutinaAsignada(true); // fromRefresh = true
     } catch (error) {
       console.error('Error en refresh:', error);
@@ -532,50 +564,89 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
 
   // Guardar rutina en caché para modo offline
   private guardarRutinaEnCache(data: any) {
+    const cacheKey = `${this.RUTINA_CACHE_KEY}_${this.clienteId}`;
+    const dataString = JSON.stringify(data);
+    
     try {
-      const cacheKey = `${this.RUTINA_CACHE_KEY}_${this.clienteId}`;
-      localStorage.setItem(cacheKey, JSON.stringify(data));
+      // Información de diagnóstico
+      console.log(`💾 Guardando ${data.rutinas?.length || 0} rutinas en caché offline`);
+      console.log(`📊 Días con rutinas: ${data.rutinasPorDia?.length || 0}`);
+      console.log(`📦 Tamaño del caché: ${(dataString.length / 1024).toFixed(2)} KB`);
+      
+      // Guardar en localStorage
+      localStorage.setItem(cacheKey, dataString);
+      
+      console.log('✅ Rutinas guardadas correctamente en modo offline');
     } catch (error) {
       console.error('❌ Error al guardar rutina en caché:', error);
+      
+      // Si es error de cuota excedida, intentar limpiar cachés antiguos
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        console.warn('⚠️ Límite de almacenamiento excedido. Limpiando caché antiguo...');
+        try {
+          // Limpiar cachés de otros clientes
+          const keys = Object.keys(localStorage);
+          for (const key of keys) {
+            if (key.startsWith(this.RUTINA_CACHE_KEY) && !key.endsWith(`_${this.clienteId}`)) {
+              localStorage.removeItem(key);
+              console.log(`🗑️ Caché antiguo eliminado: ${key}`);
+            }
+          }
+          // Reintentar guardar
+          localStorage.setItem(cacheKey, dataString);
+          console.log('✅ Rutinas guardadas después de limpiar caché antiguo');
+        } catch (retryError) {
+          console.error('❌ No se pudo guardar incluso después de limpiar:', retryError);
+        }
+      }
     }
   }
 
-  // Validar y cargar ejercicios alternativos
+  // Validar y cargar ejercicios alternativos - OPTIMIZADO con Promise.all
   private async validarEjerciciosAlternativos(rutinas: any[]): Promise<void> {
     try {
+      // Recolectar todos los IDs que necesitan cargarse
+      const ejerciciosPendientes: Array<{ rutina: any; ejercicio: any; tipo: 'principal' | 'alternativo'; index: number }> = [];
+
       for (const rutina of rutinas) {
         if (rutina.ejercicios && Array.isArray(rutina.ejercicios)) {
           for (let i = 0; i < rutina.ejercicios.length; i++) {
             const ejercicio = rutina.ejercicios[i];
             
-            // Cargar detalles del ejercicio principal si no están completos
             if (ejercicio.ejercicio_id && !ejercicio.ejercicio_completo) {
-              const { data, error } = await this.rutinaService.obtenerEjercicioPorId(ejercicio.ejercicio_id);
-              
-              if (data && !error) {
-                ejercicio.ejercicio = data;
-                ejercicio.ejercicio_completo = true;
-              }
+              ejerciciosPendientes.push({ rutina, ejercicio, tipo: 'principal', index: i });
             }
 
-            // Si tiene ejercicio alternativo, cargar sus detalles completos
             if (ejercicio.ejercicio_alternativo_id && !ejercicio.ejercicio_alternativo_completo) {
-              const { data, error } = await this.rutinaService.obtenerEjercicioPorId(ejercicio.ejercicio_alternativo_id);
-              
-              if (data && !error) {
-                ejercicio.ejercicio_alternativo = data;
-                ejercicio.ejercicio_alternativo_completo = true;
-              }
+              ejerciciosPendientes.push({ rutina, ejercicio, tipo: 'alternativo', index: i });
             } else if (!ejercicio.ejercicio_alternativo_id) {
-              // Si el ejercicio ya no tiene alternativo (fue eliminado), resetear el índice del carrusel
               const indiceCarruselActual = this.videoCarouselIndices.get(i);
               if (indiceCarruselActual === 1) {
-                // Estaba viendo el alternativo, cambiar a principal
                 this.videoCarouselIndices.set(i, 0);
               }
             }
           }
         }
+      }
+
+      // Cargar TODOS los ejercicios en paralelo
+      if (ejerciciosPendientes.length > 0) {
+        await Promise.all(
+          ejerciciosPendientes.map(async ({ ejercicio, tipo }) => {
+            const ejercicioId = tipo === 'principal' ? ejercicio.ejercicio_id : ejercicio.ejercicio_alternativo_id;
+            const { data, error } = await this.rutinaService.obtenerEjercicioPorId(ejercicioId);
+            
+            if (data && !error) {
+              if (tipo === 'principal') {
+                ejercicio.ejercicio = data;
+                ejercicio.ejercicio_completo = true;
+              } else {
+                ejercicio.ejercicio_alternativo = data;
+                ejercicio.ejercicio_alternativo_completo = true;
+              }
+            }
+          })
+        );
       }
     } catch (error) {
       console.error('❌ Error al validar ejercicios alternativos:', error);
@@ -587,7 +658,17 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
     try {
       const cacheKey = `${this.RUTINA_CACHE_KEY}_${this.clienteId}`;
       const cache = localStorage.getItem(cacheKey);
-      return cache ? JSON.parse(cache) : null;
+      
+      if (cache) {
+        const data = JSON.parse(cache);
+        console.log(`📂 Cargando ${data.rutinas?.length || 0} rutinas desde caché offline`);
+        console.log(`📊 Días con rutinas: ${data.rutinasPorDia?.length || 0}`);
+        console.log(`📅 Fecha del caché: ${data.fecha || 'desconocida'}`);
+        return data;
+      }
+      
+      console.log('⚠️ No hay rutinas en caché offline');
+      return null;
     } catch (error) {
       console.error('❌ Error al leer caché de rutina:', error);
       return null;

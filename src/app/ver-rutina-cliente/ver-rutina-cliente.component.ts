@@ -313,6 +313,58 @@ export class VerRutinaClienteComponent implements OnInit {
     this.router.navigate(['/ver-clientes'], { replaceUrl: true });
   }
 
+  // Eliminar todas las rutinas del cliente
+  async eliminarTodasLasRutinas() {
+    if (!this.clienteId) {
+      this.toastService.mostrarError('Cliente no válido');
+      return;
+    }
+
+    const confirmado = await this.confirmService.confirm(
+      '¿Estás seguro de eliminar todas las rutinas asignadas a este cliente? Esta acción no se puede deshacer.',
+      'Eliminar todas las rutinas',
+      'Eliminar'
+    );
+
+    if (!confirmado) return;
+
+    // Pequeño delay para asegurar cierre del modal
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    this.mostrarSpinner = true;
+    this.cdr.detectChanges();
+
+    try {
+      // Ejecutar eliminación con delay mínimo de 1.5s para el spinner
+      const [resultado] = await Promise.all([
+        this.rutinaService.eliminarTodasLasRutinasDeCliente(this.clienteId),
+        new Promise(resolve => setTimeout(resolve, 1500))
+      ]);
+
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
+
+      if (resultado.success) {
+        // Limpiar datos locales
+        this.rutinasAsignadas = [];
+        this.rutinasFiltradasPorDia = [];
+        this.diasDisponibles = [];
+        this.diaSeleccionado = 0;
+        this.cdr.detectChanges();
+        
+        this.toastService.mostrarExito('Todas las rutinas fueron eliminadas exitosamente');
+      } else {
+        console.error('Error al eliminar rutinas:', resultado.error);
+        this.toastService.mostrarError('Error al eliminar las rutinas');
+      }
+    } catch (error) {
+      console.error('Error inesperado al eliminar todas las rutinas:', error);
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
+      this.toastService.mostrarError('Error al eliminar las rutinas');
+    }
+  }
+
   // Asignar nueva rutina
   asignarNuevaRutina() {
     if (!this.clienteId) return;
@@ -358,6 +410,28 @@ export class VerRutinaClienteComponent implements OnInit {
         // Actualizar la vista inmediatamente
         this.rutinasAsignadas = this.rutinasAsignadas.filter(r => r.id !== rutinaCliente.id);
         this.diasDisponibles = [...new Set(this.rutinasAsignadas.map(r => r.dia_semana))].sort();
+        
+        // Verificar si el día actual eliminado aún tiene rutinas
+        const diaEliminado = rutinaCliente.dia_semana;
+        const hayRutinasEnDiaActual = this.rutinasAsignadas.some(r => r.dia_semana === this.diaSeleccionado);
+        
+        // Si estaba viendo el día que se eliminó y ya no tiene rutinas
+        if (this.diaSeleccionado === diaEliminado && !hayRutinasEnDiaActual) {
+          // Buscar el día anterior disponible
+          const diasAnteriores = this.diasDisponibles.filter(d => d < diaEliminado);
+          
+          if (diasAnteriores.length > 0) {
+            // Seleccionar el último día anterior disponible
+            this.diaSeleccionado = diasAnteriores[diasAnteriores.length - 1];
+          } else if (this.diasDisponibles.length > 0) {
+            // Si no hay días anteriores, seleccionar el primer día disponible
+            this.diaSeleccionado = this.diasDisponibles[0];
+          } else {
+            // Si no hay más días, mostrar "Todos"
+            this.diaSeleccionado = 0;
+          }
+        }
+        
         this.filtrarPorDia();
         this.cdr.detectChanges();
 
@@ -735,6 +809,23 @@ export class VerRutinaClienteComponent implements OnInit {
 
   get rutinasAMostrar() {
     return this.rutinasFiltradasPorDia || [];
+  }
+
+  // TrackBy para optimizar ngFor de rutinas
+  trackByRutinaId(index: number, rutina: any): number {
+    return rutina.id || index;
+  }
+
+  // TrackBy para optimizar ngFor de ejercicios
+  trackByEjercicioIndex(index: number, ejercicio: any): number {
+    return ejercicio.id || index;
+  }
+
+  // Lazy loading de videos - solo cargar el ejercicio visible
+  isEjercicioVisible(rutinaAsignada: any, ejercicioIndex: number): boolean {
+    const currentIndex = this.getCarouselIndex(rutinaAsignada);
+    // Precargar el anterior, actual y siguiente
+    return Math.abs(currentIndex - ejercicioIndex) <= 1;
   }
 
   // Métodos del carrusel

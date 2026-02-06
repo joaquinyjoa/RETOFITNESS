@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "tp-angular-hosting"
+  },
+  "targets": {
+    "tp-angular-hosting": {
+      "hosting": {
+        "retofitness": [
+          "retofitness"
+        ]
+      }
+    }
+  }
+}

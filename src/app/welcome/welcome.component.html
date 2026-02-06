@@ -67,6 +67,18 @@
 
     <!-- Botones de acción -->
     <div class="welcome-buttons">
+      <!-- Botón de instalación PWA (solo se muestra si está disponible) -->
+      <ion-button 
+        *ngIf="mostrarBotonInstalar"
+        expand="block" 
+        color="warning" 
+        fill="solid"
+        class="install-pwa-button" 
+        (click)="instalarPWA()">
+        <ion-icon name="download" slot="start"></ion-icon>
+        Instalar como App
+      </ion-button>
+
       <ion-button 
         expand="block" 
         color="success" 
@@ -86,6 +98,12 @@
         <ion-icon name="log-in" slot="start"></ion-icon>
         Ya tengo cuenta
       </ion-button>
+    </div>
+
+    <!-- Enlace sutil para instrucciones de instalación (solo Android/Chrome) -->
+    <div class="install-hint" *ngIf="!mostrarBotonInstalar && esMobile() && !esSafariOiOS()" (click)="mostrarInstruccionesInstalacion()">
+      <ion-icon name="phone-portrait-outline"></ion-icon>
+      <span>¿Quieres instalar en tu móvil?</span>
     </div>
 
     <!-- Enlaces legales -->
