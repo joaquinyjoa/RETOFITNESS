@@ -321,6 +321,27 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
     }
   }
 
+  // Recarga manual desde botón (funciona en navegador y móvil)
+  async recargarManual() {
+    this.mostrarSpinner = true;
+    this.cdr.detectChanges();
+    
+    try {
+      const tieneConexion = navigator.onLine;
+      
+      if (!tieneConexion) {
+        await this.toastService.mostrarInfo('Sin conexión - Recargando desde rutinas guardadas');
+      }
+      
+      await this.cargarRutinaAsignada(true);
+    } catch (error) {
+      console.error('Error en recarga manual:', error);
+    } finally {
+      this.mostrarSpinner = false;
+      this.cdr.detectChanges();
+    }
+  }
+
   seleccionarDia(dia: number) {
     this.diaSeleccionado = dia;
     this.rutinaAsignada = this.rutinasPorDia.get(dia) || null;
@@ -411,7 +432,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
           await new Promise(resolve => setTimeout(resolve, 1500));
           this.ejercicioDetalle = detalleEjercicio;
         } else {
-          await this.toastService.mostrarError('⚠️ Detalles no disponibles offline');
+          await this.toastService.mostrarError('Detalles no disponibles offline');
         }
         
         this.cargandoDetalle = false;

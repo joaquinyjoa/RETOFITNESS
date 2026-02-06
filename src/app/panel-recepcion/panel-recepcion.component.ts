@@ -213,4 +213,21 @@ export class PanelRecepcionComponent implements OnInit {
       event.target.complete();
     }
   }
+
+  // Recarga manual desde botón (funciona en navegador y móvil)
+  async recargarManual() {
+    try {
+      const tieneConexion = this.verificarConexion();
+      
+      if (!tieneConexion) {
+        await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para recargar los datos');
+        return;
+      }
+      
+      await this.cargarClientes(true); // Recargar con spinner
+    } catch (error) {
+      console.error('Error en recarga manual:', error);
+      await this.toastService.mostrarError('Error al recargar los datos');
+    }
+  }
 }

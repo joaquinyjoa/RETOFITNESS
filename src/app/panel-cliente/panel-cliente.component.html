@@ -4,10 +4,13 @@
       <ion-icon name="fitness-outline" class="title-icon"></ion-icon>
       Mi Entrenamiento
       <ion-badge *ngIf="!isOnline" color="warning" style="margin-left: 8px; font-size: 0.7em;">
-        📴 Offline
+        Offline
       </ion-badge>
     </ion-title>
     <ion-buttons slot="end">
+      <ion-button (click)="recargarManual()" [disabled]="mostrarSpinner">
+        <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+      </ion-button>
       <ion-button (click)="mostrarMenuOpciones()">
         <ion-icon name="ellipsis-vertical" slot="icon-only"></ion-icon>
       </ion-button>
