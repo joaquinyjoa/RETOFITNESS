@@ -4,13 +4,14 @@
 
 ### Sistema de Gestión de Entrenamiento Personalizado
 
-[![Angular](https://img.shields.io/badge/Angular-18-red?logo=angular)](https://angular.io/)
-[![Ionic](https://img.shields.io/badge/Ionic-8-blue?logo=ionic)](https://ionicframework.com/)
+[![Angular](https://img.shields.io/badge/Angular-21-red?logo=angular)](https://angular.io/)
+[![Ionic](https://img.shields.io/badge/Ionic-8.7-blue?logo=ionic)](https://ionicframework.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green?logo=supabase)](https://supabase.com/)
+[![Firebase](https://img.shields.io/badge/Firebase-Hosting-orange?logo=firebase)](https://firebase.google.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[🎥 Ver Demo](#-demo-en-video) • [📱 Características](#-características) • [🚀 Instalación](#-instalación) • [📊 Rendimiento](#-optimizaciones-de-rendimiento)
+[🌐 Demo en Vivo](https://retofitness.web.app) • [📱 Características](#-características) • [🚀 Instalación](#-instalación) • [📊 Rendimiento](#-optimizaciones-de-rendimiento)
 
 </div>
 
@@ -18,7 +19,16 @@
 
 ## 📖 Descripción
 
-**RetoFitness** es una aplicación móvil completa para la gestión de entrenamientos personalizados en gimnasios. Permite a entrenadores crear rutinas customizadas, asignarlas a clientes, y hacer seguimiento del progreso en tiempo real.
+**RetoFitness** es una aplicación móvil y web progresiva (PWA) completa para la gestión de entrenamientos personalizados en gimnasios. Permite a entrenadores crear rutinas customizadas, asignarlas a clientes, y hacer seguimiento del progreso en tiempo real.
+
+### 🌐 Demo en Vivo
+
+**[🚀 Prueba la App en Web: https://retofitness.web.app](https://retofitness.web.app)**
+
+- ✅ **Funciona en cualquier navegador**: Chrome, Firefox, Safari, Edge
+- ✅ **Compatible con móviles**: iOS, Android (sin instalar desde tienda)
+- ✅ **Instalable como PWA**: Agregar a pantalla de inicio
+- ✅ **Optimizada para Safari**: Full compatibilidad iOS
 
 ### 🎯 Problema que Resuelve
 - Gestión manual de rutinas en papel o spreadsheets
@@ -101,12 +111,15 @@ Una plataforma móvil centralizada con roles diferenciados (Admin, Entrenador, C
 - ✅ **Rutinas del Día**: Ver entrenamientos asignados automáticamente
 - ✅ **Instrucciones Visuales**: GIFs animados de cada ejercicio
 - ✅ **Seguimiento de Progreso**: Registro de series, repeticiones y pesos
-- ✅ **Acceso 24/7**: Consultar rutinas desde cualquier lugar
+- ✅ **Pull-to-Refresh**: Actualizar rutinas deslizando hacia abajo
+- ✅ **Modo Offline**: Acceso a rutinas guardadas sin conexión
+- ✅ **Acceso 24/7**: Consultar desde cualquier dispositivo (web o app)
 
-### 🎛️ Para Administradores
+### 🎛️ Para Administradores y Recepción
 - ✅ **Dashboard Completo**: Métricas de usuarios, rutinas y actividad
 - ✅ **Gestión de Roles**: Asignar permisos (Admin, Entrenador, Recepción)
 - ✅ **Aprobación de Usuarios**: Sistema de validación de nuevos registros
+- ✅ **Pull-to-Refresh**: Actualizar lista de clientes en tiempo real
 - ✅ **Auditoría**: Logs de actividad y cambios
 
 ### 🔐 Seguridad
@@ -120,11 +133,13 @@ Una plataforma móvil centralizada con roles diferenciados (Admin, Entrenador, C
 ## 🛠️ Stack Tecnológico
 
 ### Frontend
-- **Framework**: Angular 18 (Standalone Components)
-- **UI Framework**: Ionic 8 (iOS & Android)
+- **Framework**: Angular 21 (Standalone Components)
+- **UI Framework**: Ionic 8.7 (iOS, Android & Web)
 - **Lenguaje**: TypeScript 5
+- **PWA**: Service Worker + Manifest (instalable)
 - **Gestión de Estado**: RxJS + BehaviorSubject
 - **Caché**: IndexedDB API (persistente)
+- **Compatibilidad**: Chrome, Firefox, Safari, Edge
 
 ### Backend
 - **BaaS**: Supabase (PostgreSQL + Storage + Auth)
@@ -133,13 +148,16 @@ Una plataforma móvil centralizada con roles diferenciados (Admin, Entrenador, C
 - **API**: Auto-generada REST API (PostgREST)
 - **Auth**: Supabase Auth (JWT)
 
-### Mobile
-- **Deployment**: Capacitor 6
+### Mobile & Web
+- **Mobile Native**: Capacitor 7.4.3
 - **Plataformas**: Android (Google Play) + iOS (App Store ready)
+- **PWA Hosting**: Firebase Hosting (https://retofitness.web.app)
+- **Instalación PWA**: Compatible con iOS/Android sin tienda
 - **Notificaciones**: Capacitor Push Notifications (próximamente)
 
 ### DevOps
-- **CI/CD**: GitHub Actions (próximamente)
+- **Web Hosting**: Firebase Hosting + CDN
+- **CI/CD**: Manual deployment (GitHub Actions próximamente)
 - **Testing**: Jasmine + Karma
 - **Linting**: ESLint + Prettier
 - **Version Control**: Git
@@ -169,6 +187,22 @@ Mejora: 80% más rápido
 ✅ UI instantánea sin esperar backend
 ✅ Rollback automático en caso de error
 ✅ Feedback visual inmediato
+```
+
+### 🌐 Compatibilidad Safari & Cross-Browser
+```typescript
+✅ NgZone.run() para change detection confiable
+✅ Toast system compatible con todos los navegadores
+✅ Event binding directo (sin async pipes problemáticos)
+✅ Tested en Chrome, Firefox, Safari, Edge
+```
+
+### 🔄 Pull-to-Refresh
+```typescript
+✅ Implementado en panel-cliente y panel-recepcion
+✅ Actualización manual de datos sin recargar página
+✅ Feedback visual con ion-refresher
+✅ Detección de conexión antes de recargar
 ```
 
 ### 🚫 Request Cancellation
@@ -243,7 +277,7 @@ database_indexes_simple.sql
 
 ### 5. Ejecutar en Desarrollo
 ```bash
-# Web
+# Web (localhost)
 ionic serve
 
 # Android
@@ -253,9 +287,42 @@ ionic cap run android
 ionic cap run ios
 ```
 
+### 6. Deploy a Firebase Hosting (Web)
+```bash
+# 1. Instalar Firebase CLI
+npm install -g firebase-tools
+
+# 2. Login a Firebase
+firebase login
+
+# 3. Build producción
+npm run build
+
+# 4. Deploy
+firebase deploy --only hosting
+
+# URL: https://retofitness.web.app
+```
+
 ---
 
 ## 📱 Deployment
+
+### 🌐 Web (Firebase Hosting)
+
+**URL Producción**: [https://retofitness.web.app](https://retofitness.web.app)
+
+```bash
+# Build y deploy
+npm run build
+firebase deploy --only hosting
+
+# Características PWA:
+✅ Instalable en iOS/Android
+✅ Service Worker para caché
+✅ Funciona offline (rutinas guardadas)
+✅ Compatible con Safari
+```
 
 ### Android (Google Play)
 
@@ -360,6 +427,8 @@ npm run test:coverage
 | **Tiempo de Carga** | <2s |
 | **Usuarios Concurrentes** | 500-1000 |
 | **Reducción Queries** | 90% |
+| **Plataformas** | Web (PWA) + Android + iOS |
+| **Compatibilidad** | Chrome, Firefox, Safari, Edge |
 
 ---
 
@@ -371,6 +440,10 @@ npm run test:coverage
 - [x] Cache persistente con IndexedDB
 - [x] Optimización de queries
 - [x] Panel de cliente responsivo
+- [x] **PWA desplegada en Firebase Hosting**
+- [x] **Pull-to-refresh en paneles principales**
+- [x] **Compatibilidad completa con Safari**
+- [x] **Sistema de toasts cross-browser**
 
 ### 🚧 Versión 1.1 (En Desarrollo)
 - [ ] Notificaciones push

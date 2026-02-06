@@ -51,13 +51,11 @@ export class AppComponent implements OnInit, OnDestroy {
     this.toastSub = this.toastService.toast$.subscribe(toast => {
       // Ejecutar en NgZone para forzar change detection en Safari
       this.ngZone.run(() => {
-        console.log('📬 AppComponent: Toast recibido:', toast);
         this.toastIsOpen = toast.isOpen;
         this.toastMessage = toast.message;
         this.toastDuration = toast.duration;
         this.toastColor = toast.color;
         this.toastIcon = toast.icon;
-        console.log('📬 AppComponent: Toast state - isOpen:', this.toastIsOpen, 'message:', this.toastMessage);
         
         // Forzar change detection para Safari
         this.cdr.detectChanges();
@@ -81,7 +79,6 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   onToastDismiss() {
-    console.log('📪 AppComponent: Toast dismissed');
     this.ngZone.run(() => {
       this.toastService.cerrarToast();
       this.cdr.detectChanges();

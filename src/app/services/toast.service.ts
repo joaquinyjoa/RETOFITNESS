@@ -26,7 +26,6 @@ export class ToastService {
   constructor(private ngZone: NgZone) { }
 
   mostrarExito(mensaje: string, duracion: number = 3000) {
-    console.log('🟢 ToastService: Mostrando toast de éxito:', mensaje);
     this.ngZone.run(() => {
       this.toastSubject.next({
         message: mensaje,
@@ -35,13 +34,11 @@ export class ToastService {
         icon: 'checkmark-circle-outline',
         isOpen: true
       });
-      console.log('🟢 ToastService: Toast emitido en ngZone');
     });
     return Promise.resolve();
   }
 
   mostrarError(mensaje: string, duracion: number = 4000) {
-    console.log('🔴 ToastService: Mostrando toast de error:', mensaje);
     this.ngZone.run(() => {
       this.toastSubject.next({
         message: mensaje,
@@ -50,13 +47,11 @@ export class ToastService {
         icon: 'alert-circle-outline',
         isOpen: true
       });
-      console.log('🔴 ToastService: Toast emitido en ngZone');
     });
     return Promise.resolve();
   }
 
   mostrarAdvertencia(mensaje: string, duracion: number = 3500) {
-    console.log('🟡 ToastService: Mostrando toast de advertencia:', mensaje);
     this.ngZone.run(() => {
       this.toastSubject.next({
         message: mensaje,
@@ -65,13 +60,11 @@ export class ToastService {
         icon: 'warning-outline',
         isOpen: true
       });
-      console.log('🟡 ToastService: Toast emitido en ngZone');
     });
     return Promise.resolve();
   }
 
   mostrarInfo(mensaje: string, duracion: number = 3000) {
-    console.log('🟠 ToastService: Mostrando toast de info:', mensaje);
     this.toastSubject.next({
       message: mensaje,
       duration: duracion,
@@ -86,7 +79,6 @@ export class ToastService {
     this.ngZone.run(() => {
       const current = this.toastSubject.value;
       this.toastSubject.next({ ...current, isOpen: false });
-      console.log('📪 ToastService: Toast cerrado');
     });
   }
 }

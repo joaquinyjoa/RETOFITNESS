@@ -568,15 +568,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
     const dataString = JSON.stringify(data);
     
     try {
-      // Información de diagnóstico
-      console.log(`💾 Guardando ${data.rutinas?.length || 0} rutinas en caché offline`);
-      console.log(`📊 Días con rutinas: ${data.rutinasPorDia?.length || 0}`);
-      console.log(`📦 Tamaño del caché: ${(dataString.length / 1024).toFixed(2)} KB`);
-      
       // Guardar en localStorage
       localStorage.setItem(cacheKey, dataString);
-      
-      console.log('✅ Rutinas guardadas correctamente en modo offline');
     } catch (error) {
       console.error('❌ Error al guardar rutina en caché:', error);
       
@@ -589,12 +582,10 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
           for (const key of keys) {
             if (key.startsWith(this.RUTINA_CACHE_KEY) && !key.endsWith(`_${this.clienteId}`)) {
               localStorage.removeItem(key);
-              console.log(`🗑️ Caché antiguo eliminado: ${key}`);
             }
           }
           // Reintentar guardar
           localStorage.setItem(cacheKey, dataString);
-          console.log('✅ Rutinas guardadas después de limpiar caché antiguo');
         } catch (retryError) {
           console.error('❌ No se pudo guardar incluso después de limpiar:', retryError);
         }
@@ -661,13 +652,9 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
       
       if (cache) {
         const data = JSON.parse(cache);
-        console.log(`📂 Cargando ${data.rutinas?.length || 0} rutinas desde caché offline`);
-        console.log(`📊 Días con rutinas: ${data.rutinasPorDia?.length || 0}`);
-        console.log(`📅 Fecha del caché: ${data.fecha || 'desconocida'}`);
         return data;
       }
       
-      console.log('⚠️ No hay rutinas en caché offline');
       return null;
     } catch (error) {
       console.error('❌ Error al leer caché de rutina:', error);

@@ -34,36 +34,25 @@ export class WelcomeComponent implements OnInit, OnDestroy, ViewWillEnter, ViewW
       this.playWelcomeAnimation();
     }, 100);
 
-    // Log para debug
-    console.log('🔍 Inicializando detección PWA');
-    console.log('📱 User Agent:', navigator.userAgent);
-    console.log('🌐 Plataforma:', navigator.platform);
-
     // Escuchar evento de PWA instalable
     window.addEventListener('pwa-installable', () => {
-      console.log('✅ Evento pwa-installable recibido');
       this.deferredPrompt = (window as any).deferredPrompt;
       this.mostrarBotonInstalar = true;
       this.cdr.detectChanges();
-      console.log('📲 Botón de instalación PWA activado');
     });
 
     // Verificar si ya existe el prompt al cargar (importante para móvil)
     setTimeout(() => {
       if ((window as any).deferredPrompt) {
-        console.log('✅ Prompt encontrado en window al cargar');
         this.deferredPrompt = (window as any).deferredPrompt;
         this.mostrarBotonInstalar = true;
         this.cdr.detectChanges();
-      } else {
-        console.log('⚠️ No hay prompt disponible todavía');
       }
     }, 1000);
 
     // Verificación adicional después de 3 segundos (para móvil)
     setTimeout(() => {
       if ((window as any).deferredPrompt && !this.mostrarBotonInstalar) {
-        console.log('✅ Prompt encontrado en verificación tardía (móvil)');
         this.deferredPrompt = (window as any).deferredPrompt;
         this.mostrarBotonInstalar = true;
         this.cdr.detectChanges();
@@ -150,25 +139,20 @@ export class WelcomeComponent implements OnInit, OnDestroy, ViewWillEnter, ViewW
   }
 
   async instalarPWA() {
-    console.log('🚀 Intentando instalar PWA...');
-    
     if (!this.deferredPrompt) {
-      console.log('⚠️ No hay prompt de instalación disponible');
       alert('La instalación no está disponible en este momento. Intenta usar el menú del navegador: ⋮ → "Instalar aplicación"');
       return;
     }
 
     try {
       // Mostrar el prompt de instalación
-      console.log('📲 Mostrando prompt de instalación');
       this.deferredPrompt.prompt();
       
       // Esperar la respuesta del usuario
       const { outcome } = await this.deferredPrompt.userChoice;
-      console.log(`Usuario ${outcome === 'accepted' ? '✅ aceptó' : '❌ rechazó'} la instalación`);
       
       if (outcome === 'accepted') {
-        console.log('🎉 PWA instalada exitosamente');
+        // PWA instalada exitosamente
       }
     } catch (error) {
       console.error('❌ Error al instalar PWA:', error);

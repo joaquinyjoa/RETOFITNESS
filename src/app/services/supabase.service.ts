@@ -56,10 +56,6 @@ export class SupabaseService {
   // Registrar un nuevo cliente
   async registrarCliente(cliente: Cliente): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      console.log('💾 Insertando cliente en BD...');
-      console.log('📝 Datos a insertar (sin password):', { ...cliente, password: '[OCULTO]' });
-      console.log('📊 Cantidad de campos:', Object.keys(cliente).length);
-      
       const { data, error } = await this.supabase
         .from('clientes')
         .insert([cliente])
@@ -88,15 +84,8 @@ export class SupabaseService {
       }
       
       if (!data) {
-        console.error('❌ Insert no devolvió datos');
         return { success: false, error: 'No se recibieron datos después de insertar el cliente' };
       }
-      
-      console.log('✅ Cliente insertado en BD exitosamente');
-      console.log('✅ ID del cliente:', data.id);
-      console.log('✅ Email:', data.correo);
-      console.log('✅ User ID:', data.user_id);
-      console.log('✅ Estado:', data.Estado);
       
       return { success: true, data };
     } catch (error: any) {
@@ -110,8 +99,6 @@ export class SupabaseService {
   // Verificar si un email ya existe
   async verificarEmailExistente(correo: string): Promise<boolean> {
     try {
-      console.log(`🔍 Verificando email: ${correo}`);
-      
       const { data, error } = await this.supabase
         .from('clientes')
         .select('id')
@@ -120,12 +107,10 @@ export class SupabaseService {
 
       if (error) {
         this.logger.error('SupabaseService: Error al verificar email en BD:', error);
-        console.error('❌ Error en verificarEmailExistente:', error);
         return false;
       }
 
       const existe = data !== null;
-      console.log(`🔍 Email ${correo} existe en BD: ${existe}`);
       return existe;
     } catch (error) {
       this.logger.error('SupabaseService: Error inesperado en verificarEmailExistente:', error);
@@ -137,8 +122,6 @@ export class SupabaseService {
   // Crear usuario en Supabase Auth
   async crearUsuarioAuth(email: string, password: string): Promise<{ success: boolean; userId?: string; error?: string; requiresConfirmation?: boolean }> {
     try {
-      console.log(`🔐 Creando usuario Auth para: ${email}`);
-      
       const { data, error } = await this.supabase.auth.signUp({
         email: email,
         password: password,
@@ -175,13 +158,9 @@ export class SupabaseService {
 
       if (!data.user) {
         this.logger.error('SupabaseService: No se obtuvo usuario después de signUp');
-        console.error('❌ No se obtuvo usuario en signUp');
         return { success: false, error: 'No se pudo crear el usuario' };
       }
 
-      console.log('✅ Usuario Auth creado:', data.user.id);
-      console.log('📧 Email confirmado:', data.user.email_confirmed_at ? 'SÍ' : 'NO');
-      
       // Detectar si el usuario requiere confirmación de email
       const requiresConfirmation = !data.user.email_confirmed_at;
       return { 

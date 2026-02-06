@@ -280,12 +280,13 @@ ion-button.password-button::part(native) .button-native,
   }
 }
 
-// Grid de clientes
+// Grid de clientes (diseño móvil para todas las resoluciones)
 .clientes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 400px));
+  grid-template-columns: 1fr;
   gap: 20px;
-  justify-content: center;
+  max-width: 420px;
+  margin: 0 auto;
   padding: 0 8px;
 }
 
@@ -414,6 +415,8 @@ ion-button.password-button::part(native) .button-native,
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
+  min-width: fit-content;
 }
 
 .password-button {
@@ -458,6 +461,26 @@ ion-button.password-button::part(native) .button-native,
   --handle-width: 26px;
   --handle-height: 26px;
   --handle-box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
+  --background: rgba(255, 255, 255, 0.2);
+  --background-checked: var(--primary-green);
+  --handle-background: #ffffff;
+  --handle-background-checked: #000000;
+  width: 52px;
+  height: 32px;
+  margin: 0;
+  
+  &::part(track) {
+    height: 32px;
+    border-radius: 16px;
+    border: 2px solid rgba(0, 255, 136, 0.3);
+  }
+  
+  &::part(handle) {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
 }
 
 // Empty state
@@ -495,8 +518,8 @@ ion-button.password-button::part(native) .button-native,
   }
 }
 
-// Responsive
-@media (max-width: 768px) {
+// Responsive - Ya no necesario, siempre usa diseño móvil
+/* @media (max-width: 768px) {
   .clientes-grid {
     grid-template-columns: 1fr;
   }
@@ -508,4 +531,4 @@ ion-button.password-button::part(native) .button-native,
   .stat {
     min-width: calc(33.333% - 8px);
   }
-}
+} */
