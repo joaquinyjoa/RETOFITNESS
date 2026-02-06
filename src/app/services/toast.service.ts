@@ -1,74 +1,92 @@
 import { Injectable, NgZone } from '@angular/core';
-import { ToastController } from '@ionic/angular';
+import { BehaviorSubject } from 'rxjs';
+
+export interface ToastData {
+  message: string;
+  duration: number;
+  color: 'success' | 'danger' | 'warning' | 'primary';
+  icon: string;
+  isOpen: boolean;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class ToastService {
+  private toastSubject = new BehaviorSubject<ToastData>({
+    message: '',
+    duration: 3000,
+    color: 'primary',
+    icon: 'information-circle-outline',
+    isOpen: false
+  });
 
-  constructor(
-    private toastController: ToastController,
-    private ngZone: NgZone
-  ) { }
+  public toast$ = this.toastSubject.asObservable();
 
-  async mostrarExito(mensaje: string, duracion: number = 3000) {
-    // Forzar ejecución en NgZone para asegurar que el toast se muestre
-    return this.ngZone.run(async () => {
-      const toast = await this.toastController.create({
+  constructor(private ngZone: NgZone) { }
+
+  mostrarExito(mensaje: string, duracion: number = 3000) {
+    console.log('🟢 ToastService: Mostrando toast de éxito:', mensaje);
+    this.ngZone.run(() => {
+      this.toastSubject.next({
         message: mensaje,
         duration: duracion,
-        position: 'top',
         color: 'success',
         icon: 'checkmark-circle-outline',
-        cssClass: 'toast-success'
+        isOpen: true
       });
-      await toast.present();
-      return toast;
+      console.log('🟢 ToastService: Toast emitido en ngZone');
     });
+    return Promise.resolve();
   }
 
-  async mostrarError(mensaje: string, duracion: number = 4000) {
-    return this.ngZone.run(async () => {
-      const toast = await this.toastController.create({
+  mostrarError(mensaje: string, duracion: number = 4000) {
+    console.log('🔴 ToastService: Mostrando toast de error:', mensaje);
+    this.ngZone.run(() => {
+      this.toastSubject.next({
         message: mensaje,
         duration: duracion,
-        position: 'top',
         color: 'danger',
         icon: 'alert-circle-outline',
-        cssClass: 'toast-error'
+        isOpen: true
       });
-      await toast.present();
-      return toast;
+      console.log('🔴 ToastService: Toast emitido en ngZone');
     });
+    return Promise.resolve();
   }
 
-  async mostrarAdvertencia(mensaje: string, duracion: number = 3500) {
-    return this.ngZone.run(async () => {
-      const toast = await this.toastController.create({
+  mostrarAdvertencia(mensaje: string, duracion: number = 3500) {
+    console.log('🟡 ToastService: Mostrando toast de advertencia:', mensaje);
+    this.ngZone.run(() => {
+      this.toastSubject.next({
         message: mensaje,
         duration: duracion,
-        position: 'top',
         color: 'warning',
         icon: 'warning-outline',
-        cssClass: 'toast-warning'
+        isOpen: true
       });
-      await toast.present();
-      return toast;
+      console.log('🟡 ToastService: Toast emitido en ngZone');
     });
+    return Promise.resolve();
   }
 
-  async mostrarInfo(mensaje: string, duracion: number = 3000) {
-    return this.ngZone.run(async () => {
-      const toast = await this.toastController.create({
-        message: mensaje,
-        duration: duracion,
-        position: 'top',
-        color: 'primary',
-        icon: 'information-circle-outline',
-        cssClass: 'toast-info'
-      });
-      await toast.present();
-      return toast;
+  mostrarInfo(mensaje: string, duracion: number = 3000) {
+    console.log('🟠 ToastService: Mostrando toast de info:', mensaje);
+    this.toastSubject.next({
+      message: mensaje,
+      duration: duracion,
+      color: 'primary',
+      icon: 'information-circle-outline',
+      isOpen: true
+    });
+    return Promise.resolve();
+  }
+
+  cerrarToast() {
+    this.ngZone.run(() => {
+      const current = this.toastSubject.value;
+      this.toastSubject.next({ ...current, isOpen: false });
+      console.log('📪 ToastService: Toast cerrado');
     });
   }
 }

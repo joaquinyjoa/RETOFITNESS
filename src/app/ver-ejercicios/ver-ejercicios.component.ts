@@ -167,7 +167,7 @@ export class VerEjerciciosComponent implements OnInit, OnDestroy {
     const ahora = Date.now();
     if (!forzarRecarga && this.cacheEjercicios && (ahora - this.ultimaCargaEjercicios) < this.CACHE_TTL) {
       this.ejercicios = this.cacheEjercicios;
-      this.aplicarFiltros();
+      this.aplicarFiltros(true); // Sin debounce al usar caché
       return;
     }
 
@@ -191,7 +191,8 @@ export class VerEjerciciosComponent implements OnInit, OnDestroy {
       this.cacheEjercicios = this.ejercicios;
       this.ultimaCargaEjercicios = ahora;
       
-      this.aplicarFiltros();
+      // Aplicar filtros sin debounce para actualización inmediata
+      this.aplicarFiltros(true);
       
     } catch (error) {
       console.error('🔴 [VerEjerciciosComponent] Error al cargar ejercicios:', error);
@@ -210,13 +211,29 @@ export class VerEjerciciosComponent implements OnInit, OnDestroy {
     }
   }
 
-  aplicarFiltros() {
+  aplicarFiltros(sinDebounce = false) {
+    // Si sinDebounce es true, aplicar filtros inmediatamente
+    if (sinDebounce) {
+      this.ejerciciosFiltrados = this.ejercicios.filter(ejercicio => {
+        const coincideTexto = !this.filtroTexto || 
+          ejercicio.nombre.toLowerCase().includes(this.filtroTexto.toLowerCase()) ||
+          ejercicio.descripcion?.toLowerCase().includes(this.filtroTexto.toLowerCase());
+        
+        const coincideCategoria = !this.filtroCategoria || ejercicio.categoria === this.filtroCategoria;
+        const coincideMusculo = !this.filtroMusculo || ejercicio.musculo_principal === this.filtroMusculo;
+
+        return coincideTexto && coincideCategoria && coincideMusculo;
+      });
+      this.cdr.detectChanges();
+      return;
+    }
+
     // Cancelar búsqueda anterior si existe
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
     }
 
-    // Debounce de 300ms
+    // Debounce de 300ms para búsquedas manuales
     this.searchTimeout = setTimeout(() => {
       this.ejerciciosFiltrados = this.ejercicios.filter(ejercicio => {
         const coincideTexto = !this.filtroTexto || 
@@ -1121,7 +1138,7 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
     const ahora = Date.now();
     if (!forzarRecarga && this.cacheRutinas && (ahora - this.ultimaCargaRutinas) < this.CACHE_TTL) {
       this.rutinas = this.cacheRutinas;
-      this.aplicarFiltrosRutinas();
+      this.aplicarFiltrosRutinas(true); // Sin debounce al usar caché
       return;
     }
 
@@ -1144,7 +1161,9 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
       // Actualizar caché
       this.cacheRutinas = this.rutinas;
       this.ultimaCargaRutinas = ahora;
-      this.aplicarFiltrosRutinas();
+      
+      // Aplicar filtros sin debounce para actualización inmediata
+      this.aplicarFiltrosRutinas(true);
       
     } catch (error) {
       await this.toastService.mostrarError('Error al cargar rutinas');
@@ -1163,7 +1182,23 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
     }
   }
 
-  aplicarFiltrosRutinas() {
+  aplicarFiltrosRutinas(sinDebounce = false) {
+    // Si sinDebounce es true, aplicar filtros inmediatamente
+    if (sinDebounce) {
+      this.rutinasFiltradas = this.rutinas.filter(rutina => {
+        const coincideTexto = !this.filtroTextoRutina ||
+          rutina.nombre.toLowerCase().includes(this.filtroTextoRutina.toLowerCase()) ||
+          rutina.descripcion?.toLowerCase().includes(this.filtroTextoRutina.toLowerCase());
+        
+        const coincideNivel = !this.filtroNivelRutina || rutina.nivel_dificultad === this.filtroNivelRutina;
+
+        return coincideTexto && coincideNivel;
+      });
+      this.cdr.detectChanges();
+      return;
+    }
+
+    // Aplicar filtros con debounce para búsquedas manuales
     this.rutinasFiltradas = this.rutinas.filter(rutina => {
       const coincideTexto = !this.filtroTextoRutina ||
         rutina.nombre.toLowerCase().includes(this.filtroTextoRutina.toLowerCase()) ||
@@ -1173,6 +1208,7 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
 
       return coincideTexto && coincideNivel;
     });
+    this.cdr.detectChanges();
   }
 
   limpiarFiltrosRutinas() {

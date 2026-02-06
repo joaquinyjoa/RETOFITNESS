@@ -104,9 +104,9 @@ export class RegisterComponent implements OnInit {
 
   constructor(
     private router: Router,
-  private clienteService: ClienteService,
-  private toastService: ToastService,
-  private cdr: ChangeDetectorRef
+    private clienteService: ClienteService,
+    private toastService: ToastService,
+    private cdr: ChangeDetectorRef
   ) { 
     // Asegurar que el objeto cliente esté completamente inicializado
   }
@@ -505,28 +505,43 @@ export class RegisterComponent implements OnInit {
     this.showSpinner = true;
     this.cdr.detectChanges();
 
+    console.log('🔄 Iniciando proceso de registro...');
+
     // Timer para asegurar que el spinner se muestre por al menos 1.5 segundos
     const spinnerStartTime = Date.now();
     const minSpinnerDuration = 1500; // 1.5 segundos
+    
+    // Timeout de seguridad: detener spinner después de 30 segundos
+    const timeoutId = setTimeout(() => {
+      console.error('⏱️ TIMEOUT: El registro tardó más de 30 segundos');
+      this.showSpinner = false;
+      this.isSubmitting = false;
+      this.cdr.detectChanges();
+      this.toastService.mostrarError('⏱️ La operación está tardando demasiado. Verifica tu conexión e intenta nuevamente.');
+    }, 30000);
     
     try {
       // Verificar conexión a internet PRIMERO
       const tieneConexion = this.verificarConexion();
       if (!tieneConexion) {
+        clearTimeout(timeoutId);
         this.isSubmitting = false;
         this.showSpinner = false;
         this.cdr.detectChanges();
         await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para registrarte');
         return;
       }
+      console.log('✅ Conexión verificada');
 
       // Validar datos antes del registro
       if (!this.validateAllData()) {
+        clearTimeout(timeoutId);
         this.isSubmitting = false;
         this.showSpinner = false;
         this.cdr.detectChanges();
         return;
       }
+      console.log('✅ Datos validados');
 
       // Preparar datos del cliente para Supabase
       const clienteSupabase: ClienteSupabase = {
@@ -558,10 +573,16 @@ export class RegisterComponent implements OnInit {
       };
 
       // Usar ClienteService para crear el cliente
+      console.log('📝 Enviando datos a Supabase...');
+      console.log('📧 Email:', clienteSupabase.correo);
+      
       const result = await this.clienteService.crearCliente(clienteSupabase, this.cliente.password.trim());
       
+      console.log('📬 Respuesta recibida:', result);
+      
       if (!result.success) {
-        console.error('Error en el registro:', result.error);
+        console.error('❌ Error en el registro:', result.error);
+        clearTimeout(timeoutId);
         
         // Detener spinner inmediatamente en caso de error
         this.showSpinner = false;
@@ -571,6 +592,23 @@ export class RegisterComponent implements OnInit {
         await this.toastService.mostrarError(result.error || 'Error al registrar el cliente');
         return;
       }
+      
+      // Validar que se recibieron los datos del cliente guardado
+      if (!result.data || !result.data.id) {
+        console.error('⚠️ Registro exitoso pero no se recibieron datos del cliente');
+        console.error('⚠️ Result completo:', result);
+        clearTimeout(timeoutId);
+        this.showSpinner = false;
+        this.isSubmitting = false;
+        this.cdr.detectChanges();
+        await this.toastService.mostrarError('Error: El registro no se completó correctamente. Intenta nuevamente.');
+        return;
+      }
+      
+      console.log('✅ Cliente registrado exitosamente');
+      console.log('✅ ID del cliente:', result.data.id);
+      console.log('✅ Email:', result.data.correo);
+      clearTimeout(timeoutId);
 
       // Calcular tiempo restante para cumplir los 1.5 segundos
       const elapsedTime = Date.now() - spinnerStartTime;
@@ -578,39 +616,76 @@ export class RegisterComponent implements OnInit {
       
       // Esperar el tiempo restante si es necesario
       if (remainingTime > 0) {
+        console.log(`⏳ Esperando ${remainingTime}ms para cumplir tiempo mínimo de spinner...`);
         await new Promise(resolve => setTimeout(resolve, remainingTime));
       }
       
       // Ocultar spinner
+      console.log('🎯 Ocultando spinner...');
       this.showSpinner = false;
+      this.isSubmitting = false;
       this.cdr.detectChanges();
       
+      // Pequeña pausa para asegurar que el spinner se oculte antes de mostrar el toast
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
       // Mostrar mensaje apropiado según si requiere confirmación o no
+      console.log('📢 Mostrando mensaje de éxito...');
+      console.log('📢 Requiere confirmación:', result.requiresConfirmation);
+      
+      // Mostrar toast sin bloquear la ejecución
+      const navigationDelay = result.requiresConfirmation ? 3500 : 2000;
+      
       if (result.requiresConfirmation) {
-        await this.toastService.mostrarAdvertencia(
+        console.log('⚠️ Mostrando advertencia de confirmación...');
+        this.toastService.mostrarAdvertencia(
           '¡Registro completado! Tu cuenta está pendiente de aprobación. El administrador debe confirmar tu email antes de que puedas iniciar sesión.',
           6000
+        ).then(
+          () => console.log('📢 Toast de advertencia mostrado'),
+          (error) => console.error('❌ Error al mostrar toast:', error)
         );
       } else {
-        await this.toastService.mostrarExito('¡Registro completado! Redirigiendo al login...');
+        console.log('✅ Mostrando mensaje de éxito...');
+        this.toastService.mostrarExito('¡Registro completado! Redirigiendo al login...', 2500).then(
+          () => console.log('📢 Toast de éxito mostrado'),
+          (error) => console.error('❌ Error al mostrar toast:', error)
+        );
       }
       
-      // Navegar al login después de breve pausa
-      setTimeout(() => {
-        this.router.navigate(['/login']);
-      }, result.requiresConfirmation ? 3000 : 1500);
+      // Navegar al login después de breve pausa (no esperar al toast)
+      console.log(`🚀 Programando navegación al login en ${navigationDelay}ms...`);
       
-    } catch (error) {
-      console.error('Error registrando cliente:', error);
+      setTimeout(() => {
+        console.log('🚀 Ejecutando navegación a /login...');
+        this.router.navigate(['/login'], { replaceUrl: true }).then(
+          () => console.log('✅ Navegación exitosa'),
+          (error) => console.error('❌ Error en navegación:', error)
+        );
+      }, navigationDelay);
+      
+    } catch (error: any) {
+      console.error('❌ Error registrando cliente:', error);
+      console.error('❌ Stack trace:', error?.stack);
+      console.error('❌ Mensaje:', error?.message);
+      
+      try {
+        clearTimeout(timeoutId);
+      } catch (e) {
+        // Ignorar error al limpiar timeout
+      }
       
       // Detener spinner inmediatamente en caso de error
       this.showSpinner = false;
       this.isSubmitting = false;
       this.cdr.detectChanges();
       
-      await this.toastService.mostrarError('Error inesperado durante el registro');
+      const errorMsg = error?.message || 'Error inesperado durante el registro';
+      await this.toastService.mostrarError(`❌ ${errorMsg}`);
     } finally {
       this.isSubmitting = false;
+      this.showSpinner = false;
+      this.cdr.detectChanges();
     }
   }
 

@@ -5,4 +5,15 @@
   <div *ngIf="spinner$ | async" class="spinner-overlay-transparent">
     <app-spinner></app-spinner>
   </div>
+
+  <!-- Global toast - Binding directo para compatibilidad con Safari -->
+  <ion-toast
+    [isOpen]="toastIsOpen"
+    [message]="toastMessage"
+    [duration]="toastDuration"
+    [color]="toastColor"
+    [icon]="toastIcon"
+    position="top"
+    (didDismiss)="onToastDismiss()"
+  ></ion-toast>
 </ion-app>

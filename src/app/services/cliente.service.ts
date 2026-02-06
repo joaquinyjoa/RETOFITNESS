@@ -31,21 +31,36 @@ export class ClienteService {
    */
   async crearCliente(clienteData: Cliente, password: string): Promise<{ success: boolean; data?: any; error?: string; requiresConfirmation?: boolean }> {
     try {
+      console.log('🔹 PASO 1: Verificando si el email ya existe...');
 
       // 1. Verificar si el email ya existe
       const emailExists = await this.supabaseService.verificarEmailExistente(clienteData.correo);
+      console.log(`🔹 Email ${clienteData.correo} existe:`, emailExists);
+      
       if (emailExists) {
-        return { success: false, error: 'Este correo electrónico ya está registrado' };
+        console.log('❌ Email ya registrado en la base de datos');
+        return { success: false, error: '📧 Este correo electrónico ya está registrado. Si ya tienes una cuenta, intenta iniciar sesión.' };
       }
 
+      console.log('🔹 PASO 2: Creando usuario en Supabase Auth...');
+      
       // 2. Crear usuario en Supabase Auth
       const authResult = await this.supabaseService.crearUsuarioAuth(clienteData.correo, password);
       
+      console.log('🔹 Resultado de Auth:', authResult);
+      
       if (!authResult.success || !authResult.userId) {
+        console.error('❌ Error al crear usuario en Auth:', authResult.error);
+        // El mensaje de error ya viene traducido de supabaseService
         return { success: false, error: authResult.error || 'Error al crear usuario' };
       }
+      
+      console.log('✅ Usuario Auth creado con ID:', authResult.userId);
       const requiresConfirmation = authResult.requiresConfirmation || false;
+      console.log('📧 Requiere confirmación:', requiresConfirmation);
 
+      console.log('🔹 PASO 3: Preparando datos del cliente...');
+      
       // 3. Agregar user_id y Estado a los datos del cliente
       const clienteConUserId = {
         ...clienteData,
@@ -54,6 +69,8 @@ export class ClienteService {
         terminos_aceptados: clienteData.terminos_aceptados || true, // Valor por defecto true
         fecha_aceptacion_terminos: new Date().toISOString() // Fecha actual
       };
+      
+      console.log('📝 Cliente preparado:', { ...clienteConUserId, password: '[OCULTO]' });
 
       // Normalizar campos de texto opcionales cuando estén vacíos, undefined o null.
       // descripcionMedicacion tiene UNIQUE constraint y registros existentes con '',
@@ -73,18 +90,27 @@ export class ClienteService {
           }
         }
       });
+      
+      console.log('✅ Campos normalizados');
+      console.log('🔹 PASO 4: Registrando cliente en la base de datos...');
 
       // 4. Registrar cliente en la base de datos
       const result = await this.supabaseService.registrarCliente(clienteConUserId);
       
+      console.log('🔹 Resultado del registro:', result);
+      
       if (!result.success || !result.data) {
         // Si falla el registro, eliminar el usuario de auth
-        console.error('Error al registrar cliente, eliminando usuario auth...');
+        console.error('❌ Error al registrar cliente en BD:', result.error);
+        console.error('🛠️ El usuario fue creado en Auth pero no se pudo guardar en la BD');
+        console.error('🛠️ User ID de Auth que quedó huérfano:', authResult.userId);
         // Nota: Supabase no permite eliminar usuarios desde el cliente, solo desde el admin API
-        return { success: false, error: result.error || 'Error al registrar el cliente' };
+        return { success: false, error: result.error || 'Error al registrar el cliente en la base de datos' };
       }
 
       const clienteRegistrado = result.data;
+      console.log('✅ ¡Cliente registrado exitosamente!');
+      console.log('📊 ID del cliente:', clienteRegistrado.id);
 
       return { 
         success: true, 
@@ -92,8 +118,10 @@ export class ClienteService {
         requiresConfirmation: requiresConfirmation
       };
     } catch (error: any) {
-      console.error('Error en crearCliente:', error);
-      return { success: false, error: error.message };
+      console.error('❌ Error GRAVE en crearCliente:', error);
+      console.error('❌ Error message:', error?.message);
+      console.error('❌ Error stack:', error?.stack);
+      return { success: false, error: error.message || 'Error desconocido al crear cliente' };
     }
   }
 

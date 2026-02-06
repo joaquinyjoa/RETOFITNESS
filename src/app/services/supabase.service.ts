@@ -56,6 +56,10 @@ export class SupabaseService {
   // Registrar un nuevo cliente
   async registrarCliente(cliente: Cliente): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
+      console.log('💾 Insertando cliente en BD...');
+      console.log('📝 Datos a insertar (sin password):', { ...cliente, password: '[OCULTO]' });
+      console.log('📊 Cantidad de campos:', Object.keys(cliente).length);
+      
       const { data, error } = await this.supabase
         .from('clientes')
         .insert([cliente])
@@ -64,18 +68,50 @@ export class SupabaseService {
 
       if (error) {
         this.logger.error('SupabaseService: Error al registrar cliente:', error);
-        return { success: false, error: error.message };
+        console.error('❌ Error en insert de cliente:', error);
+        console.error('❌ Código:', error.code);
+        console.error('❌ Mensaje:', error.message);
+        console.error('❌ Detalles:', error.details);
+        console.error('❌ Hint:', error.hint);
+        
+        // Traducir errores comunes
+        let mensajeError = error.message;
+        if (error.code === '23505') { // Duplicate key
+          mensajeError = '❌ Ya existe un registro con estos datos. Verifica el email o contacta al administrador.';
+        } else if (error.code === '42501') { // Insufficient privilege
+          mensajeError = '❌ Error de permisos en la base de datos. Contacta al administrador.';
+        } else if (error.message.includes('permission denied') || error.message.includes('policy')) {
+          mensajeError = '❌ Error de permisos (RLS Policy). Contacta al administrador para configurar los permisos correctamente.';
+        }
+        
+        return { success: false, error: mensajeError };
       }
+      
+      if (!data) {
+        console.error('❌ Insert no devolvió datos');
+        return { success: false, error: 'No se recibieron datos después de insertar el cliente' };
+      }
+      
+      console.log('✅ Cliente insertado en BD exitosamente');
+      console.log('✅ ID del cliente:', data.id);
+      console.log('✅ Email:', data.correo);
+      console.log('✅ User ID:', data.user_id);
+      console.log('✅ Estado:', data.Estado);
+      
       return { success: true, data };
     } catch (error: any) {
       this.logger.error('SupabaseService: Error en registrarCliente:', error);
-      return { success: false, error: error.message };
+      console.error('❌ Error inesperado en registrarCliente:', error);
+      console.error('❌ Stack:', error?.stack);
+      return { success: false, error: error.message || 'Error desconocido al registrar cliente' };
     }
   }
 
   // Verificar si un email ya existe
   async verificarEmailExistente(correo: string): Promise<boolean> {
     try {
+      console.log(`🔍 Verificando email: ${correo}`);
+      
       const { data, error } = await this.supabase
         .from('clientes')
         .select('id')
@@ -83,14 +119,17 @@ export class SupabaseService {
         .maybeSingle(); // Usar maybeSingle() en lugar de single() para evitar error si no existe
 
       if (error) {
-        this.logger.error('SupabaseService: Error al verificar email:', error);
+        this.logger.error('SupabaseService: Error al verificar email en BD:', error);
+        console.error('❌ Error en verificarEmailExistente:', error);
         return false;
       }
 
       const existe = data !== null;
+      console.log(`🔍 Email ${correo} existe en BD: ${existe}`);
       return existe;
     } catch (error) {
       this.logger.error('SupabaseService: Error inesperado en verificarEmailExistente:', error);
+      console.error('❌ Error inesperado en verificarEmailExistente:', error);
       return false;
     }
   }
@@ -98,6 +137,8 @@ export class SupabaseService {
   // Crear usuario en Supabase Auth
   async crearUsuarioAuth(email: string, password: string): Promise<{ success: boolean; userId?: string; error?: string; requiresConfirmation?: boolean }> {
     try {
+      console.log(`🔐 Creando usuario Auth para: ${email}`);
+      
       const { data, error } = await this.supabase.auth.signUp({
         email: email,
         password: password,
@@ -113,14 +154,34 @@ export class SupabaseService {
 
       if (error) {
         this.logger.error('SupabaseService: Error al crear usuario auth:', error);
-        return { success: false, error: error.message };
+        console.error('❌ Error en signUp:', error);
+        console.error('❌ Código de error:', error.status);
+        console.error('❌ Mensaje:', error.message);
+        
+        // Traducir mensajes de error comunes a español
+        let mensajeError = error.message;
+        if (error.message.includes('User already registered') || error.message.includes('already registered')) {
+          mensajeError = '📧 Este correo electrónico ya está registrado. Si ya tienes una cuenta, intenta iniciar sesión. Si olvidaste tu contraseña, contacta al administrador.';
+        } else if (error.message.includes('Invalid email')) {
+          mensajeError = '❌ Correo electrónico inválido';
+        } else if (error.message.includes('Password should be at least')) {
+          mensajeError = '❌ La contraseña debe tener al menos 6 caracteres';
+        } else if (error.message.includes('Database error')) {
+          mensajeError = '❌ Error de base de datos. Contacta al administrador.';
+        }
+        
+        return { success: false, error: mensajeError };
       }
 
       if (!data.user) {
         this.logger.error('SupabaseService: No se obtuvo usuario después de signUp');
+        console.error('❌ No se obtuvo usuario en signUp');
         return { success: false, error: 'No se pudo crear el usuario' };
       }
 
+      console.log('✅ Usuario Auth creado:', data.user.id);
+      console.log('📧 Email confirmado:', data.user.email_confirmed_at ? 'SÍ' : 'NO');
+      
       // Detectar si el usuario requiere confirmación de email
       const requiresConfirmation = !data.user.email_confirmed_at;
       return { 
@@ -131,7 +192,9 @@ export class SupabaseService {
 
     } catch (error: any) {
       this.logger.error('SupabaseService: Error inesperado en crearUsuarioAuth:', error);
-      return { success: false, error: error.message };
+      console.error('❌ Error inesperado en crearUsuarioAuth:', error);
+      console.error('❌ Stack:', error?.stack);
+      return { success: false, error: error.message || 'Error desconocido al crear usuario' };
     }
   }
 
