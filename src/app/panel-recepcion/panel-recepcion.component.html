@@ -17,12 +17,12 @@
 
 <ion-content class="ion-padding recepcion-content">
   <!-- Pull to refresh -->
-  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)" [disabled]="mostrarSpinner">
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
     <ion-refresher-content
-      pullingIcon=""
-      pullingText=""
-      refreshingSpinner="dots"
-      refreshingText="">
+      pullingIcon="chevron-down-circle-outline"
+      pullingText="Desliza para recargar"
+      refreshingSpinner="circles"
+      refreshingText="Recargando...">
     </ion-refresher-content>
   </ion-refresher>
 

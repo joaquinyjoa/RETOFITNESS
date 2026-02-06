@@ -54,10 +54,6 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
   // Caché de pesos en localStorage
   private readonly PESOS_CACHE_KEY = 'pesos_ejercicios_cache';
   private readonly RUTINA_CACHE_KEY = 'rutina_cliente_cache';
-  private readonly IMAGENES_CACHE_KEY = 'imagenes_cache';
-
-  // Caché de imágenes en base64 para modo offline
-  private imagenesCache = new Map<string, string>();
 
   // Control de conexión
   isOnline = navigator.onLine;
@@ -72,9 +68,6 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
   async ngOnInit() {
     // Configurar listeners para detectar cambios de conexión
     this.setupConnectionListeners();
-
-    // Cargar caché de imágenes
-    this.cargarImagenesCache();
 
     // Obtener información del usuario logueado
     const sesion = this.authService.obtenerSesion();
@@ -598,11 +591,6 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
     try {
       // Guardar en localStorage
       localStorage.setItem(cacheKey, dataString);
-      
-      // Precachear imágenes en base64 para uso offline en navegador
-      if (this.isOnline) {
-        await this.precachearImagenes(data.rutinas);
-      }
     } catch (error) {
       console.error('❌ Error al guardar rutina en caché:', error);
       
@@ -614,9 +602,6 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
           const keys = Object.keys(localStorage);
           for (const key of keys) {
             if (key.startsWith(this.RUTINA_CACHE_KEY) && !key.endsWith(`_${this.clienteId}`)) {
-              localStorage.removeItem(key);
-            }
-            if (key.startsWith(this.IMAGENES_CACHE_KEY) && !key.endsWith(`_${this.clienteId}`)) {
               localStorage.removeItem(key);
             }
           }
@@ -805,11 +790,6 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
   getDirectImageUrl(url: string): string {
     if (!url) return '';
 
-    // Si estamos offline o la imagen está en caché, usar la versión base64
-    if (this.imagenesCache.has(url)) {
-      return this.imagenesCache.get(url)!;
-    }
-
     const lower = url.toLowerCase();
 
     // Si no es Google Drive, devolver la URL tal cual
@@ -855,154 +835,5 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   // Google Drive helpers removed to simplify URL handling; templates use raw enlace_video
-
-  // ============================================
-  // SISTEMA DE CACHÉ DE IMÁGENES PARA MODO OFFLINE
-  // ============================================
-
-  // Convertir imagen de URL a base64
-  private async convertImageToBase64(url: string): Promise<string | null> {
-    try {
-      const response = await fetch(url, {
-        mode: 'cors',
-        cache: 'force-cache'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const blob = await response.blob();
-      
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    } catch (error) {
-      console.error('❌ Error al convertir imagen a base64:', url, error);
-      return null;
-    }
-  }
-
-  // Precachear todas las imágenes de la rutina en base64
-  private async precachearImagenes(rutinas: any[]) {
-    try {
-      const urlsUnicas = new Set<string>();
-      
-      // Recolectar todas las URLs de imágenes
-      for (const rutina of rutinas) {
-        if (rutina.ejercicios) {
-          for (const ejercicio of rutina.ejercicios) {
-            // Imagen del ejercicio principal
-            if (ejercicio.ejercicio?.enlace_video && this.isImageUrl(ejercicio.ejercicio.enlace_video)) {
-              urlsUnicas.add(ejercicio.ejercicio.enlace_video);
-            }
-            
-            // Imagen del ejercicio alternativo
-            if (ejercicio.ejercicio_alternativo?.enlace_video && this.isImageUrl(ejercicio.ejercicio_alternativo.enlace_video)) {
-              urlsUnicas.add(ejercicio.ejercicio_alternativo.enlace_video);
-            }
-          }
-        }
-      }
-
-      // Convertir todas las imágenes a base64 en paralelo
-      const urls = Array.from(urlsUnicas);
-      const conversiones = urls.map(async (urlOriginal) => {
-        // Transformar URL sin buscar en caché
-        const urlDirecta = this.transformarUrl(urlOriginal);
-        const base64 = await this.convertImageToBase64(urlDirecta);
-        if (base64) {
-          return { url: urlOriginal, base64 };
-        }
-        return null;
-      });
-
-      const resultados = await Promise.all(conversiones);
-      
-      // Actualizar caché en memoria
-      for (const resultado of resultados) {
-        if (resultado) {
-          this.imagenesCache.set(resultado.url, resultado.base64);
-        }
-      }
-
-      // Guardar en localStorage
-      this.guardarImagenesCache();
-      
-    } catch (error) {
-      console.error('❌ Error al precachear imágenes:', error);
-    }
-  }
-
-  // Transformar URL sin buscar en caché (helper para precacheo)
-  private transformarUrl(url: string): string {
-    if (!url) return '';
-
-    const lower = url.toLowerCase();
-
-    // Si no es Google Drive, devolver la URL tal cual
-    if (!lower.includes('drive.google.com')) {
-      return url;
-    }
-
-    // Extraer fileId de Drive
-    const m1 = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-    const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-    const fileId = m1 ? m1[1] : (m2 ? m2[1] : null);
-
-    if (!fileId) return url;
-
-    // Si parece GIF, usar lh3 endpoint
-    if (lower.includes('.gif') || !/\.[a-z0-9]{2,5}(\?|$)/.test(lower)) {
-      return `https://lh3.googleusercontent.com/d/${fileId}`;
-    }
-
-    return `https://drive.google.com/uc?export=view&id=${fileId}`;
-  }
-
-  // Cargar caché de imágenes desde localStorage
-  private cargarImagenesCache() {
-    try {
-      const cacheKey = `${this.IMAGENES_CACHE_KEY}_${this.clienteId}`;
-      const cacheString = localStorage.getItem(cacheKey);
-      
-      if (cacheString) {
-        const cacheData = JSON.parse(cacheString);
-        this.imagenesCache = new Map(Object.entries(cacheData));
-      }
-    } catch (error) {
-      console.error('❌ Error al cargar caché de imágenes:', error);
-    }
-  }
-
-  // Guardar caché de imágenes en localStorage
-  private guardarImagenesCache() {
-    try {
-      const cacheKey = `${this.IMAGENES_CACHE_KEY}_${this.clienteId}`;
-      // Convertir Map a objeto manualmente para compatibilidad
-      const cacheData: any = {};
-      this.imagenesCache.forEach((value, key) => {
-        cacheData[key] = value;
-      });
-      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-    } catch (error) {
-      console.error('❌ Error al guardar caché de imágenes:', error);
-      
-      // Si es error de cuota, intentar comprimir o limpiar
-      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-        console.warn('⚠️ Límite de almacenamiento excedido para imágenes');
-        // Limpiar imágenes antiguas de otros clientes
-        const keys = Object.keys(localStorage);
-        for (const key of keys) {
-          if (key.startsWith(this.IMAGENES_CACHE_KEY) && !key.endsWith(`_${this.clienteId}`)) {
-            localStorage.removeItem(key);
-          }
-        }
-      }
-    }
-  }
 }
 
