@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
@@ -310,7 +310,7 @@ export class VerRutinaClienteComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['/ver-clientes'], { replaceUrl: true });
+    inject(Location).back();
   }
 
   // Eliminar todas las rutinas del cliente

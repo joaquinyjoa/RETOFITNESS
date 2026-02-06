@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -192,7 +192,7 @@ export class EditarClienteComponent implements OnInit {
   }
 
   cancelar() {
-    this.router.navigate(['/ver-clientes'], { replaceUrl: true });
+    window.history.back();
   }
 
   // Método para manejar cambios en checkboxes

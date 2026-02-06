@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { IonicModule, ToastController } from '@ionic/angular';
@@ -229,7 +229,7 @@ export class AsignarRutinaClienteSeleccionadoComponent implements OnInit {
 
   // Volver atrás
   volver() {
-    this.router.navigate(['/ver-rutina-cliente', this.clienteId]);
+    inject(Location).back();
   }
 
   // Obtener el nombre del día

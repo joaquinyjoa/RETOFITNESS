@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, ChangeDetectorRef, CUSTOM_ELEMENTS_SCHEMA, NgZone } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import {
@@ -337,10 +337,8 @@ export class AsignarRutinaComponent implements OnInit {
     // Limpiar overlays antes de volver
     await this.dismissAllOverlays();
     
-    // Navegar sin animación para evitar superposición de componentes
-    await this.navCtrl.navigateBack('/ver-ejercicios', {
-      animated: false
-    });
+    // Usar Location.back() para respetar el historial del navegador
+    inject(Location).back();
   }
 
   // Intentar descartar modales/alerts/loaders abiertos y ocultar overlays residuales

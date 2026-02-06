@@ -1,5 +1,5 @@
 // Service Worker para RetoFitness PWA
-const CACHE_NAME = 'retofitness-v2.4';
+const CACHE_NAME = 'retofitness-v2.5';
 const urlsToCache = [
   '/',
   '/index.html',

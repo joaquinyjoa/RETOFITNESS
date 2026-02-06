@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, ChangeDetectorRef, NgZone, OnDestroy, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { IonicModule, AlertController } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -1004,7 +1004,7 @@ async eliminarEjercicio(ejercicio: Ejercicio) {
   }
 
   goBack() {
-    this.router.navigate(['/panel-entrenador']);
+    inject(Location).back();
   }
 
   getCategoriaColor(categoria: string): string {

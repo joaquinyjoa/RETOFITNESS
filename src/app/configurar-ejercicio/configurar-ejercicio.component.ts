@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, ChangeDetectorRef, NgZone } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
@@ -256,10 +256,6 @@ export class ConfigurarEjercicioComponent implements OnInit {
   }
 
   goBack() {
-    if (this.clienteId) {
-      this.router.navigate(['/ver-rutina-cliente', this.clienteId]);
-    } else {
-      this.router.navigate(['/ver-clientes']);
-    }
+    inject(Location).back();
   }
 }
