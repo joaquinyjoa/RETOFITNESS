@@ -525,7 +525,7 @@ export class RegisterComponent implements OnInit {
         this.isSubmitting = false;
         this.showSpinner = false;
         this.cdr.detectChanges();
-        await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para registrarte');
+        await this.toastService.mostrarError('Debes estar conectado a internet para registrarte');
         return;
       }
 

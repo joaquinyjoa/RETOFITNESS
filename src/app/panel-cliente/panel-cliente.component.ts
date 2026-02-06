@@ -714,13 +714,6 @@ export class PanelClienteComponent implements OnInit, OnDestroy, ViewWillEnter {
           }
         },
         {
-          text: 'Refrescar',
-          icon: 'refresh-outline',
-          handler: () => {
-            this.cargarRutinaAsignada();
-          }
-        },
-        {
           text: 'Términos y Condiciones',
           icon: 'document-text-outline',
           handler: () => {

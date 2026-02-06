@@ -417,6 +417,15 @@ ion-button.password-button::part(native) .button-native,
   gap: 12px;
   flex-shrink: 0;
   min-width: fit-content;
+  justify-content: flex-end;
+  padding-left: 8px;
+  
+  // Asegurar visibilidad de todos los elementos hijos
+  > * {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-flex !important;
+  }
 }
 
 .password-button {
@@ -457,32 +466,6 @@ ion-button.password-button::part(native) .button-native,
   }
 }
 
-.custom-toggle {
-  --handle-width: 26px;
-  --handle-height: 26px;
-  --handle-box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
-  --background: rgba(255, 255, 255, 0.2);
-  --background-checked: var(--primary-green);
-  --handle-background: #ffffff;
-  --handle-background-checked: #000000;
-  width: 52px;
-  height: 32px;
-  margin: 0;
-  
-  &::part(track) {
-    height: 32px;
-    border-radius: 16px;
-    border: 2px solid rgba(0, 255, 136, 0.3);
-  }
-  
-  &::part(handle) {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-}
-
 // Empty state
 .empty-state {
   display: flex;
@@ -515,6 +498,89 @@ ion-button.password-button::part(native) .button-native,
     color: var(--text-secondary);
     font-size: 0.95rem;
     margin: 0;
+  }
+}
+
+// Estilos globales para asegurar visibilidad del toggle en todos los navegadores
+ion-toggle {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: all !important;
+}
+
+// Toggle personalizado con HTML/CSS puro (sin shadow DOM)
+.toggle-button {
+  position: relative;
+  display: inline-block;
+  width: 56px;
+  height: 34px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  &:focus {
+    outline: none;
+  }
+  
+  .toggle-track {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(150, 150, 150, 0.4);
+    border: 2px solid rgba(0, 255, 136, 0.4);
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    display: block;
+  }
+  
+  .toggle-handle {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 26px;
+    height: 26px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease;
+    display: block;
+  }
+  
+  &.toggle-active {
+    .toggle-track {
+      background: var(--primary-green);
+      border-color: var(--primary-green);
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+    }
+    
+    .toggle-handle {
+      transform: translateX(22px);
+      background: #000000;
+      box-shadow: 0 0 12px rgba(0, 255, 136, 0.6);
+    }
+  }
+  
+  &:hover:not(:disabled) {
+    .toggle-track {
+      border-color: var(--primary-green);
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+    }
+  }
+  
+  &:active:not(:disabled) {
+    .toggle-handle {
+      width: 30px;
+    }
   }
 }
 

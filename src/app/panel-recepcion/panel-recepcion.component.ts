@@ -51,7 +51,7 @@ export class PanelRecepcionComponent implements OnInit {
     // Verificar conexión a internet
     const tieneConexion = this.verificarConexion();
     if (!tieneConexion) {
-      await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para cargar los clientes');
+      await this.toastService.mostrarError('Debes estar conectado a internet para cargar los clientes');
       return;
     }
 
@@ -126,7 +126,7 @@ export class PanelRecepcionComponent implements OnInit {
     // Verificar conexión a internet
     const tieneConexion = this.verificarConexion();
     if (!tieneConexion) {
-      await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para cambiar el estado del cliente');
+      await this.toastService.mostrarError('Debes estar conectado a internet para cambiar el estado del cliente');
       return;
     }
 
@@ -190,7 +190,7 @@ export class PanelRecepcionComponent implements OnInit {
     // Verificar conexión a internet
     const tieneConexion = this.verificarConexion();
     if (!tieneConexion) {
-      await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para cambiar la contraseña');
+      await this.toastService.mostrarError('Debes estar conectado a internet para cambiar la contraseña');
       return;
     }
     
@@ -220,7 +220,7 @@ export class PanelRecepcionComponent implements OnInit {
       const tieneConexion = this.verificarConexion();
       
       if (!tieneConexion) {
-        await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para recargar los datos');
+        await this.toastService.mostrarError('Debes estar conectado a internet para recargar los datos');
         return;
       }
       

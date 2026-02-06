@@ -608,4 +608,34 @@ ion-alert {
 	box-shadow: 0 8px 30px rgba(255, 107, 107, 0.06);
 }
 
+/* ========================================
+   GLOBAL ION-TOGGLE VISIBILITY FIX
+   Forzar visibilidad en todos los navegadores
+   ======================================== */
+ion-toggle {
+	display: inline-block !important;
+	opacity: 1 !important;
+	visibility: visible !important;
+	pointer-events: all !important;
+	position: relative !important;
+	z-index: 1 !important;
+	min-width: 50px !important;
+	min-height: 30px !important;
+}
+
+ion-toggle::part(track),
+ion-toggle::part(handle) {
+	opacity: 1 !important;
+	visibility: visible !important;
+	display: block !important;
+}
+
+/* Específico para clase custom-toggle */
+.custom-toggle {
+	display: inline-block !important;
+	opacity: 1 !important;
+	visibility: visible !important;
+	width: 56px !important;
+	height: 34px !important;
+}
 

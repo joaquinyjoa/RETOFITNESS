@@ -194,7 +194,7 @@ export class LoginComponent implements OnInit, OnDestroy, ViewWillEnter, ViewWil
       // Verificar conexión a internet PRIMERO
       const tieneConexion = this.verificarConexion();
       if (!tieneConexion) {
-        await this.presentToast('⚠️ Necesitas conectarte a internet para iniciar sesión', 'top');
+        await this.presentToast('Necesitas conectarte a internet para iniciar sesión', 'top');
         return;
       }
 

@@ -16,15 +16,6 @@
 </ion-header>
 
 <ion-content class="ion-padding recepcion-content">
-  <!-- Pull to refresh -->
-  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
-    <ion-refresher-content
-      pullingIcon="chevron-down-circle-outline"
-      pullingText="Desliza para recargar"
-      refreshingSpinner="circles"
-      refreshingText="Recargando...">
-    </ion-refresher-content>
-  </ion-refresher>
 
   <!-- Spinner Overlay -->
   <div class="spinner-overlay" *ngIf="mostrarSpinner">
@@ -130,12 +121,16 @@
               <ion-icon slot="start" name="key-outline"></ion-icon>
               <span>Contraseña</span>
             </ion-button>
-            <ion-toggle 
-              class="custom-toggle"
-              [checked]="cliente.Estado || false"
-              (ionChange)="cambiarEstado(cliente)"
-              [color]="cliente.Estado ? 'success' : 'medium'">
-            </ion-toggle>
+            <!-- Toggle personalizado con botón -->
+            <button 
+              class="toggle-button"
+              [class.toggle-active]="cliente.Estado"
+              (click)="cambiarEstado(cliente)"
+              [disabled]="mostrarSpinner">
+              <span class="toggle-track">
+                <span class="toggle-handle"></span>
+              </span>
+            </button>
           </div>
         </div>
       </div>

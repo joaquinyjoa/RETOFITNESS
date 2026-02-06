@@ -93,7 +93,7 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
     // Verificar conexión antes de navegar
     const tieneConexion = this.verificarConexion();
     if (!tieneConexion) {
-      await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para ver los clientes');
+      await this.toastService.mostrarError('Debes estar conectado a internet para ver los clientes');
       return;
     }
 
@@ -122,7 +122,7 @@ export class PanelEntrenadorComponent implements OnInit, OnDestroy, ViewWillEnte
     // Verificar conexión antes de navegar
     const tieneConexion = this.verificarConexion();
     if (!tieneConexion) {
-      await this.toastService.mostrarError('⚠️ Debes estar conectado a internet para ver los ejercicios');
+      await this.toastService.mostrarError('Debes estar conectado a internet para ver los ejercicios');
       return;
     }
 

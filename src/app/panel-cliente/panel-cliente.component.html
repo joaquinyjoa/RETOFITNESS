@@ -20,16 +20,6 @@
 
 <ion-content class="panel-content" [class.no-scroll]="mostrarSpinner">
   
-  <!-- Pull to refresh -->
-  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
-    <ion-refresher-content
-      pullingIcon="chevron-down-circle-outline"
-      pullingText="Desliza para recargar"
-      refreshingSpinner="circles"
-      refreshingText="Recargando...">
-    </ion-refresher-content>
-  </ion-refresher>
-  
   <!-- Spinner animado global -->
   <div *ngIf="mostrarSpinner" class="global-spinner-overlay">
     <app-spinner></app-spinner>
