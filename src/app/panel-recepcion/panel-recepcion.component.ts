@@ -203,7 +203,7 @@ export class PanelRecepcionComponent implements OnInit {
       const tieneConexion = this.verificarConexion();
       
       if (!tieneConexion) {
-        await this.toastService.mostrarInfo('📴 Sin conexión - No se pueden recargar los datos');
+        await this.toastService.mostrarInfo('Sin conexión - No se pueden recargar los datos');
       } else {
         await this.cargarClientes(false); // Recargar sin mostrar spinner
       }
